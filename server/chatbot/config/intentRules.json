@@ -1,0 +1,58 @@
+{
+  "version": "1.1.0",
+  "description": "Intent rules configuration for SportSphere chatbot (Hybird RAG Architecture)",
+  "intents": [
+    {
+      "id": "GREETING",
+      "patterns": ["hello", "hi", "hey", "greetings", "good morning", "good afternoon", "good evening"],
+      "actionType": "STATIC_RESPONSE",
+      "response": "Hello! I'm your SportSphere assistant. How can I help you with badminton today?",
+      "priority": 1
+    },
+    {
+      "id": "BOOK_COURT",
+      "patterns": ["book court", "reserve court", "court booking", "book a court", "want to book", "need a court"],
+      "actionType": "ROUTE_TO_SERVICE",
+      "response": "I can help you book a court! You can browse available courts and times on our booking page.",
+      "serviceRoute": "/api/bookings",
+      "priority": 2
+    },
+    {
+      "id": "CHECK_AVAILABILITY",
+      "patterns": ["court available", "availability", "free courts", "open courts", "when is court free", "court times"],
+      "actionType": "ROUTE_TO_SERVICE",
+      "response": "Let me check court availability for you. You can view real-time availability on our courts page.",
+      "serviceRoute": "/api/courts",
+      "priority": 2
+    },
+    {
+      "id": "FIND_COACH",
+      "patterns": ["find coach", "coach", "coaching", "trainer", "lessons", "learn badminton", "training session"],
+      "actionType": "ROUTE_TO_SERVICE",
+      "response": "We have certified coaches available on SportSphere! You can browse coach profiles and book sessions on our coaches page.",
+      "serviceRoute": "/api/coaches",
+      "priority": 2
+    },
+    {
+      "id": "FIND_PARTNER",
+      "patterns": ["sparring", "partner", "play with", "find player", "looking for opponent", "practice partner"],
+      "actionType": "ROUTE_TO_SERVICE",
+      "response": "Looking for a sparring partner? Check out our sparring matchmaking feature to find players at your skill level!",
+      "serviceRoute": "/api/sparring",
+      "priority": 2
+    },
+    {
+      "id": "PLATFORM_INFO",
+      "patterns": ["what can you do", "features", "platform", "help me", "what is sportsphere", "about"],
+      "actionType": "STATIC_RESPONSE",
+      "response": "SportSphere offers court booking, coach profiles, tournament registration, and intelligent sparring matchmaking. I can help you with any of these features!",
+      "priority": 4
+    }
+  ],
+  "fallback": {
+    "id": "FALLBACK",
+    "actionType": "FALLBACK",
+    "response": "I'm not sure I understood that. I can help you with badminton rules, techniques, equipment, booking courts, finding coaches, or checking your matches and tournaments. Could you please rephrase?",
+    "forwardToML": true
+  }
+}

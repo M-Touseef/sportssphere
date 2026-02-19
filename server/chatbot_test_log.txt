@@ -1,0 +1,41 @@
+🚀 Starting AI Chatbot Verification...
+
+--- 1. Registering User ---
+✅ Registered User: chat_user_1765020687957@test.com
+
+--- 2. Creating Conversation ---
+✅ Conversation Created. ID: 69341410ae1b22052c041392
+   Bot Reply: Hi there! Ready to talk about badminton? What would you like to know?
+
+--- 3. Testing Valid Questions ---
+   Q: "What are the scoring rules?"
+   A: "In badminton, a match is played best of 3 games of 21 points. You must win by 2 points, and the game..."
+   ✅ Content Validated
+   Q: "Which racket should I buy?"
+   A: "For beginners, I recommend a lightweight racket (85-90g) with a flexible shaft. Good badminton shoes..."
+   ✅ Content Validated
+   Q: "How to hit a smash?"
+   A: "Good footwork is essential in badminton. Use the split step, move quickly to the shuttle, and return..."
+   ✅ Content Validated
+   Q: "Tell me about doubles strategy"
+   A: "Doubles strategy: Maintain front-back or side-by-side formation, communicate with your partner, atta..."
+   ✅ Content Validated
+   Q: "How can I improve my training?"
+   A: "For beginners, focus on: proper grip, basic strokes (clear, drop, smash), footwork patterns, and ser..."
+   ✅ Content Validated
+
+--- 4. Testing Fallback Responses ---
+   Q: "sdlkfjsdklf"
+   A: "I'm here to help with badminton-related questions. Could you rephrase that or ask something more specific?"
+   ✅ Correctly received Fallback suggestion
+   Q: "Can I fly to the moon?"
+   A: "I'd love to help! Try asking about badminton rules, techniques, equipment, training tips, or our platform features."
+   ⚠️ Unexpected response (Should be fallback)
+
+--- 5. Verifying Session Tracking ---
+✅ Message Count Verified: 16 (Corect)
+
+--- 6. Error Handling (Empty Message) ---
+✅ Correctly rejected empty message (400 Bad Request)
+
+🏁 Chatbot Verification Completed.

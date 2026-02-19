@@ -1,0 +1,515 @@
+const SparringAvailability = require('../models/SparringAvailability'); // Legacy? Or for specific overrides?
+const SparringSessionRequest = require('../models/SparringSessionRequest');
+const User = require('../models/User');
+const Booking = require('../models/Booking');
+const CoachProfile = require('../models/CoachProfile');
+const ProfessionalProfile = require('../models/ProfessionalProfile');
+
+// =============================================================================
+// RECURRING AVAILABILITY MANAGEMENT (Professional Players)
+// =============================================================================
+
+// @desc    Add a recurring availability slot (Weekly)
+// @route   POST /api/sparring/availability/recurring
+// @access  Private (Professional only)
+exports.addRecurringSlot = async (req, res) => {
+    try {
+        const { day, startTime, endTime, court, venue, sparringType } = req.body;
+
+        if (!day || !startTime || !endTime) {
+            return res.status(400).json({ error: 'Missing required fields: day, startTime, endTime' });
+        }
+
+        let profile = await ProfessionalProfile.findOne({ user: req.user.id });
+
+        if (!profile) {
+            // Create profile if not exists (should usually exist)
+            profile = await ProfessionalProfile.create({
+                user: req.user.id,
+                matchFee: 0, // Default, client should probably set this elsewhere or here
+                availability: []
+            });
+        }
+
+        // Check for overlaps in existing recurring slots
+        const hasOverlap = profile.availability.some(slot =>
+            slot.day === day &&
+            slot.isActive &&
+            ((startTime >= slot.startTime && startTime < slot.endTime) ||
+                (endTime > slot.startTime && endTime <= slot.endTime) ||
+                (startTime <= slot.startTime && endTime >= slot.endTime))
+        );
+
+        if (hasOverlap) {
+            return res.status(400).json({ error: 'This time slot overlaps with an existing weekly slot.' });
+        }
+
+        const newSlot = {
+            day,
+            startTime,
+            endTime,
+            court,
+            venue: venue || undefined,
+            sparringType: sparringType || 'singles',
+            isActive: true
+        };
+
+        profile.availability.push(newSlot);
+        await profile.save();
+
+        res.status(201).json({
+            success: true,
+            data: profile.availability
+        });
+    } catch (error) {
+        console.error('Add Recurring Slot Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Get my recurring availability
+// @route   GET /api/sparring/availability/recurring
+// @access  Private (Professional only)
+exports.getMyRecurringAvailability = async (req, res) => {
+    try {
+        const profile = await ProfessionalProfile.findOne({ user: req.user.id })
+            .populate('availability.court', 'name location');
+
+        if (!profile) {
+            return res.status(200).json({ success: true, data: [] });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: profile.availability
+        });
+    } catch (error) {
+        console.error('Get Recurring Availability Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Remove recurring slot
+// @route   DELETE /api/sparring/availability/recurring/:slotId
+// @access  Private (Professional only)
+exports.removeRecurringSlot = async (req, res) => {
+    try {
+        const profile = await ProfessionalProfile.findOne({ user: req.user.id });
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        profile.availability = profile.availability.filter(slot => slot._id.toString() !== req.params.slotId);
+        await profile.save();
+
+        res.status(200).json({
+            success: true,
+            data: profile.availability
+        });
+    } catch (error) {
+        console.error('Remove Recurring Slot Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Get professional availability (Public)
+// @route   GET /api/sparring/professionals/:id/availability
+exports.getProAvailability = async (req, res) => {
+    try {
+        const profile = await ProfessionalProfile.findOne({ user: req.params.id })
+            .populate('availability.court', 'name location');
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        // Convert recurring slots to include computed dates
+        const slotsWithDates = profile.availability
+            .filter(slot => slot.isActive)
+            .map(slot => ({
+                ...slot.toObject(),
+                date: getNextOccurrence(slot.day),
+                matchFee: profile.matchFee
+            }));
+
+        res.status(200).json({
+            success: true,
+            data: slotsWithDates
+        });
+    } catch (error) {
+        console.error('Get Pro Availability Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Create/Override single availability (Legacy Support)
+exports.createAvailability = async (req, res) => {
+    // Basic implementation for legacy support
+    res.status(501).json({ error: 'Not implemented. Please use recurring slots.' });
+};
+
+// @desc    Update availability
+exports.updateAvailability = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented. Please use recurring slots.' });
+};
+
+// @desc    Get my availability (Legacy Support)
+exports.getMyAvailability = async (req, res) => {
+    // Basic implementation for legacy support, redirecting or returning recurring?
+    // For now, let's just return success with an empty array or implement as needed.
+    res.status(501).json({ error: 'Not implemented. Please use recurring slots.' });
+};
+
+// @desc    Delete availability
+exports.deleteAvailability = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented. Please use recurring slots.' });
+};
+
+// @desc    Toggle availability
+exports.toggleAvailability = async (req, res) => {
+    try {
+        const profile = await ProfessionalProfile.findOne({ user: req.user.id });
+        if (!profile) return res.status(404).json({ error: 'Profile not found' });
+
+        const slot = profile.availability.id(req.params.id);
+        if (!slot) return res.status(404).json({ error: 'Slot not found' });
+
+        slot.isActive = !slot.isActive;
+        await profile.save();
+
+        res.status(200).json({ success: true, data: profile.availability });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// =============================================================================
+// BROWSING (Non-Professional Players)
+// =============================================================================
+
+// @desc    Get available professionals for a specific DATE and TIME
+// @route   GET /api/sparring/available-pros
+// @access  Public
+exports.getAvailableProsForSlot = async (req, res) => {
+    try {
+        const { date, startTime, city } = req.query;
+
+        if (!date || !startTime) {
+            return res.status(400).json({ error: 'Please provide date and startTime' });
+        }
+
+        const queryDate = new Date(date);
+        queryDate.setHours(0, 0, 0, 0);
+
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayOfWeek = days[queryDate.getDay()];
+
+        // 1. Find Professionals with a recurring slot on this day/time
+        // We look for profiles where availability.day matches and isActive is true
+        // and startTime matches (assuming fixed 1-hour slots for simplicity or exact match)
+
+        let proQuery = {
+            isActive: true,
+            'availability': {
+                $elemMatch: {
+                    day: dayOfWeek,
+                    startTime: startTime,
+                    isActive: true
+                }
+            }
+        };
+
+        const profiles = await ProfessionalProfile.find(proQuery)
+            .populate('user', 'name email city skillLevel rank')
+            .populate('availability.court', 'name location');
+
+        const availablePros = [];
+
+        for (const profile of profiles) {
+            // Further filter if city is provided (match user city or venue city)
+            if (city && profile.user.city.toLowerCase() !== city.toLowerCase()) {
+                // Check if the specific slot venue is in the city? 
+                // Simplification: Match user city for now.
+                continue;
+            }
+
+            const slot = profile.availability.find(s => s.day === dayOfWeek && s.startTime === startTime);
+
+            // CHECK FOR CONFLICTING BOOKING
+            const isBooked = await Booking.findOne({
+                proPlayer: profile.user._id,
+                date: queryDate,
+                startTime: startTime,
+                status: { $nin: ['cancelled', 'rejected'] }
+            });
+
+            if (!isBooked) {
+                availablePros.push({
+                    player: profile.user,
+                    profileId: profile._id,
+                    slot: slot,
+                    matchFee: profile.matchFee,
+                    isRecurring: true
+                });
+            }
+        }
+
+        // 2. Also Fetch Coaches (Recurring logic same as before)
+        // Ignoring mixed coach logic here for brevity unless requested to merge.
+        // The user specifically asked about "player, coach add his availability".
+        // Coaches have CoachProfile. Let's merge them if needed, but for 'Sparring' purposes?
+        // Assuming this endpoint is 'Sparring'. If it includes Coaches acting as sparring partners:
+
+        const coaches = await CoachProfile.find({
+            isActive: true,
+            'availability': {
+                $elemMatch: {
+                    day: dayOfWeek,
+                    startTime: startTime
+                }
+            }
+        }).populate('user', 'name email city skillLevel');
+
+        for (const coach of coaches) {
+            if (city && coach.user.city.toLowerCase() !== city.toLowerCase()) continue;
+
+            const isBooked = await Booking.findOne({
+                proPlayer: coach.user._id, // Coaches are Users too
+                date: queryDate,
+                startTime: startTime,
+                status: { $nin: ['cancelled', 'rejected'] }
+            });
+
+            if (!isBooked) {
+                availablePros.push({
+                    player: coach.user,
+                    profileId: coach._id,
+                    isMyCoach: true, // Marker
+                    isRecurring: true
+                });
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            count: availablePros.length,
+            data: availablePros
+        });
+
+    } catch (error) {
+        console.error('Get Available Pros For Slot Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// =============================================================================
+// SPARRING REQUESTS (Non-Professional to Professional)
+// =============================================================================
+
+// @desc    Send a sparring request for a GENERATED slot
+// @route   POST /api/sparring/request/
+// @access  Private (Non-Professional only)
+exports.sendSparringRequest = async (req, res) => {
+    try {
+        const { proId, date, startTime, endTime, courtId, venue, price, message } = req.body;
+
+        if (req.user.role === 'professional') {
+            return res.status(403).json({ error: 'Professionals cannot send requests.' });
+        }
+
+        // Validate duplicates
+        const bookingDate = new Date(date);
+        bookingDate.setHours(0, 0, 0, 0);
+
+        // Create a Booking directly with status 'pending_pro'.
+        const booking = await Booking.create({
+            user: req.user.id,
+            proPlayer: proId,
+            court: (typeof courtId === 'string' && courtId.length === 24) ? courtId : undefined,
+            venue: (typeof courtId === 'object') ? courtId : venue,
+            date: bookingDate,
+            startTime,
+            endTime,
+            totalPrice: price || 0,
+            status: 'pending_pro'
+        });
+
+        // Create notification request wrapper if needed, or just use Booking.
+        // Existing flow used `SparringSessionRequest`. Let's create it for consistency with UI.
+
+        const request = await SparringSessionRequest.create({
+            requester: req.user.id,
+            proPlayer: proId,
+            booking: booking._id,
+            message,
+            status: 'PENDING_RESPONSE',
+            responseDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+        });
+
+        // Link request to booking
+        booking.sparringRequest = request._id;
+        await booking.save();
+
+        res.status(201).json({
+            success: true,
+            data: request
+        });
+
+    } catch (error) {
+        console.error('Send Request Error:', error);
+        res.status(500).json({
+            error: 'Server error',
+            details: error.message,
+            validationErrors: error.errors
+        });
+    }
+};
+
+// @desc    Get My Sent Requests (Non-Professional)
+// @route   GET /api/sparring/requests/my
+exports.getMySentRequests = async (req, res) => {
+    try {
+        const requests = await SparringSessionRequest.find({ requester: req.user.id })
+            .populate('proPlayer', 'name email')
+            .populate({
+                path: 'booking',
+                populate: { path: 'court', select: 'name location' }
+            })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: requests
+        });
+    } catch (error) {
+        console.error('Get My Sent Requests Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getNextOccurrence = (dayName) => {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const targetDay = days.indexOf(dayName.toLowerCase());
+    if (targetDay === -1) return new Date();
+
+    const now = new Date();
+    const result = new Date(now);
+    const currentDay = now.getDay();
+
+    let diff = targetDay - currentDay;
+    if (diff <= 0) diff += 7;
+
+    result.setDate(now.getDate() + diff);
+    result.setHours(0, 0, 0, 0);
+    return result;
+};
+
+// @desc    Get all professionals with availability
+// @route   GET /api/sparring/professionals
+exports.getProfessionalsWithAvailability = async (req, res) => {
+    try {
+        const { city } = req.query;
+        let query = { isActive: true };
+
+        // Find profiles that have at least one active availability slot
+        const profiles = await ProfessionalProfile.find({
+            ...query,
+            'availability.isActive': true,
+            'availability.0': { $exists: true }
+        }).populate('user', 'name city rank achievements skillLevel');
+
+        const formattedResults = profiles
+            .filter(profile => {
+                if (!city) return true;
+                return profile.user?.city?.toLowerCase() === city.toLowerCase();
+            })
+            .map(profile => ({
+                player: profile.user,
+                profile: profile,
+                availableSlots: profile.availability
+                    .filter(slot => slot.isActive)
+                    .map(slot => ({
+                        ...slot.toObject(),
+                        date: getNextOccurrence(slot.day),
+                        matchFee: profile.matchFee // Fallback match fee from profile
+                    }))
+            }));
+
+        res.status(200).json({
+            success: true,
+            count: formattedResults.length,
+            data: formattedResults
+        });
+    } catch (error) {
+        console.error('Get Professionals With Availability Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Get Incoming Requests (Professional)
+// @route   GET /api/sparring/requests/incoming
+exports.getIncomingRequests = async (req, res) => {
+    try {
+        // Fetch requests linked to bookings for me
+        const requests = await SparringSessionRequest.find({ proPlayer: req.user.id })
+            .populate('requester', 'name email')
+            .populate({
+                path: 'booking',
+                populate: { path: 'court', select: 'name location' }
+            })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: requests
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Accept Request
+exports.acceptRequest = async (req, res) => {
+    try {
+        const request = await SparringSessionRequest.findById(req.params.id).populate('booking');
+        if (!request || request.proPlayer.toString() !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        request.status = 'ACCEPTED';
+        request.respondedAt = new Date();
+        await request.save();
+
+        if (request.booking) {
+            await Booking.findByIdAndUpdate(request.booking._id, { status: 'pending_payment' });
+        }
+
+        res.status(200).json({ success: true, data: request });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Reject Request
+exports.rejectRequest = async (req, res) => {
+    try {
+        const request = await SparringSessionRequest.findById(req.params.id).populate('booking');
+        if (!request || request.proPlayer.toString() !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        request.status = 'REJECTED';
+        request.respondedAt = new Date();
+        await request.save();
+
+        if (request.booking) {
+            await Booking.findByIdAndUpdate(request.booking._id, { status: 'cancelled' });
+        }
+
+        res.status(200).json({ success: true, data: request });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};

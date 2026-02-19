@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "isArray": false,
+  "keys": [
+    "AbortException",
+    "FormatError",
+    "InvalidPDFException",
+    "Line",
+    "LineDirection",
+    "LineStore",
+    "PDFParse",
+    "PasswordException",
+    "Point",
+    "Rectangle",
+    "ResponseException",
+    "Shape",
+    "Table",
+    "UnknownErrorException",
+    "VerbosityLevel",
+    "getException"
+  ],
+  "stringified": "{\n  \"LineDirection\": {\n    \"0\": \"None\",\n    \"1\": \"Horizontal\",\n    \"2\": \"Vertical\",\n    \"None\": 0,\n    \"Horizontal\": 1,\n    \"Vertical\": 2\n  },\n  \"VerbosityLevel\": {\n    \"ERRORS\": 0,\n    \"WARNINGS\": 1,\n    \"INFOS\": 5\n  }\n}"
+}

@@ -1,0 +1,22 @@
+Starting Role Verify Tests...
+
+--- 1. Registering Users ---
+✅ Registered player: player_1765016761498@test.com
+✅ Registered coach: coach_1765016761498@test.com
+✅ Registered organizer: organizer_1765016761498@test.com
+✅ Registered admin: admin_1765016761498@test.com
+
+--- 2. Admin Permissions ---
+✅ Admin: Created Court successfully
+✅ Admin: Accessed Admin Stats
+
+--- 3. Organizer Permissions ---
+✅ Organizer: Created Tournament
+✅ Organizer: Blocked from Admin Stats
+
+--- 4. Coach Permissions ---
+✅ Coach: Blocked from Admin Stats
+
+--- 5. Player Permissions ---
+✅ Player: Booked Court
+✅ Player: Blocked from Creating Tournament

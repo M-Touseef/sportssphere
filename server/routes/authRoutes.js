@@ -1,0 +1,16 @@
+const express = require('express');
+const router = express.Router();
+const { register, login, getMe, updateDetails, completeProfile, selectRole } = require('../controllers/authController');
+const { auth } = require('../middleware/auth');
+const { registerValidation, loginValidation, updateProfileValidation } = require('../middleware/validation');
+
+const upload = require('../middleware/uploadMiddleware');
+
+router.post('/register', registerValidation, register);
+router.post('/login', loginValidation, login);
+router.get('/me', auth, getMe);
+router.put('/updatedetails', auth, updateProfileValidation, updateDetails);
+router.put('/select-role', auth, selectRole);
+router.put('/complete-profile', auth, upload.single('verificationDocument'), completeProfile);
+
+module.exports = router;

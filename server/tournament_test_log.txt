@@ -1,0 +1,44 @@
+🚀 Starting Tournament Simulation...
+
+--- 1. Registering Users ---
+✅ Registered 1 Organizer + 8 Players
+
+--- 2. Creating Tournament ---
+✅ Tournament Created: Grand Slam 1765019325786
+✅ Tournament Published
+
+--- 4. Players Registering ---
+✅ All 8 Players Registered
+
+--- 5. Generating Brackets ---
+✅ Brackets Generated (7 matches)
+
+--- 6. Simulating Round 1 (QF) ---
+quarter_final: Found 4 matches
+   Playing: User P1 vs User P2
+   ✅ Result Submitted: User P1 WINS
+   Playing: User P3 vs User P4
+   ✅ Result Submitted: User P3 WINS
+   Playing: User P5 vs User P6
+   ✅ Result Submitted: User P5 WINS
+   Playing: User P7 vs User P8
+   ✅ Result Submitted: User P7 WINS
+
+--- 7. Simulating Round 2 (SF) ---
+semi_final: Found 2 matches
+   Playing: User P1 vs User P3
+   ✅ Result Submitted: User P1 WINS
+   Playing: User P5 vs User P7
+   ✅ Result Submitted: User P5 WINS
+
+--- 8. Simulating Final ---
+final: Found 1 matches
+   Playing: User P1 vs User P5
+   ✅ Result Submitted: User P1 WINS
+
+--- 9. Verifying Leaderboard ---
+🏆 Winner: User P1
+🥈 Runner-up: User P5
+✅ Winner has 3 wins - Correct!
+
+🏁 Tournament Simulation Completed.

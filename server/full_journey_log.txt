@@ -1,0 +1,31 @@
+🚀 Starting Full Journey Simulation...
+
+--- 1. Setup: Registering Actors ---
+✅ All Actors Registered & Logged In
+
+--- 2. Admin: Creating Infrastructure ---
+✅ Admin Created Court: Sim Arena 1765022399605
+
+--- 3. Organizer: Creating Tournament ---
+✅ Organizer Created & Published Tournament: Sim Open 1765022399640
+
+--- 4. Coach: Setting Up Profile ---
+✅ Coach Profile Updated
+
+--- 5. Player Journey ---
+   [Player] Booking Court...
+   ✅ Court Booked
+   [Player] Chatting with Bot...
+   ✅ Chat Started. Bot says: "Rally scoring is used in badmi..."
+   [Player] Booking Coach...
+   ✅ Coach Session Booked
+   [Player] Creating Sparring Request...
+   ✅ Sparring Request Created
+   [Player] Registering for Tournament...
+   ✅ Tournament Registration Successful
+
+--- 6. Verifying Logic & Consistency ---
+   ✅ Coach sees confirmed session
+   ✅ Admin sees active court: Sim Arena 1765022399605
+
+🏁 Full Journey Simulation Completed.

@@ -1,0 +1,50 @@
+﻿[AIService] Initialized with RuleBasedEngine
+node : (node:11760) 
+[MONGODB DRIVER] 
+Warning: 
+useNewUrlParser is a 
+deprecated option: 
+useNewUrlParser has 
+no effect since 
+Node.js Driver 
+version 4.0.0 and 
+will be removed in 
+the next major 
+version
+At line:1 char:1
++ node index.js 2>&1 
+| Out-File -FilePath 
+crash_output.txt 
+-Encoding ut ...
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ((node:1   
+ 1760) [M...t maj    
+or version:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+(Use `node 
+--trace-warnings 
+...` to show where 
+the warning was 
+created)
+(node:11760) 
+[MONGODB DRIVER] 
+Warning: 
+useUnifiedTopology 
+is a deprecated 
+option: 
+useUnifiedTopology 
+has no effect since 
+Node.js Driver 
+version 4.0.0 and 
+will be removed in 
+the next major 
+version
+Server running on port 5000
+MongoDB Connected: localhost
