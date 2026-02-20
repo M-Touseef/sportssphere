@@ -33,8 +33,9 @@ const CoachBookingRequests = () => {
                 message: session.notes || 'Coaching Session',
                 paymentPlan: session.planType,
                 status: session.status === 'pending' ? 'PENDING_RESPONSE' :
-                    session.status === 'confirmed' ? 'ACCEPTED' :
-                        session.status === 'cancelled' ? 'REJECTED' : session.status,
+                    session.status === 'pending_payment' ? 'ACCEPTED' :
+                        session.status === 'confirmed' ? 'PAID & CONFIRMED' :
+                            session.status === 'cancelled' ? 'REJECTED' : session.status,
             }));
 
             const allRequests = [

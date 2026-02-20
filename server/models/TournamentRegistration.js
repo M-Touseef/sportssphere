@@ -55,6 +55,15 @@ const tournamentRegistrationSchema = new mongoose.Schema({
     },
     notes: {
         type: String
+    },
+    // JazzCash payment tracking
+    txnRefNo: {
+        type: String,
+        default: null
+    },
+    jazzcashTxnId: {
+        type: String,
+        default: null
     }
 });
 

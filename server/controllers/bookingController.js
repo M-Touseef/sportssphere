@@ -124,11 +124,9 @@ exports.createBooking = async (req, res, next) => {
 
         // Determine initial status
         // If pro selected: pending_pro
-        // If no pro: confirmed (legacy) or maybe it should always go to pending_payment now?
-        // User request says: "after professional layer accept a request, the non professional player will pay..."
-        // So with pro: pending_pro -> pro accepts -> pending_payment -> paid -> confirmed.
-        let status = 'confirmed';
-        let paymentStatus = 'paid'; // Mock auto-paid for legacy
+        // If no pro: pending_payment (mandatory payment)
+        let status = 'pending_payment';
+        let paymentStatus = 'pending';
 
         if (proPlayerId) {
             status = 'pending_pro';
@@ -174,7 +172,7 @@ exports.createBooking = async (req, res, next) => {
         res.status(201).json({
             success: true,
             data: booking,
-            message: proPlayerId ? 'Request sent to professional player' : 'Booking confirmed'
+            message: proPlayerId ? 'Request sent to professional player' : 'Booking created. Please complete payment to confirm.'
         });
     } catch (error) {
         console.error('Create Booking Error:', error);

@@ -61,9 +61,9 @@ const CourtList = () => {
             {/* Header Section */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8 mb-10 sm:mb-16">
                 <div className="max-w-3xl">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">Find Courts</h1>
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">Elite Court Network</h1>
                     <p className="mt-3 sm:mt-4 text-base sm:text-lg lg:text-xl text-slate-500 font-medium leading-relaxed">
-                        Discover and book the best badminton courts in your area.
+                        Discover and book professional-grade courts across the region.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -94,7 +94,7 @@ const CourtList = () => {
                     </div>
 
                     <div className="md:col-span-5">
-                        <label htmlFor="surfaceType" className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block ml-1">Court Condition</label>
+                        <label htmlFor="surfaceType" className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block ml-1">Court Surface</label>
                         <select
                             name="surfaceType"
                             id="surfaceType"
@@ -147,60 +147,70 @@ const CourtList = () => {
                         key="grid"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     >
                         {courts.map((court) => (
                             <motion.div
                                 key={court._id}
                                 layout
-                                whileHover={{ y: -8 }}
-                                className="group bg-white rounded-3xl sm:rounded-[2.5rem] shadow-[0_10px_40_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden transition-all duration-500 flex flex-col"
+                                whileHover={{ y: -6 }}
+                                className="group bg-white rounded-2xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden transition-all duration-300 flex flex-col h-full"
                             >
-                                <div className="relative h-64 w-full overflow-hidden">
+                                <div className="relative h-60 w-full overflow-hidden shrink-0">
                                     {court.images && court.images.length > 0 ? (
                                         <img
                                             src={court.images[0]}
                                             alt={court.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
                                     ) : (
                                         <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                                            <SparklesIcon className="h-20 w-20 text-slate-200" />
+                                            <SparklesIcon className="h-12 w-12 text-slate-200" />
                                         </div>
                                     )}
-                                    <div className="absolute top-6 left-6">
-                                        <span className="px-5 py-2 rounded-full text-[11px] font-bold border backdrop-blur-md shadow-sm uppercase tracking-wider bg-white/80 text-indigo-600 border-white/40">
-                                            {court.surfaceType}
-                                        </span>
+
+                                    {/* Top Left Badge: Surface */}
+                                    <div className="absolute top-4 left-4 z-10">
+                                        <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                                                {court.surfaceType}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Right Badge: Price Overlay */}
+                                    <div className="absolute bottom-4 right-4 z-10">
+                                        <div className="bg-slate-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 shadow-lg flex flex-col items-end">
+                                            <p className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest leading-none mb-1">Fee</p>
+                                            <p className="text-xl font-bold text-white tracking-tight leading-none flex items-baseline gap-1">
+                                                <span className="text-xs font-medium">Rs.</span>
+                                                {court.pricePerHour}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="p-6 sm:p-8 flex-1 flex flex-col">
-                                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4 sm:mb-6">
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight uppercase tracking-tight break-words">
-                                                {court.name}
-                                            </h3>
-                                        </div>
-                                        <div className="text-left sm:text-right shrink-0">
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Fee</p>
-                                            <p className="text-xl sm:text-2xl font-black text-indigo-600 tracking-tighter whitespace-nowrap">Rs. {court.pricePerHour}</p>
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <div className="mb-4">
+                                        <h3 className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight mb-3 line-clamp-2">
+                                            {court.name}
+                                        </h3>
+
+                                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                            <MapPinIcon className="h-4 w-4 text-indigo-500 shrink-0" />
+                                            {court.location.city}
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-sm font-semibold text-slate-500 mb-10 bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
-                                        <MapPinIcon className="h-4 w-4 text-indigo-500 shrink-0" />
-                                        <span className="">{court.location.city}</span>
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center justify-between gap-4 pt-8 border-t border-slate-50 mt-auto">
-                                        <div className="flex gap-2 items-center shrink-0">
-                                            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse" />
+                                    <div className="mt-auto pt-6 border-t border-slate-100/50 flex items-center justify-between">
+                                        <div className="flex gap-2.5 items-center shrink-0">
+                                            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Available</span>
                                         </div>
                                         <Link to={`/courts/${court._id}`} className="shrink-0">
-                                            <Button className="px-4 sm:px-8 rounded-xl h-11 sm:h-12 text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white shadow-sm transition-all flex items-center gap-2">
-                                                View Details <ArrowRightIcon className="h-3.5 w-3.5" />
+                                            <Button variant="outline" className="h-10 px-5 rounded-xl text-[11px] font-bold border-slate-200 hover:bg-slate-900 hover:text-white transition-all flex items-center gap-2">
+                                                Details
+                                                <ArrowRightIcon className="h-4 w-4" />
                                             </Button>
                                         </Link>
                                     </div>

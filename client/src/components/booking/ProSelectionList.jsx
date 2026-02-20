@@ -77,7 +77,7 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
                                 <UserIcon className="h-7 w-7" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h4 className={`text-lg font-extrabold tracking-tight break-words ${selectedProId === item.player._id ? 'text-white' : 'text-slate-900'}`}>
+                                <h4 className={`text-base font-black tracking-tight leading-tight mb-0.5 break-words line-clamp-2 ${selectedProId === item.player._id ? 'text-white' : 'text-slate-900'}`}>
                                     {item.player.name}
                                 </h4>
                                 <div className="flex items-center gap-3 mt-1">
@@ -104,10 +104,12 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
                 ))}
             </div>
 
-            <div className="flex flex-col gap-3 pt-4">
+            <div className="flex flex-col gap-2 pt-4 border-t border-slate-50">
                 <Button
                     fullWidth
+                    size="lg"
                     disabled={!selectedProId}
+                    className="h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100"
                     onClick={() => {
                         const selected = pros.find(p => p.player._id === selectedProId);
                         onSelect(selected);
@@ -115,9 +117,9 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
                 >
                     Request Session
                 </Button>
-                <div className="flex gap-3">
-                    <Button variant="outline" fullWidth onClick={onCancel}>Cancel</Button>
-                    <Button variant="ghost" fullWidth onClick={() => onSelect(null)}>Book Court Only</Button>
+                <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="h-11 text-[11px] font-bold border-slate-200" onClick={onCancel}>Cancel</Button>
+                    <Button variant="ghost" className="h-11 text-[11px] font-bold text-slate-500 hover:bg-slate-50" onClick={() => onSelect(null)}>Skip Pro</Button>
                 </div>
             </div>
         </div>

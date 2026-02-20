@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import sessionService from '../services/sessionService';
 import SessionRating from '../components/SessionRating';
+import * as paymentService from '../services/paymentService';
 
 const MySessions = () => {
     const [sessions, setSessions] = useState([]);
@@ -39,9 +40,19 @@ const MySessions = () => {
         }
     };
 
+    const handlePayment = async (sessionId) => {
+        try {
+            await paymentService.payForSession(sessionId);
+        } catch (error) {
+            console.error('Payment error:', error);
+            alert('Failed to initiate payment. Please try again.');
+        }
+    };
+
     const getStatusColor = (status) => {
         const colors = {
             pending: 'bg-yellow-100 text-yellow-800',
+            pending_payment: 'bg-amber-100 text-amber-800 border border-amber-200',
             confirmed: 'bg-green-100 text-green-800',
             completed: 'bg-blue-100 text-blue-800',
             cancelled: 'bg-red-100 text-red-800'
@@ -158,6 +169,24 @@ const MySessions = () => {
                                         <p className="text-sm text-gray-600">
                                             <span className="font-medium">Notes:</span> {session.notes}
                                         </p>
+                                    </div>
+                                )}
+
+                                {session.status === 'pending_payment' && (
+                                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+                                        <div className="flex items-center gap-3 text-amber-800 text-sm">
+                                            <span className="text-xl">💳</span>
+                                            <div>
+                                                <p className="font-bold">Payment Required</p>
+                                                <p>Coach has accepted! Pay Rs. {session.totalPrice} to confirm your slot.</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handlePayment(session._id)}
+                                            className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-bold shadow-md shadow-amber-200 transition-all text-sm"
+                                        >
+                                            Pay Now via JazzCash
+                                        </button>
                                     </div>
                                 )}
 

@@ -55,7 +55,7 @@ const sessionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+        enum: ['pending', 'pending_payment', 'confirmed', 'completed', 'cancelled'],
         default: 'pending'
     },
     paymentStatus: {

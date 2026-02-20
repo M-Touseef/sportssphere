@@ -23,11 +23,6 @@ exports.registerForTournament = async (req, res) => {
             return res.status(400).json({ error: 'Registration deadline has passed' });
         }
 
-        // Check for payment
-        if (req.body.paymentToken?.toLowerCase() !== 'yes') {
-            return res.status(400).json({ error: 'Tactical Error: Tournament entry fee authorization required. Please enter "yes" in the terminal.' });
-        }
-
         // Find category details
         const categoryDetails = tournament.categories.find(cat => cat.name === category);
         if (!categoryDetails) {
@@ -49,6 +44,7 @@ exports.registerForTournament = async (req, res) => {
         const existingRegistration = await TournamentRegistration.findOne({
             tournament: tournament._id,
             category,
+            status: { $nin: ['withdrawn', 'disqualified'] },
             $or: [
                 { player: req.user.id },
                 { player1: req.user.id },
@@ -57,7 +53,7 @@ exports.registerForTournament = async (req, res) => {
         });
 
         if (existingRegistration) {
-            return res.status(400).json({ error: 'Already registered for this category' });
+            return res.status(400).json({ error: 'Already registered/pending for this category' });
         }
 
         // Create registration
@@ -65,8 +61,8 @@ exports.registerForTournament = async (req, res) => {
             tournament: tournament._id,
             category,
             paymentAmount: categoryDetails.entryFee,
-            status: 'confirmed', // Auto-confirm for now
-            paymentStatus: 'paid' // Mock payment
+            status: 'pending', // Awaiting payment
+            paymentStatus: 'pending'
         };
 
         // Handle singles vs doubles

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import tournamentService from '../services/tournamentService';
-import { TrophyIcon, CalendarIcon, MapPinIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { payForTournamentRegistration } from '../services/paymentService';
+import { TrophyIcon, CalendarIcon, MapPinIcon, ChevronRightIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const MyRegistrations = () => {
@@ -86,6 +87,16 @@ const MyRegistrations = () => {
                                         <MapPinIcon className="h-4 w-4 mr-2 text-slate-400" />
                                         {reg.tournament?.venue}, {reg.tournament?.city}
                                     </div>
+                                    <div className="flex items-center text-sm text-slate-600 font-medium">
+                                        <BanknotesIcon className="h-4 w-4 mr-2 text-slate-400" />
+                                        Total Fee: Rs. {reg.paymentAmount}
+                                        <span className={`ml-3 px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${reg.paymentStatus === 'paid'
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                : 'bg-rose-50 text-rose-700 border-rose-100'
+                                            }`}>
+                                            {reg.paymentStatus}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3 pt-4 border-t border-slate-50">
@@ -95,12 +106,21 @@ const MyRegistrations = () => {
                                     >
                                         Details
                                     </Link>
-                                    <Link
-                                        to={`/tournaments/${reg.tournament?._id}/brackets`}
-                                        className="flex-1 text-center py-2 px-4 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors"
-                                    >
-                                        View Brackets
-                                    </Link>
+                                    {reg.paymentStatus !== 'paid' ? (
+                                        <button
+                                            onClick={() => payForTournamentRegistration(reg._id)}
+                                            className="flex-1 text-center py-2 px-4 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                                        >
+                                            Pay Fee
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            to={`/tournaments/${reg.tournament?._id}/brackets`}
+                                            className="flex-1 text-center py-2 px-4 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                                        >
+                                            View Brackets
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </div>

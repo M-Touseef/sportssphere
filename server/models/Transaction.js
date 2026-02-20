@@ -4,8 +4,12 @@ const transactionSchema = new mongoose.Schema(
     {
         orderId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Booking',
             required: true
+        },
+        orderType: {
+            type: String,
+            required: true,
+            enum: ['Booking', 'TournamentRegistration', 'Session', 'SessionCourt']
         },
         userId: {
             type: mongoose.Schema.Types.ObjectId,

@@ -8,6 +8,7 @@ import sessionService from '../../services/sessionService';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/ui/Button';
 import { Link } from 'react-router-dom';
+import * as paymentService from '../../services/paymentService';
 
 const CoachDashboard = () => {
     const { user } = useAuth();
@@ -21,6 +22,7 @@ const CoachDashboard = () => {
     const [requests, setRequests] = useState([]);
     const [upcomingSessions, setUpcomingSessions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [payingFeeId, setPayingFeeId] = useState(null);
 
     useEffect(() => {
         fetchDashboardData();
@@ -82,12 +84,12 @@ const CoachDashboard = () => {
 
     const handlePayFee = async (sessionId) => {
         try {
-            await sessionService.payCourtFee(sessionId);
-            success('Court fee paid successfully!');
-            fetchDashboardData();
+            setPayingFeeId(sessionId);
+            await paymentService.payCourtFee(sessionId);
         } catch (error) {
             console.error(error);
-            toastError('Failed to pay court fee.');
+            toastError('Failed to initiate court fee payment.');
+            setPayingFeeId(null);
         }
     };
 
@@ -253,9 +255,21 @@ const CoachDashboard = () => {
                                                                 {request.availabilitySlot?.courtPaymentStatus !== 'paid' && (
                                                                     <button
                                                                         onClick={() => handlePayFee(request._id)}
-                                                                        className="text-[10px] lg:text-xs font-black text-white bg-indigo-600 px-3 lg:px-4 py-1.5 rounded-lg lg:rounded-xl hover:bg-indigo-700 transition-colors uppercase"
+                                                                        disabled={payingFeeId === request._id}
+                                                                        className={`text-[10px] lg:text-xs font-black text-white px-3 lg:px-4 py-1.5 rounded-lg lg:rounded-xl transition-all uppercase shadow-md ${payingFeeId === request._id
+                                                                            ? 'bg-indigo-400 cursor-not-allowed'
+                                                                            : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-indigo-200 active:scale-95'
+                                                                            }`}
                                                                     >
-                                                                        Pay Now
+                                                                        {payingFeeId === request._id ? (
+                                                                            <span className="flex items-center gap-1.5 font-bold">
+                                                                                <svg className="animate-spin h-3 w-3 text-white" viewBox="0 0 24 24">
+                                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                                                </svg>
+                                                                                Processing
+                                                                            </span>
+                                                                        ) : 'Pay Fee'}
                                                                     </button>
                                                                 )}
                                                             </div>

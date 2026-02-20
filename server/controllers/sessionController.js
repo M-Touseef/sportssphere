@@ -279,7 +279,7 @@ exports.confirmSession = async (req, res) => {
             return res.status(400).json({ error: 'Session is not pending' });
         }
 
-        session.status = 'confirmed';
+        session.status = 'pending_payment';
         // session.paymentStatus = 'paid'; // In a real app, this might trigger payment capture
         await session.save();
 

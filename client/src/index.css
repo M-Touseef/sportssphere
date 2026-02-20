@@ -68,7 +68,7 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -78,6 +78,11 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-200 rounded-full hover:bg-slate-300;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
 
 .glass-card {
   background: rgba(255, 255, 255, 0.7);

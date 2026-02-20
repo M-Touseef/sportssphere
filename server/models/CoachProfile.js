@@ -40,7 +40,8 @@ const coachProfileSchema = new mongoose.Schema({
         endTime: String,    // e.g., "17:00"
         court: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Court'
+            ref: 'Court',
+            required: true
         },
         maxStudents: {
             type: Number,

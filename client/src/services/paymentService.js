@@ -8,11 +8,12 @@ import axiosInstance from './axiosInstance';
  * Call the backend to initiate a JazzCash payment.
  * Returns the full JazzCash parameter map and payment URL.
  *
- * @param {string} bookingId  – MongoDB ObjectId of the booking
+ * @param {string} orderId   – MongoDB ObjectId of the order
+ * @param {string} orderType - 'Booking' or 'TournamentRegistration'
  * @returns {{ txnRefNo, paymentUrl, params }}
  */
-export const initiatePayment = async (bookingId) => {
-    const response = await axiosInstance.post('/payment/initiate', { bookingId });
+export const initiatePayment = async (orderId, orderType = 'Booking') => {
+    const response = await axiosInstance.post('/payment/initiate', { orderId, orderType });
     return response.data;
 };
 
@@ -59,12 +60,81 @@ export const submitJazzCashForm = (params, actionUrl) => {
 
 /**
  * Full convenience function: initiate payment then auto-submit to JazzCash.
- * Call this from a "Pay Now" button handler.
+ * Call this from a "Pay Now" button handler or auto-redirect flow.
  *
  * @param {string} bookingId
- * @returns {Promise<void>}  – resolves before redirect (redirect happens via form.submit())
+ * @returns {Promise<void>}
  */
 export const payForBooking = async (bookingId) => {
-    const data = await initiatePayment(bookingId);
-    submitJazzCashForm(data.params, data.paymentUrl);
+    try {
+        const data = await initiatePayment(bookingId, 'Booking');
+        if (data.success && data.params && data.paymentUrl) {
+            submitJazzCashForm(data.params, data.paymentUrl);
+        } else {
+            throw new Error('Failed to initiate payment');
+        }
+    } catch (err) {
+        console.error('payForBooking error:', err);
+        throw err;
+    }
 };
+
+/**
+ * Full convenience function for tournament registration payment.
+ *
+ * @param {string} registrationId
+ * @returns {Promise<void>}
+ */
+export const payForTournamentRegistration = async (registrationId) => {
+    try {
+        const data = await initiatePayment(registrationId, 'TournamentRegistration');
+        if (data.success && data.params && data.paymentUrl) {
+            submitJazzCashForm(data.params, data.paymentUrl);
+        } else {
+            throw new Error('Failed to initiate payment');
+        }
+    } catch (err) {
+        console.error('payForTournamentRegistration error:', err);
+        throw err;
+    }
+};
+/**
+ * Full convenience function for coaching session payment.
+ *
+ * @param {string} sessionId
+ * @returns {Promise<void>}
+ */
+export const payForSession = async (sessionId) => {
+    try {
+        const data = await initiatePayment(sessionId, 'Session');
+        if (data.success && data.params && data.paymentUrl) {
+            submitJazzCashForm(data.params, data.paymentUrl);
+        } else {
+            throw new Error('Failed to initiate payment');
+        }
+    } catch (err) {
+        console.error('payForSession error:', err);
+        throw err;
+    }
+};
+
+/**
+ * Full convenience function for coach court fee payment.
+ *
+ * @param {string} sessionId
+ * @returns {Promise<void>}
+ */
+export const payCourtFee = async (sessionId) => {
+    try {
+        const data = await initiatePayment(sessionId, 'SessionCourt');
+        if (data.success && data.params && data.paymentUrl) {
+            submitJazzCashForm(data.params, data.paymentUrl);
+        } else {
+            throw new Error('Failed to initiate payment');
+        }
+    } catch (err) {
+        console.error('payCourtFee error:', err);
+        throw err;
+    }
+};
+

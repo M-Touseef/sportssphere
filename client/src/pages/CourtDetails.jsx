@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import courtService from '../services/courtService';
+import { payForBooking } from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Button from '../components/ui/Button';
@@ -38,8 +39,9 @@ const CourtDetails = () => {
     const [slots, setSlots] = useState([]);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [bookingLoading, setBookingLoading] = useState(false);
-    const [bookingStep, setBookingStep] = useState('selecting_slot'); // 'selecting_slot' | 'selecting_pro'
+    const [bookingStep, setBookingStep] = useState('selecting_slot'); // 'selecting_slot' | 'selecting_pro' | 'payment_prompt'
     const [selectedPro, setSelectedPro] = useState(null);
+    const [selectedBooking, setSelectedBooking] = useState(null);
 
     useEffect(() => {
         fetchCourtDetails();
@@ -123,17 +125,32 @@ const CourtDetails = () => {
                 }
             }
 
-            await courtService.createBooking(bookingPayload);
+            const response = await courtService.createBooking(bookingPayload);
+            const booking = response.data;
+            setSelectedBooking(booking);
 
-            success(proData
-                ? `Request sent to ${proData.player.name}. You will be notified when they accept.`
-                : `Booking confirmed at ${court.name} for ${selectedDate} at ${selectedSlot.time}.`
-            );
+            if (proData) {
+                success(`Request sent to ${proData.player.name}. You will be notified when they accept.`);
+                fetchAvailability();
+                setSelectedSlot(null);
+                setSelectedPro(null);
+                setBookingStep('selecting_slot');
+            } else {
+                success(`Booking created. Action Required: Please complete payment.`);
+                setBookingStep('payment_prompt');
 
-            fetchAvailability();
-            setSelectedSlot(null);
-            setSelectedPro(null);
-            setBookingStep('selecting_slot');
+                // Keep auto-redirect as a courtesy, but user now has a manual button too
+                setTimeout(async () => {
+                    try {
+                        // Only auto-redirect if we are still on the prompt step
+                        if (window.location.pathname.includes(`/courts/${id}`)) {
+                            await payForBooking(booking._id);
+                        }
+                    } catch (payErr) {
+                        console.error('Auto-redirect failed:', payErr);
+                    }
+                }, 2000);
+            }
         } catch (error) {
             console.error('Booking Error:', error);
             const errorMessage = error.response?.data?.error || 'Booking failed.';
@@ -219,24 +236,24 @@ const CourtDetails = () => {
                         </div>
 
                         <div className="p-6 sm:p-10 md:p-14">
-                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 sm:gap-8 mb-8 sm:mb-12">
-                                <div>
-                                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tighter text-slate-900 leading-tight mb-4 sm:mb-6 break-words">
+                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 sm:gap-8 mb-8 sm:mb-12">
+                                <div className="max-w-2xl">
+                                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter text-slate-900 leading-[1.1] mb-4 sm:mb-6 break-words">
                                         {court.name}
                                     </h1>
                                     <div className="flex items-center gap-2.5 text-slate-500 font-bold break-words">
                                         <MapPinIcon className="h-5 w-5 text-indigo-600 shrink-0" />
-                                        <span className="text-sm uppercase tracking-wider">{court.location.address}, {court.location.city} Logistics</span>
+                                        <span className="text-sm uppercase tracking-wider">{court.location.address}, {court.location.city}</span>
                                     </div>
                                 </div>
-                                <div className="px-6 py-4 bg-slate-50 rounded-3xl border border-slate-100 flex items-center gap-6 min-w-0 shrink-0">
+                                <div className="px-6 py-4 bg-slate-50 rounded-3xl border border-slate-100 flex items-center gap-6 min-w-0 shrink-0 self-start md:mt-2">
                                     <div className="flex gap-1">
                                         {[...Array(5)].map((_, i) => <StarIcon key={i} className="h-3.5 w-3.5 text-amber-400 fill-current" />)}
                                     </div>
                                     <div className="h-8 w-px bg-slate-200" />
                                     <div className="text-right">
                                         <p className="text-xl font-extrabold text-slate-900 leading-none">4.9</p>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Verified Ratings</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Verified</p>
                                     </div>
                                 </div>
                             </div>
@@ -290,134 +307,181 @@ const CourtDetails = () => {
 
                 {/* Sidebar Reservation Card */}
                 <div className="lg:col-span-4">
-                    <div className="bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden sticky top-32">
-                        <div className="p-6 sm:p-10 bg-slate-900 border-b border-indigo-900/10 flex justify-between items-center relative overflow-hidden text-white">
-                            <div className="relative z-10">
-                                <p className="text-xs font-bold uppercase tracking-widest mb-1 text-slate-400">Booking Fee</p>
-                                <div className="flex items-baseline">
-                                    <span className="text-4xl font-black tracking-tighter">Rs.{court.pricePerHour}</span>
-                                    <span className="text-xs font-bold text-slate-400 ml-2 uppercase tracking-widest">/ session</span>
+                    <div className="bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden sticky top-32 max-h-[calc(100vh-140px)] flex flex-col">
+                        <div className="overflow-y-auto custom-scrollbar flex-1 pb-6 sm:pb-10">
+                            <div className="p-6 sm:p-8 bg-slate-900 border-b border-indigo-900/10 flex justify-between items-start relative overflow-hidden text-white">
+                                <div className="relative z-10 flex-1 min-w-0">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 text-slate-400">Booking Fee</p>
+                                    <div className="flex flex-wrap items-baseline gap-1.5">
+                                        <span className="text-3xl sm:text-4xl font-black tracking-tighter overflow-hidden text-ellipsis">Rs.{court.pricePerHour}</span>
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">/ session</span>
+                                    </div>
+                                </div>
+                                <div className="relative z-10 h-10 w-10 rounded-xl bg-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                                    <SparklesIcon className="h-5 w-5" />
                                 </div>
                             </div>
-                            <div className="relative z-10 h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
-                                <SparklesIcon className="h-5 w-5" />
-                            </div>
-                        </div>
 
-                        <div className="p-6 sm:p-10 space-y-8 sm:space-y-10">
-                            {bookingStep === 'selecting_slot' ? (
-                                <div className="space-y-8">
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 block ml-1">
-                                            Select Date
-                                        </label>
-                                        <div className="relative">
-                                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-indigo-500 pointer-events-none" />
-                                            <input
-                                                id="booking-date"
-                                                name="booking-date"
-                                                type="date"
-                                                min={new Date().toISOString().split('T')[0]}
-                                                value={selectedDate}
-                                                onChange={(e) => setSelectedDate(e.target.value)}
-                                                className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 bg-slate-50/30 font-bold text-sm focus:ring-4 focus:ring-indigo-50 outline-none transition-all cursor-pointer"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div className="flex justify-between items-center mb-5">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                                                Available Slots
+                            <div className="p-6 sm:p-10 space-y-8 sm:space-y-10">
+                                {bookingStep === 'selecting_slot' ? (
+                                    <div className="space-y-8">
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 block ml-1">
+                                                Select Date
                                             </label>
-                                            <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">
-                                                {slots.filter(s => s.available).length} Active
-                                            </span>
+                                            <div className="relative">
+                                                <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-indigo-500 pointer-events-none" />
+                                                <input
+                                                    id="booking-date"
+                                                    name="booking-date"
+                                                    type="date"
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    value={selectedDate}
+                                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                                    className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 bg-slate-50/30 font-bold text-sm focus:ring-4 focus:ring-indigo-50 outline-none transition-all cursor-pointer"
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {slots.map((slot) => (
-                                                <button
-                                                    key={slot.time}
-                                                    disabled={!slot.available}
-                                                    onClick={() => setSelectedSlot(slot)}
-                                                    className={twMerge(
-                                                        "py-4 text-[11px] font-bold rounded-2xl border transition-all relative overflow-hidden",
-                                                        !slot.available
-                                                            ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
-                                                            : selectedSlot?.time === slot.time
-                                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-100"
-                                                                : "bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50"
-                                                    )}
-                                                >
-                                                    {slot.time}
-                                                    {!slot.available && (
-                                                        <div className="absolute inset-0 flex items-center justify-center opacity-10 rotate-12">
-                                                            <span className="text-xs font-black uppercase">BOOKED</span>
-                                                        </div>
-                                                    )}
-                                                </button>
-                                            ))}
+
+                                        <div>
+                                            <div className="flex justify-between items-center mb-5">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                                    Available Slots
+                                                </label>
+                                                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">
+                                                    {slots.filter(s => s.available).length} Active
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2.5">
+                                                {slots.map((slot) => (
+                                                    <button
+                                                        key={slot.time}
+                                                        disabled={!slot.available}
+                                                        onClick={() => setSelectedSlot(slot)}
+                                                        className={twMerge(
+                                                            "py-3.5 text-[10px] sm:text-[11px] font-bold rounded-2xl border transition-all relative overflow-hidden",
+                                                            !slot.available
+                                                                ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                                                                : selectedSlot?.time === slot.time
+                                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-100"
+                                                                    : "bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50"
+                                                        )}
+                                                    >
+                                                        {slot.time}
+                                                        {!slot.available && (
+                                                            <div className="absolute inset-0 flex items-center justify-center opacity-10 rotate-12">
+                                                                <span className="text-[10px] font-black uppercase">BOOKED</span>
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {slots.length === 0 && (
+                                                <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                                    <ClockIcon className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Grid Offline</p>
+                                                </div>
+                                            )}
                                         </div>
-                                        {slots.length === 0 && (
-                                            <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                                <ClockIcon className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Grid Offline</p>
+
+                                        <div className="pt-4">
+                                            <Button
+                                                onClick={() => setBookingStep('selecting_pro')}
+                                                disabled={!selectedSlot}
+                                                fullWidth
+                                                size="lg"
+                                                className="h-16 text-base font-bold shadow-xl shadow-indigo-100 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white"
+                                            >
+                                                Continue to Pro Selection
+                                            </Button>
+                                        </div>
+
+                                        {!isAuthenticated && (
+                                            <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100 text-center">
+                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+                                                    Please log in to book this court. <Link to="/register" className="text-indigo-600 hover:text-indigo-800 transition-colors underline underline-offset-4">Join Hub</Link>
+                                                </p>
                                             </div>
                                         )}
                                     </div>
+                                ) : bookingStep === 'selecting_pro' ? (
+                                    <ProSelectionList
+                                        date={selectedDate}
+                                        startTime={selectedSlot?.time}
+                                        city={court.location.city}
+                                        onSelect={(proData) => handleBooking(proData)}
+                                        onCancel={() => setBookingStep('selecting_slot')}
+                                        preSelectedPro={location.state?.preSelectedPro}
+                                    />
+                                ) : (
+                                    <div className="space-y-6 text-center py-4">
+                                        <div className="h-16 w-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 mx-auto mb-4 border border-amber-100">
+                                            <SparklesIcon className="h-8 w-8" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-900">Payment Required</h3>
+                                            <p className="text-sm text-slate-500 mt-2 font-medium">To confirm your booking for {selectedSlot?.time}, please complete the JazzCash transaction.</p>
+                                        </div>
 
-                                    <div className="pt-4">
+                                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-left space-y-2">
+                                            <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                                <span>Court</span>
+                                                <span className="text-slate-900">{court.name}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                                <span>Amount</span>
+                                                <span className="text-indigo-600">Rs. {court.pricePerHour}</span>
+                                            </div>
+                                        </div>
+
                                         <Button
-                                            onClick={() => setBookingStep('selecting_pro')}
-                                            disabled={!selectedSlot}
+                                            onClick={() => payForBooking(selectedBooking?._id)}
                                             fullWidth
                                             size="lg"
-                                            className="h-16 text-base font-bold shadow-xl shadow-indigo-100 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white"
+                                            className="h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100 flex items-center justify-center gap-3"
                                         >
-                                            Continue to Pro Selection
+                                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                <rect x="2" y="5" width="20" height="14" rx="2" />
+                                                <path d="M2 10h20" />
+                                            </svg>
+                                            Pay Now via JazzCash
                                         </Button>
+
+                                        <button
+                                            onClick={() => {
+                                                setBookingStep('selecting_slot');
+                                                setSelectedSlot(null);
+                                                fetchAvailability();
+                                            }}
+                                            className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+                                        >
+                                            Dismiss & Back to Schedule
+                                        </button>
                                     </div>
+                                )}
+                            </div>
 
-                                    {!isAuthenticated && (
-                                        <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100 text-center">
-                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
-                                                Please log in to book this court. <Link to="/register" className="text-indigo-600 hover:text-indigo-800 transition-colors underline underline-offset-4">Join Hub</Link>
+                            <div className="p-6 sm:p-8 pt-0">
+                                <div className="p-6 sm:p-8 bg-slate-50/50 rounded-[2rem] border border-slate-100">
+                                    <h4 className="font-bold text-[10px] text-slate-900 mb-6 uppercase tracking-widest flex items-center gap-2.5">
+                                        <ShieldCheckIcon className="h-4 w-4 text-indigo-600" />
+                                        Rules & Policies
+                                    </h4>
+                                    <ul className="space-y-5">
+                                        <li className="flex items-start gap-4">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                                            <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
+                                                Cancellations within 24 operational cycles grant 100% credit return.
                                             </p>
-                                        </div>
-                                    )}
+                                        </li>
+                                        <li className="flex items-start gap-4">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                                            <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
+                                                Please wear non-marking shoes on court.
+                                            </p>
+                                        </li>
+                                    </ul>
                                 </div>
-                            ) : (
-                                <ProSelectionList
-                                    date={selectedDate}
-                                    startTime={selectedSlot?.time}
-                                    city={court.location.city}
-                                    onSelect={(proData) => handleBooking(proData)}
-                                    onCancel={() => setBookingStep('selecting_slot')}
-                                    preSelectedPro={location.state?.preSelectedPro}
-                                />
-                            )}
-                        </div>
-
-                        <div className="p-6 sm:p-10 pt-0">
-                            <div className="p-8 bg-slate-50/50 rounded-[2rem] border border-slate-100">
-                                <h4 className="font-bold text-[10px] text-slate-900 mb-6 uppercase tracking-widest flex items-center gap-2.5">
-                                    <ShieldCheckIcon className="h-4 w-4 text-indigo-600" />
-                                    Rules & Policies
-                                </h4>
-                                <ul className="space-y-5">
-                                    <li className="flex items-start gap-4">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                        <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
-                                            Cancellations within 24 operational cycles grant 100% credit return.
-                                        </p>
-                                    </li>
-                                    <li className="flex items-start gap-4">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                        <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
-                                            Please wear non-marking shoes on court.
-                                        </p>
-                                    </li>
-                                </ul>
                             </div>
                         </div>
                     </div>

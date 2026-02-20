@@ -116,10 +116,11 @@ const MyBookings = () => {
                                             {booking.court}
                                         </h3>
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${booking.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                            booking.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                'bg-slate-50 text-slate-500 border-slate-100'
+                                            booking.status === 'pending' || booking.status === 'pending_payment' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                booking.status === 'pending_pro' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                                    'bg-slate-50 text-slate-500 border-slate-100'
                                             }`}>
-                                            {booking.status}
+                                            {booking.status.replace('_', ' ')}
                                         </span>
                                     </div>
                                     <p className="flex items-center gap-1.5 text-sm font-medium text-slate-500 mb-4">

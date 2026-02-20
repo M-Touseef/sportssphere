@@ -1,4 +1,5 @@
 const Booking = require('../models/Booking');
+const TournamentRegistration = require('../models/TournamentRegistration');
 const Transaction = require('../models/Transaction');
 const {
     generateTxnRefNo,
@@ -11,51 +12,95 @@ const {
 // @access  Private (auth required)
 exports.initiatePayment = async (req, res, next) => {
     try {
-        const { bookingId } = req.body;
+        const { orderId, orderType = 'Booking' } = req.body;
 
-        if (!bookingId) {
-            return res.status(400).json({ error: 'bookingId is required' });
+        if (!orderId) {
+            return res.status(400).json({ error: 'orderId is required' });
         }
 
-        // 1. Find and validate the booking
-        const booking = await Booking.findById(bookingId);
-        if (!booking) {
-            return res.status(404).json({ error: 'Booking not found' });
-        }
-        if (booking.user.toString() !== req.user.id) {
-            return res.status(403).json({ error: 'Not authorized for this booking' });
-        }
-        if (booking.status !== 'pending_payment') {
-            return res.status(400).json({
-                error: `Booking is not awaiting payment (current status: ${booking.status})`
-            });
+        let order;
+        let amount;
+        let description;
+
+        if (orderType === 'Booking') {
+            order = await Booking.findById(orderId);
+            if (!order) return res.status(404).json({ error: 'Booking not found' });
+            if (order.user.toString() !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
+            if (order.status !== 'pending_payment') {
+                return res.status(400).json({ error: `Booking status is ${order.status}` });
+            }
+            amount = order.totalPrice;
+            description = `Booking-${order._id}`;
+        } else if (orderType === 'TournamentRegistration') {
+            order = await TournamentRegistration.findById(orderId);
+            if (!order) return res.status(404).json({ error: 'Registration not found' });
+            // Check player, player1, or player2
+            const isOwner = [order.player, order.player1, order.player2].some(id => id && id.toString() === req.user.id);
+            if (!isOwner) return res.status(403).json({ error: 'Not authorized' });
+            if (order.paymentStatus === 'paid') {
+                return res.status(400).json({ error: 'Registration already paid' });
+            }
+            amount = order.paymentAmount;
+            description = `Tournament-${order._id}`;
+        } else if (orderType === 'Session') {
+            const Session = require('../models/Session');
+            order = await Session.findById(orderId);
+            if (!order) return res.status(404).json({ error: 'Session not found' });
+
+            // Check if user is one of the students
+            if (!order.students.some(id => id.toString() === req.user.id)) {
+                return res.status(403).json({ error: 'Not authorized' });
+            }
+
+            if (order.status !== 'pending_payment') {
+                return res.status(400).json({ error: `Session status is ${order.status}` });
+            }
+            amount = order.totalPrice;
+            description = `Session-${order._id}`;
+        } else if (orderType === 'SessionCourt') {
+            const Session = require('../models/Session');
+            order = await Session.findById(orderId);
+            if (!order) return res.status(404).json({ error: 'Session not found' });
+
+            // Only the coach pays the court fee
+            if (order.coach.toString() !== req.user.id) {
+                return res.status(403).json({ error: 'Not authorized' });
+            }
+
+            if (order.courtPaymentStatus === 'paid') {
+                return res.status(400).json({ error: 'Court fee already paid' });
+            }
+            amount = order.courtFee;
+            description = `CourtFee-${order._id}`;
+        } else {
+            return res.status(400).json({ error: 'Invalid orderType' });
         }
 
         // 2. Generate unique transaction reference
         const txnRefNo = generateTxnRefNo();
 
-        // 3. Create a Transaction record (status = pending)
+        // 3. Create a Transaction record
         const transaction = await Transaction.create({
-            orderId: booking._id,
+            orderId: order._id,
+            orderType,
             userId: req.user.id,
             txnRefNo,
-            amount: booking.totalPrice,
+            amount,
             status: 'pending'
         });
 
-        // 4. Save txnRefNo onto booking for easy lookup later
-        booking.txnRefNo = txnRefNo;
-        await booking.save();
+        // 4. Save txnRefNo onto order
+        order.txnRefNo = txnRefNo;
+        await order.save();
 
-        // 5. Build JazzCash payment parameters + secure hash
-        const description = `Booking-${booking._id}`;
+        // 5. Build JazzCash payment parameters
         const { params, paymentUrl } = buildPaymentParams({
-            amount: booking.totalPrice,
+            amount,
             txnRefNo,
             description
         });
 
-        console.log(`[Payment] Initiated txnRefNo=${txnRefNo} for booking=${bookingId}`);
+        console.log(`[Payment] Initiated ${orderType} txnRefNo=${txnRefNo} for order=${orderId}`);
 
         return res.status(200).json({
             success: true,
@@ -162,7 +207,15 @@ exports.handleIPN = async (req, res, next) => {
         }
 
         // 6. Process outcome
-        const booking = await Booking.findById(transaction.orderId);
+        let order;
+        if (transaction.orderType === 'Booking') {
+            order = await Booking.findById(transaction.orderId);
+        } else if (transaction.orderType === 'TournamentRegistration') {
+            order = await TournamentRegistration.findById(transaction.orderId);
+        } else if (transaction.orderType === 'Session' || transaction.orderType === 'SessionCourt') {
+            const Session = require('../models/Session');
+            order = await Session.findById(transaction.orderId);
+        }
 
         if (responseCode === '000') {
             // SUCCESS
@@ -171,12 +224,20 @@ exports.handleIPN = async (req, res, next) => {
             transaction.ipnPayload = payload;
             await transaction.save();
 
-            if (booking) {
-                booking.paymentStatus = 'paid';
-                booking.status = 'confirmed';
-                booking.jazzcashTxnId = jazzcashTxnId;
-                await booking.save();
-                console.log(`[Payment] IPN: PAID — booking=${booking._id} confirmed`);
+            if (order) {
+                order.paymentStatus = 'paid';
+                if (transaction.orderType === 'Booking') {
+                    order.status = 'confirmed';
+                } else if (transaction.orderType === 'TournamentRegistration') {
+                    order.status = 'confirmed';
+                } else if (transaction.orderType === 'Session') {
+                    order.status = 'confirmed';
+                } else if (transaction.orderType === 'SessionCourt') {
+                    order.courtPaymentStatus = 'paid';
+                }
+                order.jazzcashTxnId = jazzcashTxnId;
+                await order.save();
+                console.log(`[Payment] IPN: PAID — ${transaction.orderType}=${order._id} confirmed`);
             }
         } else {
             // FAILURE
@@ -184,11 +245,8 @@ exports.handleIPN = async (req, res, next) => {
             transaction.ipnPayload = payload;
             await transaction.save();
 
-            if (booking) {
-                // Keep booking in pending_payment so user can retry
-                console.log(
-                    `[Payment] IPN: FAILED (code=${responseCode}) — booking=${booking._id} unchanged`
-                );
+            if (order) {
+                console.log(`[Payment] IPN: FAILED (code=${responseCode}) — ${transaction.orderType}=${order._id} unchanged`);
             }
         }
 

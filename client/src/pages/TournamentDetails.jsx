@@ -5,6 +5,7 @@ import tournamentService from '../services/tournamentService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import TournamentBracket from '../components/tournament/TournamentBracket';
+import { payForTournamentRegistration } from '../services/paymentService';
 import {
     MapPinIcon,
     CalendarIcon,
@@ -176,6 +177,8 @@ const TournamentDetails = () => {
         }
     }, [activeTab, isOrganizer, tournament]);
 
+    const [currentRegistration, setCurrentRegistration] = useState(null);
+
     const handleRegister = async (e) => {
         e.preventDefault();
 
@@ -185,30 +188,38 @@ const TournamentDetails = () => {
         }
 
         try {
-            const paymentConfirm = window.prompt("Tactical Tournament Terminal: Type 'yes' to authorize entry fee deployment for this championship.");
-
-            if (paymentConfirm?.toLowerCase() !== 'yes') {
-                setMessage({ type: 'error', text: 'Authorization failed. Tournament deployment aborted.' });
-                return;
-            }
-
             setRegistering(true);
             setMessage({ type: '', text: '' });
 
-            await tournamentService.registerForTournament(id, {
-                ...registrationData,
-                paymentToken: paymentConfirm
+            const response = await tournamentService.registerForTournament(id, {
+                ...registrationData
             });
 
-            setMessage({ type: 'success', text: 'Championship deployment confirmed! Status: Registered.' });
-            setRegistrationData({ category: '', player2Id: '', teamName: '' });
-            fetchTournament();
+            const registration = response.data;
+            setCurrentRegistration(registration);
+
+            setMessage({
+                type: 'success',
+                text: 'Championship registration data synced. Please complete the entry fee payment.'
+            });
+
+            // Initiate JuiceCash (JazzCash) payment redirect
+            setTimeout(async () => {
+                try {
+                    // Only auto-redirect if we are still on the same page
+                    if (window.location.pathname.includes(`/tournaments/${id}`)) {
+                        await payForTournamentRegistration(registration._id);
+                    }
+                } catch (payErr) {
+                    console.error('Auto-redirect failed:', payErr);
+                }
+            }, 2000);
+
         } catch (error) {
             setMessage({
                 type: 'error',
                 text: error.response?.data?.error || 'Registration protocol failed.'
             });
-        } finally {
             setRegistering(false);
         }
     };
@@ -566,14 +577,38 @@ const TournamentDetails = () => {
                                                 </div>
 
                                                 {message.text && (
-                                                    <div className={twMerge(
-                                                        "p-5 rounded-2xl flex items-center gap-4 border shadow-sm",
-                                                        message.type === 'success'
-                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                                            : 'bg-rose-50 text-rose-700 border-rose-100'
-                                                    )}>
-                                                        {message.type === 'success' ? <ShieldCheckIcon className="h-6 w-6" /> : <InformationCircleIcon className="h-6 w-6" />}
-                                                        <p className="text-sm font-bold uppercase tracking-tight">{message.text}</p>
+                                                    <div className="space-y-4">
+                                                        <div className={twMerge(
+                                                            "p-5 rounded-2xl flex items-center gap-4 border shadow-sm",
+                                                            message.type === 'success'
+                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                                : 'bg-rose-50 text-rose-700 border-rose-100'
+                                                        )}>
+                                                            {message.type === 'success' ? <ShieldCheckIcon className="h-6 w-6" /> : <InformationCircleIcon className="h-6 w-6" />}
+                                                            <p className="text-sm font-bold uppercase tracking-tight">{message.text}</p>
+                                                        </div>
+
+                                                        {message.type === 'success' && currentRegistration && (
+                                                            <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-xl shadow-slate-100 space-y-4">
+                                                                <div className="flex justify-between items-center px-2">
+                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Entry Fee</span>
+                                                                    <span className="text-xl font-black text-slate-900 tracking-tight">Rs. {tournament.categories.find(c => c.name === currentRegistration.category)?.entryFee}</span>
+                                                                </div>
+                                                                <Button
+                                                                    onClick={() => payForTournamentRegistration(currentRegistration._id)}
+                                                                    fullWidth
+                                                                    size="lg"
+                                                                    className="h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100 flex items-center justify-center gap-3"
+                                                                >
+                                                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                                                                        <path d="M2 10h20" />
+                                                                    </svg>
+                                                                    Pay Now via JazzCash
+                                                                </Button>
+                                                                <p className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-widest">Secure Payment Powered by JazzCash</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
 
