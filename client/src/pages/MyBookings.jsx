@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import courtService from '../services/courtService';
 import { useToast } from '../context/ToastContext';
+import { payForBooking } from '../services/paymentService';
 import {
     CalendarIcon,
     MapPinIcon,
@@ -15,10 +16,11 @@ import { TableSkeleton } from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 
 const MyBookings = () => {
-    const { error } = useToast();
+    const { error, success } = useToast();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(false);
+    const [payingBookingId, setPayingBookingId] = useState(null);
 
     useEffect(() => {
         fetchBookings();
@@ -38,7 +40,8 @@ const MyBookings = () => {
                 endTime: b.endTime,
                 price: b.totalPrice,
                 status: b.status,
-                paymentStatus: b.paymentStatus
+                paymentStatus: b.paymentStatus,
+                txnRefNo: b.txnRefNo || null
             })));
         } catch (err) {
             setFetchError(true);
@@ -46,6 +49,20 @@ const MyBookings = () => {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePayNow = async (bookingId) => {
+        try {
+            setPayingBookingId(bookingId);
+            // payForBooking initiates payment then auto-submits form → redirect to JazzCash
+            await payForBooking(bookingId);
+            // Note: execution typically doesn't reach here because form.submit() triggers navigation
+        } catch (err) {
+            console.error('[PayNow] Error:', err);
+            const msg = err?.response?.data?.error || 'Could not initiate payment. Please try again.';
+            error(msg);
+            setPayingBookingId(null);
         }
     };
 
@@ -130,11 +147,36 @@ const MyBookings = () => {
                             <div className="mt-6 md:mt-0 md:ml-6 flex flex-col items-end justify-center gap-3 border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0 md:pl-6">
                                 {booking.paymentStatus === 'paid' ? (
                                     <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100 uppercase tracking-widest">
-                                        Paid
+                                        ✓ Paid
                                     </span>
+                                ) : booking.status === 'pending_payment' ? (
+                                    <button
+                                        id={`pay-now-${booking.id}`}
+                                        onClick={() => handlePayNow(booking.id)}
+                                        disabled={payingBookingId === booking.id}
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xs font-bold uppercase tracking-wider transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed shadow-md shadow-emerald-100"
+                                    >
+                                        {payingBookingId === booking.id ? (
+                                            <>
+                                                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                                </svg>
+                                                Redirecting…
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                                                    <path d="M2 10h20" />
+                                                </svg>
+                                                Pay Now via JazzCash
+                                            </>
+                                        )}
+                                    </button>
                                 ) : (
                                     <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-lg border border-amber-100 uppercase tracking-widest">
-                                        Payment Pending
+                                        {booking.status === 'pending_pro' ? 'Awaiting Professional' : 'Payment Pending'}
                                     </span>
                                 )}
 

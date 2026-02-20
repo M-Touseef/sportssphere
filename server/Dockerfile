@@ -1,16 +1,21 @@
-FROM node:20-slim
+# Use lightweight Node image
+FROM node:20-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Install dependencies first for better caching
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install --production
 
-# Copy application code
+# Copy backend code
 COPY . .
 
-# Knowledge base should be present in the container
-# If using a VPS, you might want to mount this as a volume instead
-EXPOSE 5000
+# Set environment variable for port
+ENV PORT=8080
 
+# Expose the port
+EXPOSE 8080
+
+# Start server
 CMD ["node", "index.js"]

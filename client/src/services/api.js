@@ -38,4 +38,8 @@ export const API_ENDPOINTS = {
 
     // AI Chatbot
     CHATBOT: `${AI_SERVICE_URL}/api/chat`,
+
+    // JazzCash Payments
+    PAYMENT_INITIATE: `${API_BASE_URL}/payment/initiate`,
+    PAYMENT_STATUS: (txnRefNo) => `${API_BASE_URL}/payment/status/${txnRefNo}`,
 };

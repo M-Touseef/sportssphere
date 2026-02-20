@@ -38,6 +38,7 @@ import VerificationStatus from './pages/VerificationStatus';
 import PendingVerification from './pages/PendingVerification';
 import ProfileSetup from './pages/ProfileSetup';
 import RoleSelection from './pages/RoleSelection';
+import PaymentReturn from './pages/PaymentReturn';
 
 // Coach Pages
 import CoachLayout from './components/layout/CoachLayout';
@@ -133,6 +134,8 @@ const AnimatedRoutes = () => {
           <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
           <Route path="/pending-verification" element={<PageTransition><PendingVerification /></PageTransition>} />
+          {/* JazzCash return URL — no auth required, browser redirect from JazzCash */}
+          <Route path="/payment/return" element={<PaymentReturn />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

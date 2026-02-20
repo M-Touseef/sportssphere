@@ -50,6 +50,15 @@ const bookingSchema = new mongoose.Schema({
         enum: ['pending', 'paid', 'refunded'],
         default: 'pending'
     },
+    // JazzCash payment tracking
+    txnRefNo: {
+        type: String,
+        default: null
+    },
+    jazzcashTxnId: {
+        type: String,
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now

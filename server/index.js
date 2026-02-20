@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
@@ -15,14 +14,17 @@ connectDB();
 const path = require('path');
 
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes placeholder
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'SportsSphere Backend is reachable'
+  });
+});
+
 app.get('/api', (req, res) => {
   res.json({ message: 'Welcome to SportsSphere API' });
 });
@@ -46,6 +48,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const professionalRoutes = require('./routes/professionalRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const imageRoutes = require('./routes/images');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -62,6 +65,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/professional', professionalRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/images', imageRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Error handling middleware
 // Error handling middleware
