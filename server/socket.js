@@ -1,54 +1,66 @@
 const socketIo = require('socket.io');
-const jwt = require('jsonwebtoken');
+let io = null;
 
-let io;
+/**
+ * Initialize Socket.io with proper configuration
+ * @param {Object} server - HTTP server instance
+ */
+const init = (server) => {
+    io = require('socket.io')(server, {
+        cors: {
+            origin: "http://localhost:5173",
+            methods: ["GET", "POST"],
+            credentials: true
+        },
+        transports: ['websocket', 'polling'],
+        upgrade: false
+    });
 
-module.exports = {
-    // Initialize Socket.io
-    init: (httpServer) => {
-        io = socketIo(httpServer, {
-            cors: {
-                origin: '*', // Allow all origins for development, restrict in production
-                methods: ['GET', 'POST']
-            }
+    // Connection handling
+    io.on('connection', (socket) => {
+        console.log('Socket connected:', socket.id);
+        
+        // Join conversation room
+        socket.on('joinConversation', (conversationId) => {
+            socket.join(conversationId);
+            console.log(`User ${socket.id} joined conversation ${conversationId}`);
         });
 
-        io.use((socket, next) => {
-            // Authentication Middleware
+        // Handle new messages
+        socket.on('sendMessage', async (data) => {
             try {
-                const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
-
-                if (!token) {
-                    return next(new Error('Authentication error'));
-                }
-
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                socket.userId = decoded.id;
-                next();
-            } catch (err) {
-                next(new Error('Authentication error'));
+                // This will be processed by chatController
+                console.log('Message received:', data);
+            } catch (error) {
+                console.error('Socket message error:', error);
+                socket.emit('error', { message: error.message });
             }
         });
 
-        io.on('connection', (socket) => {
-            console.log('Client connected:', socket.userId);
-
-            // Join user to their own room for private messages
-            socket.join(socket.userId);
-
-            socket.on('disconnect', () => {
-                console.log('Client disconnected:', socket.userId);
-            });
+        // Typing indicators
+        socket.on('typing', (conversationId) => {
+            socket.to(conversationId).emit('typing');
         });
 
-        return io;
-    },
+        socket.on('stopTyping', (conversationId) => {
+            socket.to(conversationId).emit('stopTyping');
+        });
 
-    // Get io instance
-    getIO: () => {
-        if (!io) {
-            throw new Error('Socket.io not initialized!');
-        }
-        return io;
-    }
+        // Handle disconnection
+        socket.on('disconnect', () => {
+            console.log('Socket disconnected:', socket.id);
+        });
+    });
+
+    console.log('Socket.io initialized');
+    return io;
 };
+
+const getIO = () => {
+    if (!io) {
+        throw new Error('Socket.io not initialized. Call init() first.');
+    }
+    return io;
+};
+
+module.exports = { init, getIO };

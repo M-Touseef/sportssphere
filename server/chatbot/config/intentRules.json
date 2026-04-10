@@ -1,6 +1,8 @@
 {
-  "version": "1.1.0",
-  "description": "Intent rules configuration for SportSphere chatbot (Hybird RAG Architecture)",
+  "version": "2.0.0",
+  "description": "Intent rules configuration for SportSphere chatbot (Hugging Face RAG Architecture)",
+  "ragEndpoint": "https://huggingface.co/spaces/Sportssphere/chatbot",
+  "architecture": "HUGGINGFACE_RAG",
   "intents": [
     {
       "id": "GREETING",
@@ -51,8 +53,8 @@
   ],
   "fallback": {
     "id": "FALLBACK",
-    "actionType": "FALLBACK",
-    "response": "I'm not sure I understood that. I can help you with badminton rules, techniques, equipment, booking courts, finding coaches, or checking your matches and tournaments. Could you please rephrase?",
-    "forwardToML": true
+    "actionType": "HUGGINGFACE_RAG",
+    "response": "I'm not sure I understood that. Let me get you a helpful response based on badminton knowledge.",
+    "forwardToRAG": true
   }
 }

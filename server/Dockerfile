@@ -1,5 +1,4 @@
-# Use lightweight Node image
-FROM node:20-alpine
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
@@ -8,14 +7,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --production
 
-# Copy backend code
+# Copy the rest of the application code
 COPY . .
 
-# Set environment variable for port
-ENV PORT=8080
+# Expose the backend port
+EXPOSE 5000
 
-# Expose the port
-EXPOSE 8080
-
-# Start server
-CMD ["node", "index.js"]
+# Start the server
+CMD ["npm", "start"]

@@ -17,9 +17,7 @@ POST /api/chat/conversations/:id/messages
     ↓
 chatController.js (Node)
     ↓
-aiService.js (Node) → POST http://localhost:5001/api/send_message
-    ↓
-app.py (Flask)
+aiService.js (Node) → QueryRouter → RAGEngine → Hugging Face RAG
     ↓
 AI Response Generated
     ↓
@@ -88,8 +86,10 @@ POST   /api/chat/conversations/:id/clear     // Clear messages
 FLASK_AI_URL = process.env.FLASK_AI_URL || 'http://localhost:5001'
 ```
 
-### 4. Flask AI Service - app.py
+### 4. Flask AI Service - app.py (Fallback)
 **Location**: `ai-service/app.py`
+
+**Purpose**: Fallback AI service with basic badminton knowledge
 
 **Endpoints**:
 - `POST /api/send_message` - Main chat endpoint
@@ -101,15 +101,51 @@ FLASK_AI_URL = process.env.FLASK_AI_URL || 'http://localhost:5001'
 - **Equipment**: Rackets, shuttlecocks, shoes
 - **Platform**: Court booking, tournaments, coaches
 
-**Response Logic**:
-```python
-def generate_response(message):
-    # Check keywords
-    # Match to knowledge base
-    # Return relevant response
+### 4. Hugging Face RAG Service (Primary)
+**Location**: `https://huggingface.co/spaces/Sportssphere/chatbot`
+
+**Purpose**: Primary RAG service for intelligent responses
+
+**Features**:
+- Cloud-based RAG processing
+- Enhanced badminton domain knowledge
+- Real-time response generation
+- Automatic knowledge base updates
+
+**Request Format**:
+```json
+{
+  "message": "User's question",
+  "context": {
+    "userSkillLevel": "intermediate",
+    "userCity": "Karachi"
+  }
+}
 ```
 
-### 5. Database Model - Conversation.js
+**Response Format**:
+```json
+{
+  "response": "AI generated response based on RAG"
+}
+```
+
+### 5. Flask AI Service - app.py (Fallback)
+**Location**: `ai-service/app.py`
+
+**Purpose**: Fallback AI service with basic badminton knowledge
+
+**Endpoints**:
+- `POST /api/send_message` - Main chat endpoint
+- `GET /api/health` - Health check
+
+**Knowledge Base Categories**:
+- **Rules**: Scoring, game structure
+- **Technique**: Smash, serve, footwork
+- **Equipment**: Rackets, shuttlecocks, shoes
+- **Platform**: Court booking, tournaments, coaches
+
+### 6. Database Model - Conversation.js
 **Location**: `server/models/Conversation.js`
 
 **Schema**:
@@ -281,7 +317,8 @@ All messages are automatically logged in MongoDB via the `Conversation` model:
 - Topic tracking (last discussed topic)
 
 ### ✅ Fallback System
-- If Flask is down, Node provides fallback responses
+- Primary: Hugging Face RAG service for intelligent responses
+- Secondary: Flask service for basic knowledge if Hugging Face unavailable
 - Graceful degradation
 - Health monitoring
 
@@ -298,7 +335,24 @@ All messages are automatically logged in MongoDB via the `Conversation` model:
 mongod
 ```
 
-### 2. Start Flask AI Service
+### 2. Start Node Backend
+```bash
+cd server
+npm install
+npm start
+# Runs on http://localhost:5000
+# Note: Hugging Face RAG is used automatically (no local Flask needed)
+```
+
+### 3. Start React Frontend
+```bash
+cd client
+npm install
+npm start
+# Runs on http://localhost:3000
+```
+
+### 4. (Optional) Start Flask Fallback Service
 ```bash
 cd ai-service
 python -m venv venv
@@ -306,23 +360,7 @@ venv\Scripts\activate  # Windows
 source venv/bin/activate  # Mac/Linux
 pip install -r requirements.txt
 python app.py
-# Runs on http://localhost:5001
-```
-
-### 3. Start Node Backend
-```bash
-cd server
-npm install
-npm start
-# Runs on http://localhost:5000
-```
-
-### 4. Start React Frontend
-```bash
-cd client
-npm install
-npm start
-# Runs on http://localhost:3000
+# Runs on http://localhost:5001 (only used as fallback)
 ```
 
 ## Testing the Flow
@@ -478,4 +516,9 @@ Response:
 
 ---
 
-**Chatbot is now fully integrated and ready to use!** 🤖💬
+**Chatbot is now fully integrated with Hugging Face RAG!** 🤖💬
+
+- **Primary**: Hugging Face RAG for intelligent responses
+- **Fallback**: Flask service for basic knowledge
+- **Personal**: User-specific data queries
+- **Real-time**: Socket.io integration

@@ -58,9 +58,9 @@ class AIService {
                 result = await this.ragEngine.resolveIntent(message, context);
             }
 
-            // Step 4: Handle RAG Generation (Special Case)
-            if (result && result.actionType === 'RAG_GENERATION') {
-                return await this.callFlaskServiceWithContext(result.augmentedPrompt, context);
+            // Step 4: Handle RAG Response (Direct from Hugging Face)
+            if (result && result.intentId === 'RAG_QUERY') {
+                return result.response || this.getDefaultFallback();
             }
 
             // Step 5: Normal Generation
