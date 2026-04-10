@@ -1,7 +1,6 @@
 const axios = require('axios');
 const RuleBasedEngine = require('../chatbot/engines/RuleBasedEngine');
 const MLEngine = require('../chatbot/engines/MLEngine'); // Keeping for legacy reference or removal
-const RAGEngine = require('../chatbot/engines/RAGEngine');
 const PersonalDataEngine = require('../chatbot/engines/PersonalDataEngine');
 const PublicDataEngine = require('../chatbot/engines/PublicDataEngine'); // NEW
 const QueryRouter = require('../chatbot/QueryRouter');
@@ -17,11 +16,40 @@ class AIService {
 
         // Initialize engines
         this.ruleEngine = new RuleBasedEngine();
-        this.ragEngine = new RAGEngine();
+        this.ragEngine = null; // Will be initialized asynchronously
         this.personalEngine = new PersonalDataEngine();
         this.publicEngine = new PublicDataEngine(); // NEW
         this.queryRouter = new QueryRouter();
         this.responseGenerator = new ResponseGenerator();
+
+        // Initialize RAGEngine dynamically (ESM module)
+        this.initRAGEngine();
+    }
+
+    /**
+     * Initialize RAGEngine dynamically (ESM module)
+     */
+    async initRAGEngine() {
+        try {
+            const { default: RAGEngine } = await import('../chatbot/engines/RAGEngine.mjs');
+            this.ragEngine = new RAGEngine();
+        } catch (error) {
+            console.error('[AIService] Failed to initialize RAGEngine:', error.message);
+            this.ragEngine = null;
+        }
+    }
+
+    /**
+     * Ensure RAGEngine is ready before using
+     */
+    async ensureRAGEngine() {
+        // Wait up to 5 seconds for initialization
+        let attempts = 0;
+        while (!this.ragEngine && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        return this.ragEngine;
     }
 
     /**
@@ -55,7 +83,13 @@ class AIService {
                 result = await this.publicEngine.resolveIntent(message, context);
             } else {
                 // KNOWLEDGE -> RAG
-                result = await this.ragEngine.resolveIntent(message, context);
+                const ragEngine = await this.ensureRAGEngine();
+                if (ragEngine) {
+                    result = await ragEngine.resolveIntent(message, context);
+                } else {
+                    // Fallback if RAGEngine not available
+                    return this.getDefaultFallback();
+                }
             }
 
             // Step 4: Handle RAG Response (Direct from Hugging Face)
