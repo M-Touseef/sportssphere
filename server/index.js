@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const seedAdmin = require('./utils/seedAdmin');
 
 // Load environment variables
 dotenv.config();
@@ -9,8 +10,10 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and seed admin
+connectDB().then(() => {
+    seedAdmin();
+});
 
 const path = require('path');
 

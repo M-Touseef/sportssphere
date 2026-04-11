@@ -264,7 +264,7 @@ const CourtDetails = () => {
                                         <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
                                             <InformationCircleIcon className="h-5 w-5" />
                                         </div>
-                                        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-900">Court Details</h2>
+                                        <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-900">Court Details</h2>
                                     </div>
                                     <p className="text-lg text-slate-500 leading-relaxed font-medium">
                                         {court.description || "Premium court featuring excellent lighting and a professional playing surface. Optimized for competitive play and training."}
@@ -276,7 +276,7 @@ const CourtDetails = () => {
                                         <div className="h-8 w-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
                                             <ShieldCheckIcon className="h-5 w-5" />
                                         </div>
-                                        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-900">Facilities</h2>
+                                        <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-900">Facilities</h2>
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {court.amenities.length > 0 ? court.amenities.map((amenity, index) => (
@@ -285,7 +285,7 @@ const CourtDetails = () => {
                                                 className="flex items-center gap-3.5 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group hover:border-indigo-100 transition-all"
                                             >
                                                 <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
-                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{amenity}</span>
+                                                <span className="text-sm font-bold text-slate-600">{amenity}</span>
                                             </div>
                                         )) : (
                                             ['Pro Lighting', 'Secure Storage', 'Digital Uplink', 'Recovery Zone'].map((amenity, index) => (
@@ -294,7 +294,7 @@ const CourtDetails = () => {
                                                     className="flex items-center gap-3.5 p-4 bg-slate-50/50 rounded-2xl border border-slate-100"
                                                 >
                                                     <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
-                                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{amenity}</span>
+                                                    <span className="text-sm font-bold text-slate-600">{amenity}</span>
                                                 </div>
                                             ))
                                         )}
@@ -311,10 +311,10 @@ const CourtDetails = () => {
                         <div className="overflow-y-auto custom-scrollbar flex-1 pb-6 sm:pb-10">
                             <div className="p-6 sm:p-8 bg-slate-900 border-b border-indigo-900/10 flex justify-between items-start relative overflow-hidden text-white">
                                 <div className="relative z-10 flex-1 min-w-0">
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 text-slate-400">Booking Fee</p>
+                                    <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] mb-2 text-slate-400">Booking Fee</p>
                                     <div className="flex flex-wrap items-baseline gap-1.5">
-                                        <span className="text-3xl sm:text-4xl font-black tracking-tighter overflow-hidden text-ellipsis">Rs.{court.pricePerHour}</span>
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">/ session</span>
+                                        <span className="text-2xl sm:text-3xl font-black tracking-tighter overflow-hidden text-ellipsis">Rs.{court.pricePerHour}</span>
+                                        <span className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-widest leading-none">/ session</span>
                                     </div>
                                 </div>
                                 <div className="relative z-10 h-10 w-10 rounded-xl bg-indigo-500/20 shrink-0 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
@@ -326,7 +326,7 @@ const CourtDetails = () => {
                                 {bookingStep === 'selecting_slot' ? (
                                     <div className="space-y-8">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 block ml-1">
+                                            <label className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 block ml-1">
                                                 Select Date
                                             </label>
                                             <div className="relative">
@@ -345,10 +345,10 @@ const CourtDetails = () => {
 
                                         <div>
                                             <div className="flex justify-between items-center mb-5">
-                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                                <label className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">
                                                     Available Slots
                                                 </label>
-                                                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">
+                                                <span className="text-xs sm:text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">
                                                     {slots.filter(s => s.available).length} Active
                                                 </span>
                                             </div>
@@ -359,7 +359,7 @@ const CourtDetails = () => {
                                                         disabled={!slot.available}
                                                         onClick={() => setSelectedSlot(slot)}
                                                         className={twMerge(
-                                                            "py-3.5 text-[10px] sm:text-[11px] font-bold rounded-2xl border transition-all relative overflow-hidden",
+                                                            "py-3.5 text-xs sm:text-sm font-bold rounded-2xl border transition-all relative overflow-hidden",
                                                             !slot.available
                                                                 ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
                                                                 : selectedSlot?.time === slot.time
@@ -370,7 +370,7 @@ const CourtDetails = () => {
                                                         {slot.time}
                                                         {!slot.available && (
                                                             <div className="absolute inset-0 flex items-center justify-center opacity-10 rotate-12">
-                                                                <span className="text-[10px] font-black uppercase">BOOKED</span>
+                                                                <span className="text-xs font-black uppercase">BOOKED</span>
                                                             </div>
                                                         )}
                                                     </button>
@@ -379,7 +379,7 @@ const CourtDetails = () => {
                                             {slots.length === 0 && (
                                                 <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                                                     <ClockIcon className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Grid Offline</p>
+                                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Grid Offline</p>
                                                 </div>
                                             )}
                                         </div>
@@ -398,7 +398,7 @@ const CourtDetails = () => {
 
                                         {!isAuthenticated && (
                                             <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100 text-center">
-                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+                                                <p className="text-sm font-bold text-slate-500 leading-relaxed">
                                                     Please log in to book this court. <Link to="/register" className="text-indigo-600 hover:text-indigo-800 transition-colors underline underline-offset-4">Join Hub</Link>
                                                 </p>
                                             </div>
@@ -420,15 +420,15 @@ const CourtDetails = () => {
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-bold text-slate-900">Payment Required</h3>
-                                            <p className="text-sm text-slate-500 mt-2 font-medium">To confirm your booking for {selectedSlot?.time}, please complete the JazzCash transaction.</p>
+                                            <p className="text-base text-slate-500 mt-2 font-medium">To confirm your booking for {selectedSlot?.time}, please complete the JazzCash transaction.</p>
                                         </div>
 
                                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-left space-y-2">
-                                            <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                            <div className="flex justify-between text-sm font-bold text-slate-400 uppercase tracking-widest">
                                                 <span>Court</span>
                                                 <span className="text-slate-900">{court.name}</span>
                                             </div>
-                                            <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                            <div className="flex justify-between text-sm font-bold text-slate-400 uppercase tracking-widest">
                                                 <span>Amount</span>
                                                 <span className="text-indigo-600">Rs. {court.pricePerHour}</span>
                                             </div>
@@ -453,7 +453,7 @@ const CourtDetails = () => {
                                                 setSelectedSlot(null);
                                                 fetchAvailability();
                                             }}
-                                            className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+                                            className="text-sm font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
                                         >
                                             Dismiss & Back to Schedule
                                         </button>
@@ -463,20 +463,20 @@ const CourtDetails = () => {
 
                             <div className="p-6 sm:p-8 pt-0">
                                 <div className="p-6 sm:p-8 bg-slate-50/50 rounded-[2rem] border border-slate-100">
-                                    <h4 className="font-bold text-[10px] text-slate-900 mb-6 uppercase tracking-widest flex items-center gap-2.5">
+                                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 mb-6 uppercase tracking-widest flex items-center gap-2.5">
                                         <ShieldCheckIcon className="h-4 w-4 text-indigo-600" />
                                         Rules & Policies
                                     </h4>
                                     <ul className="space-y-5">
                                         <li className="flex items-start gap-4">
                                             <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                            <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
+                                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
                                                 Cancellations within 24 operational cycles grant 100% credit return.
                                             </p>
                                         </li>
                                         <li className="flex items-start gap-4">
                                             <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                            <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
+                                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
                                                 Please wear non-marking shoes on court.
                                             </p>
                                         </li>

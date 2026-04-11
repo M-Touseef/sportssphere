@@ -37,7 +37,7 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
         return (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <div className="h-10 w-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Scanning Grid for Professionals...</p>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Scanning Grid for Professionals...</p>
             </div>
         );
     }
@@ -45,7 +45,7 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
     if (pros.length === 0) {
         return (
             <div className="text-center py-12 px-6 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                <p className="text-sm font-bold text-slate-500 mb-6">No professional players available for this specific sector and interval.</p>
+                <p className="text-base font-bold text-slate-500 mb-6">No professional players available for this specific sector and interval.</p>
                 <div className="flex justify-center gap-4">
                     <Button variant="outline" size="sm" onClick={onCancel}>Select Different Slot</Button>
                     <Button size="sm" onClick={() => onSelect(null)}>Book Court Only</Button>
@@ -57,8 +57,8 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Available Professionals</h3>
-                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">{pros.length} Identified</span>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Available Professionals</h3>
+                <span className="text-xs sm:text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">{pros.length} Identified</span>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
@@ -83,14 +83,14 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
                                 <div className="flex items-center gap-3 mt-1">
                                     <div className="flex items-center gap-1">
                                         <StarIcon className={`h-3 w-3 fill-current ${selectedProId === item.player._id ? 'text-white' : 'text-amber-400'}`} />
-                                        <span className={`text-xs font-bold uppercase tracking-widest ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`}>
+                                        <span className={`text-sm font-bold uppercase tracking-widest ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`}>
                                             {item.player.skillLevel || 'Pro'}
                                         </span>
                                     </div>
                                     <span className={`h-1 w-1 rounded-full ${selectedProId === item.player._id ? 'bg-indigo-300' : 'bg-slate-200'}`} />
                                     <div className="flex items-center gap-1">
                                         <MapPinIcon className={`h-3 w-3 ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`} />
-                                        <span className={`text-xs font-bold uppercase tracking-widest ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`}>
+                                        <span className={`text-sm font-bold uppercase tracking-widest ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`}>
                                             {item.player.city}
                                         </span>
                                     </div>
@@ -118,8 +118,8 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
                     Request Session
                 </Button>
                 <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="h-11 text-[11px] font-bold border-slate-200" onClick={onCancel}>Cancel</Button>
-                    <Button variant="ghost" className="h-11 text-[11px] font-bold text-slate-500 hover:bg-slate-50" onClick={() => onSelect(null)}>Skip Pro</Button>
+                    <Button variant="outline" className="h-11 text-xs sm:text-sm font-bold border-slate-200" onClick={onCancel}>Cancel</Button>
+                    <Button variant="ghost" className="h-11 text-xs sm:text-sm font-bold text-slate-500 hover:bg-slate-50" onClick={() => onSelect(null)}>Skip Pro</Button>
                 </div>
             </div>
         </div>

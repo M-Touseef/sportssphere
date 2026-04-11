@@ -78,7 +78,7 @@ const CourtList = () => {
             <div className="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 mb-10 sm:mb-16">
                 <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 items-end">
                     <div className="md:col-span-4">
-                        <label htmlFor="city" className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block ml-1">Location</label>
+                        <label htmlFor="city" className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 block ml-1">Location</label>
                         <div className="relative">
                             <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500 pointer-events-none" />
                             <input
@@ -94,7 +94,7 @@ const CourtList = () => {
                     </div>
 
                     <div className="md:col-span-5">
-                        <label htmlFor="surfaceType" className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block ml-1">Court Surface</label>
+                        <label htmlFor="surfaceType" className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 block ml-1">Court Surface</label>
                         <select
                             name="surfaceType"
                             id="surfaceType"
@@ -172,7 +172,7 @@ const CourtList = () => {
                                     {/* Top Left Badge: Surface */}
                                     <div className="absolute top-4 left-4 z-10">
                                         <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                                            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-indigo-600">
                                                 {court.surfaceType}
                                             </span>
                                         </div>
@@ -181,7 +181,7 @@ const CourtList = () => {
                                     {/* Bottom Right Badge: Price Overlay */}
                                     <div className="absolute bottom-4 right-4 z-10">
                                         <div className="bg-slate-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 shadow-lg flex flex-col items-end">
-                                            <p className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest leading-none mb-1">Fee</p>
+                                            <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest leading-none mb-1">Fee</p>
                                             <p className="text-xl font-bold text-white tracking-tight leading-none flex items-baseline gap-1">
                                                 <span className="text-xs font-medium">Rs.</span>
                                                 {court.pricePerHour}
@@ -205,10 +205,10 @@ const CourtList = () => {
                                     <div className="mt-auto pt-6 border-t border-slate-100/50 flex items-center justify-between">
                                         <div className="flex gap-2.5 items-center shrink-0">
                                             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Available</span>
+                                            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">Available</span>
                                         </div>
                                         <Link to={`/courts/${court._id}`} className="shrink-0">
-                                            <Button variant="outline" className="h-10 px-5 rounded-xl text-[11px] font-bold border-slate-200 hover:bg-slate-900 hover:text-white transition-all flex items-center gap-2">
+                                            <Button variant="outline" className="h-10 px-5 rounded-xl text-xs sm:text-sm font-bold border-slate-200 hover:bg-slate-900 hover:text-white transition-all flex items-center gap-2">
                                                 Details
                                                 <ArrowRightIcon className="h-4 w-4" />
                                             </Button>
