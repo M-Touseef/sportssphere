@@ -4,7 +4,6 @@ import { Bars3Icon, XMarkIcon, BellIcon, TrophyIcon, SparklesIcon, UserIcon, Arr
 import { Link, useLocation } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import { useAuth } from '../../context/AuthContext'
-import { ThemeToggle } from './ThemeToggle'
 import Button from '../ui/Button'
 import Tooltip from '../ui/Tooltip'
 import { useNotifications } from '../../hooks/useNotifications'
@@ -61,7 +60,6 @@ export default function Navbar() {
                             {/* Actions Section */}
                             <div className="flex items-center gap-3">
                                 <div className="hidden sm:flex items-center gap-2">
-                                    <ThemeToggle />
                                     <Menu as="div" className="relative">
                                         <Menu.Button className="p-2 text-slate-400 hover:text-slate-900 transition-colors relative outline-none">
                                             <BellIcon className="h-5 w-5" />

@@ -203,6 +203,60 @@ exports.addAvailabilitySlot = async (req, res) => {
     }
 };
 
+// @desc    Update availability slot
+// @route   PUT /api/coaches/availability/:slotId
+// @access  Private (Coach)
+exports.updateAvailabilitySlot = async (req, res) => {
+    try {
+        const { slotId } = req.params;
+        const { day, startTime, endTime, court, maxStudents } = req.body;
+
+        if (!day || !startTime || !endTime) {
+            return res.status(400).json({ error: 'Please provide day, startTime, and endTime' });
+        }
+
+        const profile = await CoachProfile.findOne({ user: req.user.id });
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Coach profile not found' });
+        }
+
+        const slot = profile.availability.id(slotId);
+        if (!slot) {
+            return res.status(404).json({ error: 'Slot not found' });
+        }
+
+        const hasOverlap = profile.availability.some((s) =>
+            s._id.toString() !== slotId &&
+            s.day === day &&
+            ((startTime >= s.startTime && startTime < s.endTime) ||
+                (endTime > s.startTime && endTime <= s.endTime) ||
+                (startTime <= s.startTime && endTime >= s.endTime))
+        );
+
+        if (hasOverlap) {
+            return res.status(400).json({ error: 'Slot overlaps with existing availability' });
+        }
+
+        slot.day = day;
+        slot.startTime = startTime;
+        slot.endTime = endTime;
+        if (court) slot.court = court;
+        slot.maxStudents = maxStudents != null ? maxStudents : 1;
+
+        await profile.save();
+        await profile.populate('availability.court', 'name location');
+
+        res.status(200).json({
+            success: true,
+            data: profile.availability
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 // @desc    Remove availability slot from coach profile
 // @route   DELETE /api/coaches/availability/:slotId
 // @access  Private (Coach)

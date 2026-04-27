@@ -1,4 +1,3 @@
-import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import { BrowserRouter, Routes, Route, Outlet, useLocation, Navigate } from 'react-router-dom'
 import { useEffect } from 'react';
@@ -271,17 +270,26 @@ function App() {
       .catch(err => console.error('Backend connection error:', err));
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.classList.add('light');
+    try {
+      localStorage.removeItem('vite-ui-theme');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <SocketProvider>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <ToastProvider>
-            <BrowserRouter>
-              <AnimatedRoutes />
-              <ChatWindow />
-            </BrowserRouter>
-          </ToastProvider>
-        </ThemeProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <AnimatedRoutes />
+            <ChatWindow />
+          </BrowserRouter>
+        </ToastProvider>
       </SocketProvider>
     </AuthProvider>
   )

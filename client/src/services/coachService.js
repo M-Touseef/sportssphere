@@ -35,6 +35,10 @@ const coachService = {
         const response = await api.post('/coaches/availability', data);
         return response.data;
     },
+    updateAvailabilitySlot: async (slotId, data) => {
+        const response = await api.put(`/coaches/availability/${slotId}`, data);
+        return response.data;
+    },
     removeAvailabilitySlot: async (id) => {
         const response = await api.delete(`/coaches/availability/${id}`);
         return response.data;

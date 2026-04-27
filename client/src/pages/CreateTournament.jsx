@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import tournamentService from '../services/tournamentService';
+import courtService from '../services/courtService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import {
@@ -24,11 +25,14 @@ const CreateTournament = () => {
     const { user } = useAuth();
     const { success, error: toastError } = useToast();
     const [loading, setLoading] = useState(false);
+    const [myCourts, setMyCourts] = useState([]);
+    const [courtsLoading, setCourtsLoading] = useState(true);
 
     const {
         register,
         control,
         handleSubmit,
+        watch,
         formState: { errors }
     } = useForm({
         defaultValues: {
@@ -37,8 +41,7 @@ const CreateTournament = () => {
             startDate: '',
             endDate: '',
             registrationDeadline: '',
-            venue: '',
-            city: user?.city || '',
+            court: '',
             format: 'single_elimination',
             rules: '',
             contactEmail: user?.email || '',
@@ -59,12 +62,37 @@ const CreateTournament = () => {
         name: "categories"
     });
 
+    const selectedCourtId = watch('court');
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await courtService.getMyCourts();
+                if (!cancelled && res?.data) setMyCourts(res.data);
+            } catch (e) {
+                console.error(e);
+                if (!cancelled) toastError('Could not load your courts.');
+            } finally {
+                if (!cancelled) setCourtsLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    const selectedCourt = myCourts.find((c) => String(c._id) === String(selectedCourtId));
+
     const onSubmit = async (data) => {
         setLoading(true);
         try {
+            if (!data.court) {
+                toastError('Please select a venue court.');
+                setLoading(false);
+                return;
+            }
             await tournamentService.createTournament(data);
             success('Championship deployment successful! Redirecting to command center.');
-            setTimeout(() => navigate('/my-tournaments'), 2000);
+            setTimeout(() => navigate('/app/tournaments'), 2000);
         } catch (error) {
             toastError(error.response?.data?.error || 'Intelligence failure during deployment.');
         } finally {
@@ -81,7 +109,7 @@ const CreateTournament = () => {
                     </div>
                     <h1 className="text-4xl font-black text-foreground uppercase tracking-widest leading-none">Championship Setup</h1>
                 </div>
-                <p className="text-lg text-muted-foreground font-medium">Configure and deploy a high-stakes tournament on the network.</p>
+                <p className="text-lg text-muted-foreground font-medium">Choose one of your courts as the venue, then set dates and divisions.</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 pb-20">
@@ -89,7 +117,7 @@ const CreateTournament = () => {
                 <div className="bg-card shadow-sm ring-1 ring-border rounded-3xl p-8 md:p-10 space-y-8">
                     <div className="flex items-center gap-3 border-b border-border pb-6">
                         <InformationCircleIcon className="h-5 w-5 text-primary" />
-                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Core Intelligence</h3>
+                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Tournament details</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -113,20 +141,44 @@ const CreateTournament = () => {
                             </div>
                         </div>
 
-                        <Input
-                            label="Deployment Venue"
-                            placeholder="e.g. Apex Sports Center"
-                            error={errors.venue}
-                            leftIcon={<MapPinIcon className="h-5 w-5" />}
-                            {...register('venue', { required: 'Target venue is mandatory' })}
-                        />
-                        <Input
-                            label="Deployment City"
-                            placeholder="e.g. Islamabad"
-                            error={errors.city}
-                            leftIcon={<MapPinIcon className="h-5 w-5" />}
-                            {...register('city', { required: 'Zone city is required' })}
-                        />
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1 flex items-center gap-2">
+                                <MapPinIcon className="h-4 w-4" aria-hidden />
+                                Venue
+                            </label>
+                            <select
+                                disabled={courtsLoading}
+                                className="w-full h-11 px-4 rounded-xl border border-input bg-background font-bold text-sm focus:ring-2 focus:ring-primary outline-none transition-all disabled:opacity-60"
+                                {...register('court', { required: 'Select the court that will host this tournament' })}
+                            >
+                                <option value="">{courtsLoading ? 'Loading your courts…' : 'Select your court…'}</option>
+                                {myCourts.map((c) => (
+                                    <option key={c._id} value={c._id}>
+                                        {c.name} — {c.location?.city || 'City'}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.court && (
+                                <p className="text-[10px] font-black text-destructive uppercase pl-1">{errors.court.message}</p>
+                            )}
+                            {!courtsLoading && myCourts.length === 0 && (
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    You do not have any courts yet.{' '}
+                                    <Link to="/org/courts/create" className="text-primary font-bold underline-offset-2 hover:underline">
+                                        Add a court listing
+                                    </Link>{' '}
+                                    first, then return here.
+                                </p>
+                            )}
+                            {selectedCourt && (
+                                <p className="text-xs text-muted-foreground mt-2 font-medium">
+                                    Public venue and city will be set from this court:{' '}
+                                    <span className="text-foreground">{selectedCourt.location?.address}</span>
+                                    {', '}
+                                    <span className="text-foreground">{selectedCourt.location?.city}</span>.
+                                </p>
+                            )}
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
                             <Input
@@ -319,7 +371,7 @@ const CreateTournament = () => {
                 <div className="flex items-center justify-end gap-6 pt-10">
                     <button
                         type="button"
-                        onClick={() => navigate('/my-tournaments')}
+                        onClick={() => navigate('/app/tournaments')}
                         className="text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all"
                     >
                         Abort Mission
@@ -328,6 +380,7 @@ const CreateTournament = () => {
                         type="submit"
                         size="lg"
                         isLoading={loading}
+                        disabled={courtsLoading || myCourts.length === 0}
                         className="px-16 h-14"
                     >
                         Deploy Championship
