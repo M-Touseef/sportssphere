@@ -51,6 +51,11 @@ export const removeRecurringSlot = async (slotId) => {
     return response.data;
 };
 
+export const updateRecurringSlot = async (slotId, slotData) => {
+    const response = await api.put(`${SPARRING_URL}/availability/recurring/${slotId}`, slotData);
+    return response.data;
+};
+
 // Legacy / Overrides
 export const createAvailability = async (availabilityData) => {
     const response = await api.post(`${SPARRING_URL}/availability`, availabilityData);

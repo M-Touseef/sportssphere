@@ -67,6 +67,62 @@ exports.addRecurringSlot = async (req, res) => {
     }
 };
 
+// @desc    Update a recurring availability slot
+// @route   PUT /api/sparring/availability/recurring/:slotId
+// @access  Private (Professional only)
+exports.updateRecurringSlot = async (req, res) => {
+    try {
+        const { slotId } = req.params;
+        const { day, startTime, endTime, court, venue, sparringType } = req.body;
+
+        if (!day || !startTime || !endTime) {
+            return res.status(400).json({ error: 'Missing required fields: day, startTime, endTime' });
+        }
+
+        const profile = await ProfessionalProfile.findOne({ user: req.user.id });
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        const slot = profile.availability.id(slotId);
+        if (!slot) {
+            return res.status(404).json({ error: 'Slot not found' });
+        }
+
+        const hasOverlap = profile.availability.some(s =>
+            s._id.toString() !== slotId &&
+            s.day === day &&
+            s.isActive &&
+            ((startTime >= s.startTime && startTime < s.endTime) ||
+                (endTime > s.startTime && endTime <= s.endTime) ||
+                (startTime <= s.startTime && endTime >= s.endTime))
+        );
+
+        if (hasOverlap) {
+            return res.status(400).json({ error: 'This time slot overlaps with an existing weekly slot.' });
+        }
+
+        slot.day = day;
+        slot.startTime = startTime;
+        slot.endTime = endTime;
+        if (court !== undefined) slot.court = court || undefined;
+        if (venue !== undefined) slot.venue = venue || undefined;
+        if (sparringType) slot.sparringType = sparringType;
+
+        await profile.save();
+        await profile.populate('availability.court', 'name location');
+
+        res.status(200).json({
+            success: true,
+            data: profile.availability
+        });
+    } catch (error) {
+        console.error('Update Recurring Slot Error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 // @desc    Get my recurring availability
 // @route   GET /api/sparring/availability/recurring
 // @access  Private (Professional only)

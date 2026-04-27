@@ -16,6 +16,7 @@ router.get('/available-pros', controller.getAvailableProsForSlot);
 // =============================================================================
 // Recurring Availability Routes
 router.post('/availability/recurring', protect, requireProfessional, controller.addRecurringSlot);
+router.put('/availability/recurring/:slotId', protect, requireProfessional, controller.updateRecurringSlot);
 router.get('/availability/recurring/my', protect, requireProfessional, controller.getMyRecurringAvailability);
 router.delete('/availability/recurring/:slotId', protect, requireProfessional, controller.removeRecurringSlot);
 

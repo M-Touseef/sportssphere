@@ -117,7 +117,7 @@ const ProfessionalDashboard = () => {
                         <h3 className="text-xl font-bold mb-2">Sparring Availability</h3>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">Open slots for sparring and let players find you at your preferred courts.</p>
                         <button
-                            onClick={() => navigate('/professional/availability')}
+                            onClick={() => navigate('/pro/availability')}
                             className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-900/50"
                         >
                             Manage Schedule
