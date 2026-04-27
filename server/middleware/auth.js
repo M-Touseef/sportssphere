@@ -47,24 +47,30 @@ const authorize = (...roles) => {
     };
 };
 
-// Middleware to require professional skill level
-// Middleware to require professional skill level or Coach role
+// Middleware to require professional skill level or Coach role.
+// JWT carries status/skillLevel; legacy `verified` may be absent on old tokens, so treat
+// status === 'approved' as verified (matches admin approval and authController flows).
 const requireProfessional = (req, res, next) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if ((req.user.skillLevel === 'professional' || req.user.role === 'coach') && req.user.verified) {
-        next();
-    } else if ((req.user.skillLevel === 'professional' || req.user.role === 'coach') && !req.user.verified) {
+    const isProOrCoach =
+        req.user.skillLevel === 'professional' || req.user.role === 'coach';
+    const isApproved =
+        req.user.verified === true || req.user.status === 'approved';
+
+    if (isProOrCoach && isApproved) {
+        return next();
+    }
+    if (isProOrCoach && !isApproved) {
         return res.status(403).json({
             error: 'Forbidden: Account pending verification'
         });
-    } else {
-        return res.status(403).json({
-            error: 'Forbidden: Access restricted to Professionals or Coaches'
-        });
     }
+    return res.status(403).json({
+        error: 'Forbidden: Access restricted to Professionals or Coaches'
+    });
 };
 
 // Middleware to require non-professional skill level

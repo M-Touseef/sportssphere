@@ -3,11 +3,21 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { uploadToCloudinary } = require('../utils/cloudinary');
 
-// Generate JWT Token
-const generateToken = (id, role, status, skillLevel) => {
-    return jwt.sign({ id, role, status, skillLevel }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE || '7d',
-    });
+// Generate JWT Token (include verified so middleware and routes stay aligned with DB)
+const generateToken = (user) => {
+    return jwt.sign(
+        {
+            id: user._id,
+            role: user.role,
+            status: user.status,
+            skillLevel: user.skillLevel,
+            verified: user.verified === true,
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: process.env.JWT_EXPIRE || '7d',
+        }
+    );
 };
 
 // Helper to infer status for backward compatibility with existing users
@@ -84,7 +94,7 @@ exports.register = async (req, res, next) => {
         });
 
         // Create token
-        const token = generateToken(user._id, user.role, user.status, user.skillLevel);
+        const token = generateToken(user);
 
         res.status(201).json({
             success: true,
@@ -116,7 +126,7 @@ exports.login = async (req, res, next) => {
         }
 
         // Create token
-        const token = generateToken(user._id, user.role, user.status, user.skillLevel);
+        const token = generateToken(user);
 
         res.status(200).json({
             success: true,
