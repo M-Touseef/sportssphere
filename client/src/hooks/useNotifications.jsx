@@ -48,7 +48,23 @@ export const useNotifications = () => {
     };
   }, [loadNotifications]);
 
-  const hasUnread = notifications.some((n) => !n.isRead);
+  useEffect(() => {
+    if (!user) return undefined;
+    const intervalMs = user.role === 'admin' ? 30000 : 120000;
+    const id = setInterval(() => loadNotifications(), intervalMs);
+    return () => clearInterval(id);
+  }, [user, loadNotifications]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'visible') loadNotifications();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [loadNotifications]);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const hasUnread = unreadCount > 0;
 
   const handleMarkAllRead = async () => {
     try {
@@ -77,6 +93,7 @@ export const useNotifications = () => {
     loading,
     error,
     hasUnread,
+    unreadCount,
     reload: loadNotifications,
     markAllRead: handleMarkAllRead,
     markNotificationRead: handleMarkSingleRead,

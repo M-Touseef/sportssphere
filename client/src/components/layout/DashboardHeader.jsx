@@ -7,7 +7,7 @@ import Tooltip from '../ui/Tooltip'
 import { useNotifications } from '../../hooks/useNotifications'
 
 const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
-    const { notifications, hasUnread, markAllRead, markNotificationRead } = useNotifications()
+    const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications()
     const userNavigation = [
         { name: 'My Profile', href: '/profile', icon: UserIcon },
         { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon },
@@ -39,8 +39,10 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                     <Tooltip content="Notifications" position="bottom">
                         <Menu.Button className="h-11 w-11 flex items-center justify-center text-slate-400 hover:text-indigo-600 bg-white border border-slate-100 rounded-2xl transition-all relative shadow-sm outline-none">
                             <BellIcon className="h-5 w-5" />
-                            {hasUnread && (
-                                <span className="absolute top-3.5 right-3.5 h-2 w-2 bg-rose-500 rounded-full border-2 border-white" />
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-0.5 flex items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white border-2 border-white leading-none">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
                             )}
                         </Menu.Button>
                     </Tooltip>
@@ -69,44 +71,68 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                                         You’re all caught up. No notifications.
                                     </div>
                                 ) : (
-                                    notifications.map((item) => (
-                                        <Menu.Item key={item._id}>
-                                            {({ active }) => (
-                                                <button
-                                                    onClick={() => !item.isRead && markNotificationRead(item._id)}
+                                    notifications.map((item) => {
+                                        const pendingReview =
+                                            item.meta?.kind === 'pending_verification' && user?.role === 'admin';
+                                        const rowClass = (active) =>
+                                            twMerge(
+                                                'w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 transition-colors flex gap-3',
+                                                active ? 'bg-slate-50' : 'bg-white'
+                                            );
+                                        const inner = (active) => (
+                                            <>
+                                                <div
                                                     className={twMerge(
-                                                        "w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 transition-colors flex gap-3",
-                                                        active ? "bg-slate-50" : "bg-white"
+                                                        'h-2 w-2 mt-1.5 rounded-full flex-shrink-0',
+                                                        !item.isRead ? 'bg-rose-500' : 'bg-slate-200'
                                                     )}
-                                                >
-                                                    <div
+                                                />
+                                                <div>
+                                                    <p
                                                         className={twMerge(
-                                                            "h-2 w-2 mt-1.5 rounded-full flex-shrink-0",
-                                                            !item.isRead ? "bg-rose-500" : "bg-slate-200"
+                                                            'text-xs font-bold',
+                                                            !item.isRead ? 'text-slate-900' : 'text-slate-500'
                                                         )}
-                                                    />
-                                                    <div>
-                                                        <p
-                                                            className={twMerge(
-                                                                "text-xs font-bold",
-                                                                !item.isRead ? "text-slate-900" : "text-slate-500"
-                                                            )}
+                                                    >
+                                                        {item.title}
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed bg-transparent">
+                                                        {item.message}
+                                                    </p>
+                                                    {item.createdAt && (
+                                                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium">
+                                                            {new Date(item.createdAt).toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        );
+                                        return (
+                                            <Menu.Item key={item._id}>
+                                                {({ active }) =>
+                                                    pendingReview ? (
+                                                        <Link
+                                                            to="/admin/dashboard?tab=verification"
+                                                            onClick={() => {
+                                                                if (!item.isRead) markNotificationRead(item._id);
+                                                            }}
+                                                            className={rowClass(active)}
                                                         >
-                                                            {item.title}
-                                                        </p>
-                                                        <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed bg-transparent">
-                                                            {item.message}
-                                                        </p>
-                                                        {item.createdAt && (
-                                                            <p className="text-[10px] text-slate-400 mt-1.5 font-medium">
-                                                                {new Date(item.createdAt).toLocaleString()}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                    ))
+                                                            {inner(active)}
+                                                        </Link>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => !item.isRead && markNotificationRead(item._id)}
+                                                            className={rowClass(active)}
+                                                        >
+                                                            {inner(active)}
+                                                        </button>
+                                                    )
+                                                }
+                                            </Menu.Item>
+                                        );
+                                    })
                                 )}
                             </div>
                             {notifications.length > 0 && hasUnread && (

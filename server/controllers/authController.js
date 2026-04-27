@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { uploadToCloudinary } = require('../utils/cloudinary');
@@ -238,11 +239,43 @@ exports.completeProfile = async (req, res, next) => {
         if (coachLevel) fieldsToUpdate.coachLevel = coachLevel;
         if (verificationDocument) fieldsToUpdate.verificationDocument = verificationDocument;
 
+        const before = await User.findById(req.user.id).select('status name email');
+
         const user = await User.findByIdAndUpdate(
             req.user.id,
             fieldsToUpdate,
             { new: true, runValidators: true }
         ).select('-password');
+
+        const newlyAwaitingReview =
+            before &&
+            before.status !== 'waiting_for_approval' &&
+            user.status === 'waiting_for_approval';
+
+        if (newlyAwaitingReview) {
+            try {
+                const admins = await User.find({ role: 'admin' }).select('_id').lean();
+                const title = 'Profile pending review';
+                const message = `${user.name} (${user.email}) submitted a profile for admin approval.`;
+                await Promise.all(
+                    admins.map((admin) =>
+                        Notification.create({
+                            user: admin._id,
+                            type: 'system',
+                            title,
+                            message,
+                            meta: {
+                                kind: 'pending_verification',
+                                applicantId: user._id.toString()
+                            },
+                            isRead: false
+                        })
+                    )
+                );
+            } catch (notifyErr) {
+                console.error('[completeProfile] Admin notification error:', notifyErr);
+            }
+        }
 
         res.status(200).json({
             success: true,

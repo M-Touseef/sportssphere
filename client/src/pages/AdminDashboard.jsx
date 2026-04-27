@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import adminService from '../services/adminService';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     XMarkIcon,
     CheckCircleIcon,
@@ -27,9 +27,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Server base URL for static files (remove /api suffix if present)
 const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
+const ADMIN_TABS = new Set(['overview', 'verification', 'users', 'bookings', 'tournaments', 'courts']);
+
 const AdminDashboard = () => {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [stats, setStats] = useState(null);
     const [users, setUsers] = useState([]);
     const [pendingUsers, setPendingUsers] = useState([]);
@@ -57,6 +60,13 @@ const AdminDashboard = () => {
             return () => clearInterval(interval);
         }
     }, [user, authLoading, navigate]);
+
+    useEffect(() => {
+        const tab = new URLSearchParams(location.search).get('tab');
+        if (tab && ADMIN_TABS.has(tab)) {
+            setActiveTab(tab);
+        }
+    }, [location.search]);
 
     useEffect(() => {
         if (activeTab === 'users') fetchUsers();

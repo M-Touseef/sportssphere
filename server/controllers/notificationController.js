@@ -1,10 +1,12 @@
 const Notification = require('../models/Notification');
 
+const currentUserId = (req) => req.user.id || req.user._id;
+
 // GET /api/notifications?isRead=true|false
 exports.getMyNotifications = async (req, res, next) => {
   try {
     const { isRead } = req.query;
-    const filter = { user: req.user._id };
+    const filter = { user: currentUserId(req) };
 
     if (isRead === 'true') filter.isRead = true;
     if (isRead === 'false') filter.isRead = false;
@@ -25,7 +27,7 @@ exports.markNotificationRead = async (req, res, next) => {
     const { id } = req.params;
 
     const notification = await Notification.findOneAndUpdate(
-      { _id: id, user: req.user._id },
+      { _id: id, user: currentUserId(req) },
       { $set: { isRead: true } },
       { new: true }
     );
@@ -44,7 +46,7 @@ exports.markNotificationRead = async (req, res, next) => {
 exports.markAllRead = async (req, res, next) => {
   try {
     await Notification.updateMany(
-      { user: req.user._id, isRead: false },
+      { user: currentUserId(req), isRead: false },
       { $set: { isRead: true } }
     );
 
