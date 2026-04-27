@@ -21,7 +21,9 @@ import {
     CheckCircleIcon,
     SparklesIcon,
     UserIcon,
-    ArrowPathIcon
+    ArrowPathIcon,
+    PencilSquareIcon,
+    Squares2X2Icon
 } from '@heroicons/react/24/outline';
 import ProSelectionList from '../components/booking/ProSelectionList';
 import { twMerge } from 'tailwind-merge';
@@ -30,7 +32,7 @@ import { motion } from 'framer-motion';
 const CourtDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const { success, error: toastError } = useToast();
 
     const [court, setCourt] = useState(null);
@@ -175,6 +177,13 @@ const CourtDetails = () => {
         );
     }
 
+    const ownerId = court?.owner && (typeof court.owner === 'object' ? court.owner._id || court.owner.id : court.owner);
+    const isCourtOwner =
+        user &&
+        court &&
+        ownerId != null &&
+        String(ownerId) === String(user.id || user._id);
+
     if (!court) {
         return (
             <div className="max-w-7xl mx-auto px-4 py-24 text-center">
@@ -195,7 +204,7 @@ const CourtDetails = () => {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-32">
             {/* Header & Breadcrumb */}
-            <div className="flex items-center justify-between mb-12">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-12">
                 <Link to="/courts" className="group flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all shadow-sm">
                         <ArrowLeftIcon className="h-5 w-5" />
@@ -203,11 +212,29 @@ const CourtDetails = () => {
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] group-hover:text-slate-900 transition-colors">Back to List</span>
                 </Link>
 
-                <div className="flex gap-3">
-                    <button className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:ml-auto">
+                    {isCourtOwner && (
+                        <>
+                            <Link
+                                to="/org/courts"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                            >
+                                <Squares2X2Icon className="h-4 w-4" />
+                                My courts
+                            </Link>
+                            <Link
+                                to={`/org/courts/${id}/edit`}
+                                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 shadow-sm"
+                            >
+                                <PencilSquareIcon className="h-4 w-4" />
+                                Edit listing
+                            </Link>
+                        </>
+                    )}
+                    <button type="button" className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm">
                         <ShareIcon className="h-4.5 w-4.5" />
                     </button>
-                    <button className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all shadow-sm">
+                    <button type="button" className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all shadow-sm">
                         <HeartIcon className="h-4.5 w-4.5" />
                     </button>
                 </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusIcon, TrophyIcon, UsersIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrophyIcon, UsersIcon, CheckBadgeIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import StatCard from '../../components/ui/StatCard';
 import tournamentService from '../../services/tournamentService';
 
@@ -163,6 +163,42 @@ export default function OrganizerDashboard() {
                                 })}
                             </ul>
                         )}
+                    </div>
+                </div>
+
+                <div className="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden flex flex-col">
+                    <div className="px-6 sm:px-10 py-6 sm:py-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-50">
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                                <MapPinIcon className="h-5 w-5" />
+                            </div>
+                            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Your venues</h2>
+                        </div>
+                        <Link
+                            to="/org/courts"
+                            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 shrink-0"
+                        >
+                            Manage courts
+                        </Link>
+                    </div>
+                    <div className="p-6 sm:p-8">
+                        <p className="text-slate-600 text-sm mb-6 max-w-2xl">
+                            Open any listing to see how players view it, edit pricing and photos, or add another court.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                            <Link
+                                to="/org/courts"
+                                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800"
+                            >
+                                Open My Courts
+                            </Link>
+                            <Link
+                                to="/org/courts/create"
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50"
+                            >
+                                Add court
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>

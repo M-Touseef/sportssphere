@@ -164,6 +164,38 @@ exports.getAvailability = async (req, res, next) => {
         next(error);
     }
 };
+// @desc    Update court
+// @route   PUT /api/courts/:id
+// @access  Private (Organizer/Admin, owner or admin)
+exports.updateCourt = async (req, res, next) => {
+    try {
+        const court = await Court.findById(req.params.id);
+
+        if (!court) {
+            return res.status(404).json({ error: 'Court not found' });
+        }
+
+        if (court.owner.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Not authorized to update this court' });
+        }
+
+        const payload = { ...req.body };
+        delete payload.owner;
+
+        const updated = await Court.findByIdAndUpdate(req.params.id, payload, {
+            new: true,
+            runValidators: true
+        });
+
+        res.status(200).json({
+            success: true,
+            data: updated
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Delete court
 // @route   DELETE /api/courts/:id
 // @access  Private (Organizer/Admin)

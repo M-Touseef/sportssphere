@@ -187,6 +187,7 @@ const AnimatedRoutes = () => {
             <Route element={<ProtectedRoute allowedRoles={['organizer']} />}>
               <Route path="/org/courts" element={<PageTransition><OrganizerCourts /></PageTransition>} />
               <Route path="/org/courts/create" element={<PageTransition><CreateCourt /></PageTransition>} />
+              <Route path="/org/courts/:courtId/edit" element={<PageTransition><CreateCourt /></PageTransition>} />
             </Route>
           </Route>
 
