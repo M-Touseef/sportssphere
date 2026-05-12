@@ -47,8 +47,8 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
             <div className="text-center py-12 px-6 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
                 <p className="text-base font-bold text-slate-500 mb-6">No professional players available for this specific sector and interval.</p>
                 <div className="flex justify-center gap-4">
-                    <Button variant="outline" size="sm" onClick={onCancel}>Select Different Slot</Button>
                     <Button size="sm" onClick={() => onSelect(null)}>Book Court Only</Button>
+                    <Button variant="outline" size="sm" onClick={onCancel}>Select Different Slot</Button>
                 </div>
             </div>
         );
@@ -105,22 +105,27 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
             </div>
 
             <div className="flex flex-col gap-2 pt-4 border-t border-slate-50">
-                <Button
-                    fullWidth
-                    size="lg"
-                    disabled={!selectedProId}
-                    className="h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100"
-                    onClick={() => {
-                        const selected = pros.find(p => p.player._id === selectedProId);
-                        onSelect(selected);
-                    }}
-                >
-                    Request Session
-                </Button>
                 <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="h-11 text-xs sm:text-sm font-bold border-slate-200" onClick={onCancel}>Cancel</Button>
-                    <Button variant="ghost" className="h-11 text-xs sm:text-sm font-bold text-slate-500 hover:bg-slate-50" onClick={() => onSelect(null)}>Skip Pro</Button>
+                    <Button
+                        variant="ghost"
+                        className="h-14 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 border border-slate-200"
+                        onClick={() => onSelect(null)}
+                    >
+                        Book Court Only
+                    </Button>
+                    <Button
+                        size="lg"
+                        disabled={!selectedProId}
+                        className="h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100"
+                        onClick={() => {
+                            const selected = pros.find(p => p.player._id === selectedProId);
+                            onSelect(selected);
+                        }}
+                    >
+                        Request Session
+                    </Button>
                 </div>
+                <Button variant="outline" className="h-11 text-xs sm:text-sm font-bold border-slate-200" onClick={onCancel}>Cancel</Button>
             </div>
         </div>
     );
