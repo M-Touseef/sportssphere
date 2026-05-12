@@ -35,6 +35,45 @@ const CoachList = () => {
         paymentType: 'hourly' // hourly or monthly
     });
 
+    const normalizeCourtId = (courtValue) => {
+        if (!courtValue) return '';
+        if (typeof courtValue === 'string') return courtValue;
+        if (typeof courtValue === 'object') return courtValue._id || courtValue.id || '';
+        return '';
+    };
+
+    const applyClientFilters = (coachList, activeFilters) => {
+        const selectedCourt = activeFilters.court?.trim();
+        const maxRate = activeFilters.maxRate !== '' ? Number(activeFilters.maxRate) : null;
+        const paymentType = activeFilters.paymentType || 'hourly';
+
+        return coachList.filter((coach) => {
+            if (selectedCourt) {
+                const hasCourtMatch = Array.isArray(coach.availability) && coach.availability.some((slot) => (
+                    normalizeCourtId(slot?.court) === selectedCourt
+                ));
+
+                if (!hasCourtMatch) return false;
+            }
+
+            if (paymentType === 'monthly' && (coach.monthlyFee === null || coach.monthlyFee === undefined)) {
+                return false;
+            }
+
+            if (maxRate !== null && !Number.isNaN(maxRate)) {
+                const selectedRate = paymentType === 'monthly'
+                    ? Number(coach.monthlyFee)
+                    : Number(coach.hourlyRate);
+
+                if (Number.isNaN(selectedRate) || selectedRate > maxRate) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    };
+
     useEffect(() => {
         const initData = async () => {
             try {
@@ -42,7 +81,7 @@ const CoachList = () => {
                     getCoaches(filters),
                     getAllCourts()
                 ]);
-                setCoaches(coachesData.data);
+                setCoaches(applyClientFilters(coachesData.data || [], filters));
                 setCourts(courtsData.data || courtsData);
             } catch (err) {
                 console.error('Error fetching data:', err);
@@ -55,12 +94,12 @@ const CoachList = () => {
         initData();
     }, []);
 
-    const fetchCoaches = async () => {
+    const fetchCoaches = async (activeFilters = filters) => {
         try {
             setLoading(true);
             setFetchError(false);
-            const data = await getCoaches(filters);
-            setCoaches(data.data);
+            const data = await getCoaches(activeFilters);
+            setCoaches(applyClientFilters(data.data || [], activeFilters));
         } catch (err) {
             console.error('Error fetching coaches:', err);
             setFetchError(true);
@@ -79,7 +118,7 @@ const CoachList = () => {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        fetchCoaches();
+        fetchCoaches(filters);
     };
 
     const renderStars = (rating) => {
@@ -273,8 +312,9 @@ const CoachList = () => {
                             description="Try adjusting your filters to find available mentors."
                             actionLabel="Clear Filters"
                             action={() => {
-                                setFilters({ city: '', skillLevel: '', court: '', minRate: '', maxRate: '', paymentType: 'hourly' });
-                                fetchCoaches();
+                                const resetFilters = { city: '', skillLevel: '', court: '', minRate: '', maxRate: '', paymentType: 'hourly' };
+                                setFilters(resetFilters);
+                                fetchCoaches(resetFilters);
                             }}
                         />
                     </motion.div>

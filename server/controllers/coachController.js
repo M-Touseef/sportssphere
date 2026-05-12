@@ -59,6 +59,17 @@ exports.getCoaches = async (req, res) => {
             query.user = { $in: userIds };
         }
 
+        // Filter by selected hall/court from availability slots
+        if (court) {
+            query['availability.court'] = court;
+        }
+
+        // Payment-type filtering should apply even without rate bounds:
+        // selecting monthly should only show coaches that offer a monthly fee.
+        if (paymentType === 'monthly') {
+            query.monthlyFee = { $exists: true, $ne: null };
+        }
+
         // Fee filtering
         if (minRate || maxRate) {
             const min = Number(minRate) || 0;
