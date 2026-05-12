@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import sparringService from '../../services/sparringService';
 import ProfessionalCard from '../../components/professional/ProfessionalCard';
-import LoadingSpinner from '../../components/LoadingSpinner';
 import {
     MapPinIcon,
     CalendarIcon,
@@ -9,11 +8,10 @@ import {
     UserIcon,
     SparklesIcon,
     XMarkIcon,
-    ChevronRightIcon,
     BoltIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/ui/Button';
@@ -28,13 +26,8 @@ const FindProfessional = () => {
     const [proAvailability, setProAvailability] = useState([]);
     const [loadingAvailability, setLoadingAvailability] = useState(false);
 
-    const [selectedSlot, setSelectedSlot] = useState(null);
-    const [requestMessage, setRequestMessage] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-
-    const navigate = useNavigate();
-    const { isAuthenticated, user } = useAuth();
-    const { success, error: toastError } = useToast();
+    const { user } = useAuth();
+    const { error: toastError } = useToast();
 
     useEffect(() => {
         fetchProfessionals();
@@ -75,48 +68,6 @@ const FindProfessional = () => {
         }
     };
 
-    const handleSendRequest = async () => {
-        if (!isAuthenticated) {
-            navigate('/login', { state: { from: '/sparring' } });
-            return;
-        }
-
-        if (user?.role === 'professional') {
-            toastError('Professional players cannot send sparring requests.');
-            return;
-        }
-
-        if (!selectedSlot) return;
-
-        try {
-            setSubmitting(true);
-            const payload = {
-                proId: selectedPro._id,
-                date: selectedSlot.date,
-                startTime: selectedSlot.startTime,
-                endTime: selectedSlot.endTime,
-                courtId: (typeof selectedSlot.court === 'string' || selectedSlot.court?._id) ? (selectedSlot.court?._id || selectedSlot.court) : undefined,
-                venue: selectedSlot.venue || (!selectedSlot.court?._id ? selectedSlot.court : undefined),
-                message: requestMessage,
-                price: selectedSlot.matchFee
-            };
-
-            await sparringService.sendSparringRequest(payload);
-            success('Request sent successfully! The professional has been notified.');
-
-            // Cleanup
-            setSelectedSlot(null);
-            setSelectedPro(null);
-            setRequestMessage('');
-            fetchProfessionals(cityFilter);
-        } catch (error) {
-            console.error(error);
-            toastError(error.response?.data?.error || 'Failed to send request');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
     const formatDate = (date) => new Date(date).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
@@ -137,10 +88,10 @@ const FindProfessional = () => {
                 <div>
                     <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Find a Pro Partner</h1>
                     <p className="text-base sm:text-lg text-slate-500 font-medium max-w-2xl">
-                        Connect with top-tier professional players for high-intensity sparring sessions. Browse profiles and book confirmed slots instantly.
+                        Browse professional player profiles.
                     </p>
                 </div>
-                {isAuthenticated && (
+                {user?.skillLevel === 'professional' && (
                     <div className="flex gap-4">
                         <Link to="/sparring/requests">
                             <Button variant="outline" className="rounded-2xl h-12 sm:h-14 px-6 sm:px-8 border-slate-200 text-sm">My Requests</Button>
@@ -206,7 +157,7 @@ const FindProfessional = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-                            onClick={() => { setSelectedPro(null); setSelectedSlot(null); }}
+                            onClick={() => { setSelectedPro(null); }}
                         />
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -229,7 +180,7 @@ const FindProfessional = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => { setSelectedPro(null); setSelectedSlot(null); }}
+                                    onClick={() => { setSelectedPro(null); }}
                                     className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-slate-50 flex items-center justify-center text-slate-400 transition-colors"
                                 >
                                     <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -254,12 +205,9 @@ const FindProfessional = () => {
                                                     {slots.map(slot => (
                                                         <button
                                                             key={slot._id}
-                                                            onClick={() => setSelectedSlot(slot)}
                                                             className={twMerge(
                                                                 "p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all text-left flex flex-col gap-3 sm:gap-4 group relative overflow-hidden",
-                                                                selectedSlot?._id === slot._id
-                                                                    ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100"
-                                                                    : "bg-white border-slate-100 hover:border-indigo-200 hover:shadow-lg hover:shadow-slate-100"
+                                                                "bg-white border-slate-100"
                                                             )}
                                                         >
                                                             <div className="flex justify-between items-start">
@@ -270,16 +218,14 @@ const FindProfessional = () => {
                                                                     </div>
                                                                     <div className={twMerge(
                                                                         "text-[9px] sm:text-[10px] font-bold uppercase tracking-widest",
-                                                                        selectedSlot?._id === slot._id ? "text-indigo-200" : "text-slate-400"
+                                                                        "text-slate-400"
                                                                     )}>
                                                                         {(slot.sparringType || 'singles').replace('_', ' ')} Session
                                                                     </div>
                                                                 </div>
                                                                 <div className={twMerge(
                                                                     "px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black border",
-                                                                    selectedSlot?._id === slot._id
-                                                                        ? "bg-white/10 border-white/20 text-white"
-                                                                        : "bg-emerald-50 border-emerald-100 text-emerald-600"
+                                                                    "bg-emerald-50 border-emerald-100 text-emerald-600"
                                                                 )}>
                                                                     PKR {slot.matchFee}
                                                                 </div>
@@ -287,7 +233,7 @@ const FindProfessional = () => {
                                                             <div className="flex items-center gap-3 mt-1 sm:mt-2">
                                                                 <div className={twMerge(
                                                                     "h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl flex items-center justify-center",
-                                                                    selectedSlot?._id === slot._id ? "bg-white/10" : "bg-slate-50"
+                                                                    "bg-slate-50"
                                                                 )}>
                                                                     <MapPinIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                                                 </div>
@@ -295,21 +241,10 @@ const FindProfessional = () => {
                                                                     <span className="text-xs font-bold leading-none">{slot.venue?.name || 'Local Court'}</span>
                                                                     <span className={twMerge(
                                                                         "text-[10px] font-medium opacity-60 mt-1",
-                                                                        selectedSlot?._id === slot._id ? "text-indigo-100" : "text-slate-500"
+                                                                        "text-slate-500"
                                                                     )}>{slot.venue?.city || selectedPro.city}</span>
                                                                 </div>
                                                             </div>
-
-                                                            {selectedSlot?._id === slot._id && (
-                                                                <motion.div
-                                                                    layoutId="check"
-                                                                    className="absolute top-2 right-2"
-                                                                >
-                                                                    <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center">
-                                                                        <SparklesIcon className="h-3 w-3 text-indigo-600" />
-                                                                    </div>
-                                                                </motion.div>
-                                                            )}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -326,58 +261,6 @@ const FindProfessional = () => {
                                     </div>
                                 )}
                             </div>
-
-                            {/* Sticky Modal Footer */}
-                            <AnimatePresence>
-                                {selectedSlot && (
-                                    <motion.div
-                                        initial={{ y: 200 }}
-                                        animate={{ y: 0 }}
-                                        exit={{ y: 200 }}
-                                        className="p-6 sm:p-8 bg-slate-900 border-t border-slate-800 pb-10 sm:pb-8"
-                                    >
-                                        <div className="flex flex-col gap-4 sm:gap-6">
-                                            <div className="flex items-center justify-between text-white">
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Selected Deployment</p>
-                                                    <p className="text-xs sm:text-sm font-bold">Slot ID: {selectedSlot._id.slice(-8).toUpperCase()}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Total Fee</p>
-                                                    <p className="text-xl sm:text-2xl font-black tracking-tighter">PKR {selectedSlot.matchFee}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="relative">
-                                                <textarea
-                                                    value={requestMessage}
-                                                    onChange={(e) => setRequestMessage(e.target.value)}
-                                                    placeholder="Operational objectives or strategic notes (optional)..."
-                                                    rows={2}
-                                                    className="w-full bg-slate-800 border-none rounded-xl sm:rounded-2xl p-3 sm:p-4 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-500 outline-none resize-none"
-                                                />
-                                            </div>
-
-                                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                                                <Button
-                                                    variant="outline"
-                                                    className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white text-sm"
-                                                    onClick={() => setSelectedSlot(null)}
-                                                >
-                                                    Reset Selection
-                                                </Button>
-                                                <Button
-                                                    className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-indigo-600 text-white font-bold shadow-xl shadow-indigo-900/40 text-sm"
-                                                    onClick={handleSendRequest}
-                                                    isLoading={submitting}
-                                                >
-                                                    Execute Request
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
                         </motion.div>
                     </div>
                 )}

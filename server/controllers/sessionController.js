@@ -1,6 +1,7 @@
 const Session = require('../models/Session');
 const CoachProfile = require('../models/CoachProfile');
 const Court = require('../models/Court');
+const { createNotification } = require('./notificationController');
 
 // @desc    Publish a coaching session (Coach creates available slot)
 // @route   POST /api/sessions/publish
@@ -123,6 +124,23 @@ exports.requestSession = async (req, res) => {
         session.students.push(req.user.id);
         session.status = 'pending'; // Confirmation needed from coach
         await session.save();
+
+        // Notify coach about incoming coaching session request.
+        try {
+            await createNotification({
+                userId: session.coach,
+                type: 'booking',
+                title: 'New Coaching Session Request',
+                message: 'A player requested one of your coaching sessions. Please review it.',
+                meta: {
+                    kind: 'incoming_coaching_request',
+                    sessionId: session._id,
+                    requesterId: req.user.id
+                }
+            });
+        } catch (notifyErr) {
+            console.error('Failed to create coaching request notification:', notifyErr);
+        }
 
         res.status(200).json({
             success: true,
@@ -432,6 +450,24 @@ exports.requestRecurringSession = async (req, res) => {
 
             conflict.students.push(req.user.id);
             await conflict.save();
+
+            // Notify coach about incoming coaching session request.
+            try {
+                await createNotification({
+                    userId: conflict.coach,
+                    type: 'booking',
+                    title: 'New Coaching Session Request',
+                    message: 'A player requested one of your coaching sessions. Please review it.',
+                    meta: {
+                        kind: 'incoming_coaching_request',
+                        sessionId: conflict._id,
+                        requesterId: req.user.id
+                    }
+                });
+            } catch (notifyErr) {
+                console.error('Failed to create coaching request notification:', notifyErr);
+            }
+
             return res.status(200).json({ success: true, data: conflict });
         }
 
@@ -468,6 +504,23 @@ exports.requestRecurringSession = async (req, res) => {
             status: 'pending',
             isPublished: false // Created on demand
         });
+
+        // Notify coach about incoming coaching session request.
+        try {
+            await createNotification({
+                userId: coachId,
+                type: 'booking',
+                title: 'New Coaching Session Request',
+                message: 'A player requested one of your coaching sessions. Please review it.',
+                meta: {
+                    kind: 'incoming_coaching_request',
+                    sessionId: session._id,
+                    requesterId: req.user.id
+                }
+            });
+        } catch (notifyErr) {
+            console.error('Failed to create coaching request notification:', notifyErr);
+        }
 
         res.status(201).json({
             success: true,

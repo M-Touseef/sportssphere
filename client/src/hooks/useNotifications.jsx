@@ -50,7 +50,7 @@ export const useNotifications = () => {
 
   useEffect(() => {
     if (!user) return undefined;
-    const intervalMs = user.role === 'admin' ? 30000 : 120000;
+    const intervalMs = 30000;
     const id = setInterval(() => loadNotifications(), intervalMs);
     return () => clearInterval(id);
   }, [user, loadNotifications]);

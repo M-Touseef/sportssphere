@@ -5,6 +5,7 @@ const SparringAvailability = require('../models/SparringAvailability');
 const CoachProfile = require('../models/CoachProfile');
 const ProfessionalProfile = require('../models/ProfessionalProfile');
 const Match = require('../models/Match');
+const { createNotification } = require('./notificationController');
 
 // @desc    Create new booking
 // @route   POST /api/bookings
@@ -166,6 +167,23 @@ exports.createBooking = async (req, res, next) => {
             // Update manual slot status to PENDING if applicable
             if (slotId) {
                 await SparringAvailability.findByIdAndUpdate(slotId, { status: 'PENDING' });
+            }
+
+            // Notify selected coach/professional that they received a new request.
+            try {
+                await createNotification({
+                    userId: proPlayerId,
+                    type: 'booking',
+                    title: 'New Sparring Request',
+                    message: 'You received a new sparring/coaching request. Please review and respond.',
+                    meta: {
+                        kind: 'incoming_sparring_request',
+                        bookingId: booking._id,
+                        requesterId: req.user.id
+                    }
+                });
+            } catch (notifyErr) {
+                console.error('Failed to create incoming sparring notification:', notifyErr);
             }
         }
 
