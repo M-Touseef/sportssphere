@@ -205,10 +205,15 @@ const Home = () => {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-10">
                         <div className="flex flex-col items-center md:items-start gap-4">
                             <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                                <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shadow-sm">
                                     <TrophyIcon className="h-5 w-5" />
                                 </div>
-                                <span className="text-lg font-black tracking-tight text-slate-900 uppercase">SportSphere</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg font-black tracking-[0.06em] text-slate-900">SportsSphere</span>
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] border border-slate-200 rounded-full px-2 py-0.5">
+                                        Est. 2025
+                                    </span>
+                                </div>
                             </div>
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Premium Sports Management Platform</p>
                         </div>
@@ -218,7 +223,7 @@ const Home = () => {
                             <Link to="#" className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Support Center</Link>
                         </div>
                     </div>
-                    <div className="mt-16 text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">SportSphere 2025</div>
+                    <div className="mt-16 text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">SportsSphere 2026</div>
                 </footer>
             </div>
         </div>

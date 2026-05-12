@@ -65,14 +65,16 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
     return (
         <div className="flex h-full grow flex-col gap-y-10 overflow-y-auto border-r border-indigo-100/70 bg-gradient-to-b from-white via-indigo-50/40 to-violet-50/50 px-6 sm:px-8 pb-10 shadow-[10px_0_60px_-20px_rgba(79,70,229,0.22)]">
             <div className="flex h-24 shrink-0 items-center justify-between">
-                <Link to="/" className="flex items-center gap-4 group">
+                <Link to="/" className="flex items-center gap-3.5 group">
                     <motion.div
                         whileHover={{ rotate: 10, scale: 1.06 }}
                         className="h-11 w-11 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 transition-transform duration-500"
                     >
                         <TrophyIcon className="h-6 w-6" />
                     </motion.div>
-                    <span className="text-xl font-black tracking-tighter text-slate-900 group-hover:text-indigo-600 transition-colors uppercase">SportSphere</span>
+                    <span className="text-xl font-black tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 via-violet-600 to-cyan-600 group-hover:from-indigo-600 group-hover:to-violet-500 transition-all duration-500">
+                        SportsSphere
+                    </span>
                 </Link>
                 {isMobile && (
                     <button onClick={onCloseMobile} className="lg:hidden p-2.5 text-slate-400 hover:text-indigo-700 hover:bg-white rounded-xl transition-all border border-indigo-100/80">

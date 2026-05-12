@@ -27,11 +27,14 @@ export default function Navbar() {
                         <div className="flex h-16 justify-between items-center">
                             {/* Logo Section */}
                             <div className="flex items-center gap-10">
-                                <Link to="/" className="flex items-center gap-2 group">
+                                <Link to="/" className="flex items-center gap-2.5 group">
                                     <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30 group-hover:scale-110 transition-all">
                                         <TrophyIcon className="h-5 w-5" />
                                     </div>
-                                    <span className="text-base sm:text-lg font-black tracking-tight text-slate-900">SportSphere</span>
+                                    <span className="relative text-base sm:text-lg font-black tracking-[0.04em] text-slate-900 transition-all duration-300 group-hover:text-indigo-700">
+                                        SportsSphere
+                                        <span className="pointer-events-none absolute -bottom-1 left-0 h-[2px] w-0 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 transition-all duration-300 group-hover:w-full" />
+                                    </span>
                                 </Link>
 
                                 {/* Desktop Links */}
