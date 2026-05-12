@@ -411,16 +411,28 @@ const CourtDetails = () => {
                                             )}
                                         </div>
 
-                                        <div className="pt-4">
-                                            <Button
-                                                onClick={() => setBookingStep('selecting_pro')}
-                                                disabled={!selectedSlot}
-                                                fullWidth
-                                                size="lg"
-                                                className="h-16 text-base font-bold shadow-xl shadow-indigo-100 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white"
-                                            >
-                                                Continue to Pro Selection
-                                            </Button>
+                                        <div className="pt-4 space-y-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <Button
+                                                    onClick={() => handleBooking(null)}
+                                                    disabled={!selectedSlot || bookingLoading}
+                                                    fullWidth
+                                                    size="lg"
+                                                    isLoading={bookingLoading}
+                                                    className="h-16 text-base font-bold rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800"
+                                                >
+                                                    Book Court Only
+                                                </Button>
+                                                <Button
+                                                    onClick={() => setBookingStep('selecting_pro')}
+                                                    disabled={!selectedSlot || bookingLoading}
+                                                    fullWidth
+                                                    size="lg"
+                                                    className="h-16 text-base font-bold shadow-xl shadow-indigo-100 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                >
+                                                    Continue to Pro Selection
+                                                </Button>
+                                            </div>
                                         </div>
 
                                         {!isAuthenticated && (
