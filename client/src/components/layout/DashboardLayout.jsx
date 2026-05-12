@@ -64,12 +64,26 @@ export default function DashboardLayout() {
                     </div>
                 </main>
 
-                <footer className="py-8 px-10 border-t border-slate-100 bg-white/30 backdrop-blur-sm mt-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">© 2025 SportSphere. All rights reserved.</p>
-                        <div className="flex gap-8">
-                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-600 cursor-pointer transition-colors">Privacy Policy</span>
-                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-600 cursor-pointer transition-colors">Support</span>
+                <footer className="mt-auto border-t border-indigo-100/70 bg-gradient-to-r from-indigo-50 via-violet-50 to-cyan-50 px-4 py-6 sm:px-8 lg:px-10">
+                    <div className="mx-auto max-w-7xl">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-center sm:text-left text-[11px] sm:text-xs font-extrabold text-indigo-700/80 uppercase tracking-[0.18em]">
+                                © 2026 SportSphere. All rights reserved.
+                            </p>
+                            <div className="flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
+                                <button
+                                    type="button"
+                                    className="rounded-full border border-indigo-200/80 bg-white/70 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-indigo-700 hover:bg-white hover:border-indigo-300 transition-colors"
+                                >
+                                    Privacy Policy
+                                </button>
+                                <button
+                                    type="button"
+                                    className="rounded-full border border-violet-200/80 bg-white/70 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-violet-700 hover:bg-white hover:border-violet-300 transition-colors"
+                                >
+                                    Support
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </footer>

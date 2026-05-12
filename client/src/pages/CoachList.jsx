@@ -235,18 +235,19 @@ const CoachList = () => {
                         {coaches.map((coach) => (
                             <motion.div
                                 key={coach._id}
-                                whileHover={{ y: -8 }}
-                                className="group bg-white rounded-[2.5rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden transition-all duration-500 flex flex-col h-full"
+                                whileHover={{ y: -10, scale: 1.01 }}
+                                transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+                                className="group bg-gradient-to-b from-white to-indigo-50/30 rounded-[2.5rem] shadow-[0_20px_55px_-20px_rgba(79,70,229,0.25)] border border-indigo-100/70 overflow-hidden transition-all duration-500 flex flex-col h-full"
                             >
                                 {/* Card Header - Identity & Rating */}
                                 <div className="p-8 pb-6 flex items-center gap-6">
-                                    <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-xl shadow-indigo-100 ring-4 ring-white group-hover:scale-105 transition-transform duration-500">
+                                    <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-xl shadow-indigo-200 ring-4 ring-white group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                                         {coach.user?.name?.[0]?.toUpperCase() || 'C'}
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-1.5">
                                             <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-                                                <StarIcon className="h-3 w-3 text-amber-500 fill-current" />
+                                                <StarIcon className="h-3 w-3 text-amber-500 fill-current group-hover:scale-110 transition-transform duration-300" />
                                                 <span className="text-[11px] font-bold text-amber-700">{coach.rating.average.toFixed(2)}</span>
                                             </div>
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{coach.rating.count} Sessions</span>
@@ -255,7 +256,7 @@ const CoachList = () => {
                                             {coach.user?.name || 'Coach'}
                                         </h3>
                                         <div className="flex items-center gap-1.5 text-slate-400 mt-1">
-                                            <MapPinIcon className="h-3.5 w-3.5 text-indigo-500" />
+                                            <MapPinIcon className="h-3.5 w-3.5 text-indigo-500 group-hover:-translate-y-0.5 transition-transform duration-300" />
                                             <span className="text-[10px] font-bold uppercase tracking-widest truncate">{coach.user?.city || 'Unknown'} Division</span>
                                         </div>
                                     </div>
@@ -278,7 +279,7 @@ const CoachList = () => {
 
                                 {/* Pricing Bar */}
                                 <div className="px-8 pb-8 pt-2 mt-auto">
-                                    <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-[2rem] border border-slate-100 mb-6">
+                                    <div className="flex items-center gap-3 p-4 bg-white/80 rounded-[2rem] border border-indigo-100/70 mb-6 shadow-[0_10px_25px_-15px_rgba(79,70,229,0.35)] transition-all duration-500 group-hover:shadow-[0_16px_30px_-18px_rgba(79,70,229,0.45)]">
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-0.5">Hourly</p>
                                             <p className="text-base font-black text-indigo-600 whitespace-nowrap">Rs.{coach.hourlyRate}</p>
@@ -295,9 +296,9 @@ const CoachList = () => {
                                     <Link to={`/coaches/${coach._id}`} className="block">
                                         <Button
                                             fullWidth
-                                            className="h-14 shadow-lg shadow-indigo-100 rounded-2xl font-bold bg-slate-900 group-hover:bg-indigo-600 text-white transition-all duration-300 flex items-center justify-center gap-2"
+                                            className="h-14 shadow-lg shadow-indigo-100 rounded-2xl font-bold bg-slate-900 group-hover:bg-indigo-600 group-hover:shadow-indigo-200 text-white transition-all duration-300 flex items-center justify-center gap-2"
                                         >
-                                            View Professional <ArrowRightIcon className="h-4 w-4" />
+                                            View Professional <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                                         </Button>
                                     </Link>
                                 </div>

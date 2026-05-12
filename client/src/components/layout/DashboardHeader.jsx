@@ -1,13 +1,20 @@
 import { Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import Tooltip from '../ui/Tooltip'
 import { useNotifications } from '../../hooks/useNotifications'
 
 const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
     const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications()
+    const location = useLocation()
+    const currentSection = location.pathname
+        .split('/')
+        .filter(Boolean)
+        .slice(-1)[0]
+        ?.replace(/-/g, ' ')
+        ?.replace(/\b\w/g, (char) => char.toUpperCase()) || 'Dashboard';
     const userNavigation = [
         { name: 'My Profile', href: '/profile', icon: UserIcon },
         { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon },
@@ -23,6 +30,22 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                 >
                     <Bars3Icon className="h-5 w-5" />
                 </button>
+
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="hidden sm:flex h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white items-center justify-center shadow-lg shadow-indigo-200">
+                        <span className="text-xs font-black">SS</span>
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-indigo-500">Control Center</p>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">{currentSection}</h2>
+                            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Live
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="hidden md:flex relative max-w-sm w-full group">
                     <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-300 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />

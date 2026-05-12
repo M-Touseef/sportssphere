@@ -153,8 +153,9 @@ const CourtList = () => {
                             <motion.div
                                 key={court._id}
                                 layout
-                                whileHover={{ y: -6 }}
-                                className="group bg-white rounded-2xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden transition-all duration-300 flex flex-col h-full"
+                                whileHover={{ y: -8, scale: 1.01 }}
+                                transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                                className="group bg-gradient-to-b from-white to-indigo-50/40 rounded-2xl shadow-[0_8px_28px_-10px_rgba(79,70,229,0.18)] border border-indigo-100/70 overflow-hidden transition-all duration-300 flex flex-col h-full"
                             >
                                 <div className="relative h-60 w-full overflow-hidden shrink-0">
                                     {court.images && court.images.length > 0 ? (
@@ -196,19 +197,19 @@ const CourtList = () => {
                                             {court.name}
                                         </h3>
 
-                                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                            <MapPinIcon className="h-4 w-4 text-indigo-500 shrink-0" />
+                                        <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50/80 border border-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700 uppercase tracking-wider">
+                                            <MapPinIcon className="h-4 w-4 text-indigo-500 shrink-0 group-hover:-translate-y-0.5 transition-transform duration-300" />
                                             {court.location.city}
                                         </div>
                                     </div>
 
-                                    <div className="mt-auto pt-6 border-t border-slate-100/50 flex items-center justify-between">
+                                    <div className="mt-auto pt-6 border-t border-indigo-100/70 flex items-center justify-between">
                                         <div className="flex gap-2.5 items-center shrink-0">
-                                            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">Available</span>
+                                            <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_0_4px_rgba(16,185,129,0.14)]" />
+                                            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-600">Available</span>
                                         </div>
                                         <Link to={`/courts/${court._id}`} className="shrink-0">
-                                            <Button variant="outline" className="h-10 px-5 rounded-xl text-xs sm:text-sm font-bold border-slate-200 hover:bg-slate-900 hover:text-white transition-all flex items-center gap-2">
+                                            <Button variant="outline" className="h-10 px-5 rounded-xl text-xs sm:text-sm font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-600 hover:border-indigo-600 hover:text-white transition-all flex items-center gap-2">
                                                 Details
                                                 <ArrowRightIcon className="h-4 w-4" />
                                             </Button>
