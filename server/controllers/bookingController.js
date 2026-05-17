@@ -6,13 +6,17 @@ const CoachProfile = require('../models/CoachProfile');
 const ProfessionalProfile = require('../models/ProfessionalProfile');
 const Match = require('../models/Match');
 const { createNotification } = require('./notificationController');
+const { RESPONSE_DEADLINE_MS } = require('../constants/responseDeadlines');
+const { normalizeToHour } = require('../utils/timeUtils');
 
 // @desc    Create new booking
 // @route   POST /api/bookings
 // @access  Private
 exports.createBooking = async (req, res, next) => {
     try {
-        const { courtId, date, startTime, endTime, proPlayerId, slotId } = req.body;
+        const { courtId, date, startTime: rawStart, endTime: rawEnd, proPlayerId, slotId } = req.body;
+        const startTime = normalizeToHour(rawStart);
+        const endTime = normalizeToHour(rawEnd);
         console.log('Booking request received:', { courtId, date, startTime, endTime, proPlayerId, slotId });
 
         if (!courtId || !date || !startTime || !endTime) {
@@ -148,8 +152,7 @@ exports.createBooking = async (req, res, next) => {
 
         if (proPlayerId) {
             // Create Sparring Request
-            const responseDeadline = new Date();
-            responseDeadline.setHours(responseDeadline.getHours() + 2);
+            const responseDeadline = new Date(Date.now() + RESPONSE_DEADLINE_MS);
 
             const sparringRequest = await SparringSessionRequest.create({
                 requester: req.user.id,
@@ -175,7 +178,7 @@ exports.createBooking = async (req, res, next) => {
                     userId: proPlayerId,
                     type: 'booking',
                     title: 'New Sparring Request',
-                    message: 'You received a new sparring/coaching request. Please review and respond.',
+                    message: 'You received a new sparring/coaching request. Please respond within 30 minutes.',
                     meta: {
                         kind: 'incoming_sparring_request',
                         bookingId: booking._id,

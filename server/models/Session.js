@@ -19,6 +19,13 @@ const sessionSchema = new mongoose.Schema({
         ref: 'Court',
         required: true
     },
+    courtBooking: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Booking'
+    },
+    responseDeadline: {
+        type: Date
+    },
     date: {
         type: Date,
         required: true
@@ -84,5 +91,7 @@ sessionSchema.index({ coach: 1, date: 1, startTime: 1 }, {
     unique: true,
     partialFilterExpression: { status: { $ne: 'cancelled' } }
 });
+
+sessionSchema.index({ responseDeadline: 1, status: 1 });
 
 module.exports = mongoose.model('Session', sessionSchema);

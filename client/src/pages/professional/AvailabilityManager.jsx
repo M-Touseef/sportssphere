@@ -6,21 +6,19 @@ import {
     removeRecurringSlot,
     updateRecurringSlot
 } from '../../services/professionalService';
-import { getAllCourts } from '../../services/courtService';
 import FriendlyTimePicker from '../../components/professional/FriendlyTimePicker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {
     TrashIcon,
-    MapPinIcon,
     CalendarIcon,
     ClockIcon,
     PlusIcon,
-    PencilSquareIcon
+    PencilSquareIcon,
+    InformationCircleIcon
 } from '@heroicons/react/24/outline';
 
 const AvailabilityManager = () => {
     const [slots, setSlots] = useState([]);
-    const [courts, setCourts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingSlotId, setEditingSlotId] = useState(null);
@@ -38,21 +36,15 @@ const AvailabilityManager = () => {
     const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
         defaultValues: {
             day: 'monday',
-            startTime: '18:00',
-            court: ''
+            startTime: '18:00'
         }
     });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [slotsData, courtsData] = await Promise.all([
-                    getMyRecurringAvailability(),
-                    getAllCourts()
-                ]);
-
+                const slotsData = await getMyRecurringAvailability();
                 if (slotsData.success) setSlots(slotsData.data);
-                setCourts(courtsData.data || courtsData);
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
@@ -64,38 +56,26 @@ const AvailabilityManager = () => {
 
     const calculateEndTime = (startTime) => {
         if (!startTime) return '';
-        const [hours, minutes] = startTime.split(':').map(Number);
+        const [hours] = startTime.split(':').map(Number);
         const endHours = (hours + 1) % 24;
-        return `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        return `${String(endHours).padStart(2, '0')}:00`;
     };
 
-    const buildPayload = (data) => {
-        const court = courts.find(c => c._id === data.court);
-        const endTime = calculateEndTime(data.startTime);
-        return {
-            ...data,
-            endTime,
-            court: data.court,
-            venue: {
-                name: court?.name,
-                city: court?.location?.city || 'Unknown',
-                address: court?.location?.address || 'Unknown'
-            }
-        };
-    };
+    const buildPayload = (data) => ({
+        day: data.day,
+        startTime: data.startTime,
+        endTime: calculateEndTime(data.startTime)
+    });
 
     const onSubmit = async (data) => {
         try {
             const payload = buildPayload(data);
-            let response;
-            if (editingSlotId) {
-                response = await updateRecurringSlot(editingSlotId, payload);
-            } else {
-                response = await addRecurringSlot(payload);
-            }
+            const response = editingSlotId
+                ? await updateRecurringSlot(editingSlotId, payload)
+                : await addRecurringSlot(payload);
             if (response.success) {
                 setSlots(response.data);
-                reset({ day: 'monday', startTime: '18:00', court: '' });
+                reset({ day: 'monday', startTime: '18:00' });
                 setShowAddForm(false);
                 setEditingSlotId(null);
             }
@@ -114,7 +94,7 @@ const AvailabilityManager = () => {
                 if (editingSlotId === id) {
                     setEditingSlotId(null);
                     setShowAddForm(false);
-                    reset({ day: 'monday', startTime: '18:00', court: '' });
+                    reset({ day: 'monday', startTime: '18:00' });
                 }
             }
         } catch (error) {
@@ -124,12 +104,10 @@ const AvailabilityManager = () => {
     };
 
     const openEditSlot = (slot) => {
-        const courtId = slot.court?._id?.toString?.() || slot.court?.toString?.() || slot.court || '';
         setEditingSlotId(slot._id);
         setShowAddForm(true);
         reset({
             day: slot.day,
-            court: courtId,
             startTime: slot.startTime || '18:00'
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -137,7 +115,7 @@ const AvailabilityManager = () => {
 
     const toggleForm = () => {
         if (showAddForm) {
-            reset({ day: 'monday', startTime: '18:00', court: '' });
+            reset({ day: 'monday', startTime: '18:00' });
             setEditingSlotId(null);
         }
         setShowAddForm(!showAddForm);
@@ -157,7 +135,9 @@ const AvailabilityManager = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Weekly Availability</h1>
-                    <p className="mt-1 text-sm text-slate-500">Set your recurring weekly schedule.</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Set when you are free each week. Players choose the court when they send a request.
+                    </p>
                 </div>
                 <button
                     type="button"
@@ -178,8 +158,15 @@ const AvailabilityManager = () => {
                 </button>
             </div>
 
+            <div className="flex gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-sm text-indigo-900">
+                <InformationCircleIcon className="h-5 w-5 shrink-0 text-indigo-600" />
+                <p className="font-medium leading-relaxed">
+                    You only pick the day and time. The non-professional player selects the venue when booking a sparring session with you.
+                </p>
+            </div>
+
             {showAddForm && (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 animate-fade-in-down">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
                         <h3 className="text-lg font-bold text-slate-900">
                             {editingSlotId ? 'Edit weekly slot' : 'Add weekly recurring slot'}
@@ -188,7 +175,7 @@ const AvailabilityManager = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    reset({ day: 'monday', startTime: '18:00', court: '' });
+                                    reset({ day: 'monday', startTime: '18:00' });
                                     setEditingSlotId(null);
                                     setShowAddForm(false);
                                 }}
@@ -198,9 +185,8 @@ const AvailabilityManager = () => {
                             </button>
                         )}
                     </div>
-                    <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        <div className="col-span-2 md:col-span-1">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Day of week</label>
                             <select
                                 {...register('day', { required: 'Day is required' })}
@@ -213,23 +199,7 @@ const AvailabilityManager = () => {
                             {errors.day && <span className="text-red-500 text-xs">{errors.day.message}</span>}
                         </div>
 
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Court / venue</label>
-                            <select
-                                {...register('court', { required: 'Court is required' })}
-                                className="block w-full rounded-xl border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm py-2.5"
-                            >
-                                <option value="">Select a court…</option>
-                                {courts.map(court => (
-                                    <option key={court._id} value={court._id}>
-                                        {court.name} — {court.location?.city}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.court && <span className="text-red-500 text-xs">{errors.court.message}</span>}
-                        </div>
-
-                        <div className="col-span-2">
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Start time (1 hour)</label>
                             <Controller
                                 name="startTime"
@@ -251,26 +221,24 @@ const AvailabilityManager = () => {
                             </p>
                         </div>
 
-                        <div className="col-span-2">
-                            <div className="flex justify-end gap-3 mt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        reset({ day: 'monday', startTime: '18:00', court: '' });
-                                        setEditingSlotId(null);
-                                        setShowAddForm(false);
-                                    }}
-                                    className="px-4 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
-                                >
-                                    {editingSlotId ? 'Save changes' : 'Save weekly slot'}
-                                </button>
-                            </div>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    reset({ day: 'monday', startTime: '18:00' });
+                                    setEditingSlotId(null);
+                                    setShowAddForm(false);
+                                }}
+                                className="px-4 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+                            >
+                                {editingSlotId ? 'Save changes' : 'Save weekly slot'}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -303,12 +271,9 @@ const AvailabilityManager = () => {
                                             {slot.startTime} – {slot.endTime}
                                         </span>
                                     </div>
-                                    <div className="flex flex-wrap items-center text-sm text-slate-500 gap-y-2 gap-x-4 mt-2">
-                                        <div className="flex items-center gap-1">
-                                            <MapPinIcon className="h-4 w-4 text-slate-400 shrink-0" />
-                                            {slot.court?.name || slot.venue?.name}, {slot.court?.location?.city || slot.venue?.city}
-                                        </div>
-                                    </div>
+                                    <p className="text-xs text-slate-400 font-medium mt-1">
+                                        Venue chosen by player when requesting
+                                    </p>
                                 </div>
 
                                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">

@@ -24,18 +24,22 @@ const CoachBookingRequests = () => {
             const normalizedSessions = (coachingSessions.data || coachingSessions || []).map(session => ({
                 _id: session._id,
                 type: 'COACHING_SESSION',
-                requester: session.student, // Mapping student to requester
+                requester: session.students?.[0],
+                students: session.students,
                 availabilitySlot: {
                     date: session.date,
                     startTime: session.startTime,
-                    endTime: session.endTime
+                    endTime: session.endTime,
+                    courtName: session.court?.name
                 },
                 message: session.notes || 'Coaching Session',
                 paymentPlan: session.planType,
+                responseDeadline: session.responseDeadline,
                 status: session.status === 'pending' ? 'PENDING_RESPONSE' :
                     session.status === 'pending_payment' ? 'ACCEPTED' :
                         session.status === 'confirmed' ? 'PAID & CONFIRMED' :
                             session.status === 'cancelled' ? 'REJECTED' : session.status,
+                createdAt: session.createdAt
             }));
 
             const allRequests = [

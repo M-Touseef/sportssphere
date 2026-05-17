@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import sparringService from '../../services/sparringService';
+import { getAllCourts } from '../../services/courtService';
 import ProfessionalCard from '../../components/professional/ProfessionalCard';
 import {
     MapPinIcon,
@@ -16,21 +18,31 @@ import { useToast } from '../../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/ui/Button';
 import { twMerge } from 'tailwind-merge';
+import { formatSlotHourRange } from '../../utils/timeFormat';
 
 const FindProfessional = () => {
+    const navigate = useNavigate();
     const [professionals, setProfessionals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [cityFilter, setCityFilter] = useState('');
+    const [courts, setCourts] = useState([]);
 
     const [selectedPro, setSelectedPro] = useState(null);
     const [proAvailability, setProAvailability] = useState([]);
     const [loadingAvailability, setLoadingAvailability] = useState(false);
+    const [selectedSlot, setSelectedSlot] = useState(null);
+    const [selectedCourtId, setSelectedCourtId] = useState('');
+    const [requestMessage, setRequestMessage] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     const { user } = useAuth();
-    const { error: toastError } = useToast();
+    const { success, error: toastError } = useToast();
 
     useEffect(() => {
         fetchProfessionals();
+        getAllCourts()
+            .then((res) => setCourts(res.data || res || []))
+            .catch(() => setCourts([]));
     }, []);
 
     const fetchProfessionals = async (city = '') => {
@@ -51,9 +63,20 @@ const FindProfessional = () => {
         fetchProfessionals(cityFilter);
     };
 
+    const resetModal = () => {
+        setSelectedPro(null);
+        setSelectedSlot(null);
+        setSelectedCourtId('');
+        setRequestMessage('');
+        setProAvailability([]);
+    };
+
     const handleViewAvailability = async (proWrapper) => {
         const proId = proWrapper.player._id;
         setSelectedPro(proWrapper.player);
+        setSelectedSlot(null);
+        setSelectedCourtId('');
+        setRequestMessage('');
         setProAvailability([]);
         setLoadingAvailability(true);
 
@@ -65,6 +88,36 @@ const FindProfessional = () => {
             toastError('Failed to load availability slots.');
         } finally {
             setLoadingAvailability(false);
+        }
+    };
+
+    const handleSendRequest = async () => {
+        if (!user) {
+            navigate('/login', { state: { from: '/app/sparring' } });
+            return;
+        }
+        if (!selectedSlot || !selectedCourtId) {
+            toastError('Please select a time slot and a court.');
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            await sparringService.sendSparringRequest({
+                proId: selectedPro._id,
+                date: selectedSlot.date,
+                startTime: selectedSlot.startTime,
+                endTime: selectedSlot.endTime,
+                courtId: selectedCourtId,
+                availabilitySlotId: selectedSlot._id,
+                message: requestMessage
+            });
+            success('Request sent! The professional has 30 minutes to respond, or it will be auto-cancelled.');
+            resetModal();
+        } catch (err) {
+            toastError(err.response?.data?.error || 'Failed to send request');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -156,7 +209,7 @@ const FindProfessional = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-                            onClick={() => { setSelectedPro(null); }}
+                            onClick={resetModal}
                         />
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -179,7 +232,7 @@ const FindProfessional = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => { setSelectedPro(null); }}
+                                    onClick={resetModal}
                                     className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-slate-50 flex items-center justify-center text-slate-400 transition-colors"
                                 >
                                     <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -204,16 +257,20 @@ const FindProfessional = () => {
                                                     {slots.map(slot => (
                                                         <button
                                                             key={slot._id}
+                                                            type="button"
+                                                            onClick={() => setSelectedSlot(slot)}
                                                             className={twMerge(
-                                                                "p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all text-left flex flex-col gap-3 sm:gap-4 group relative overflow-hidden",
-                                                                "bg-white border-slate-100"
+                                                                "p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all text-left flex flex-col gap-3 sm:gap-4",
+                                                                selectedSlot?._id === slot._id
+                                                                    ? "bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200"
+                                                                    : "bg-white border-slate-100 hover:border-indigo-200"
                                                             )}
                                                         >
                                                             <div className="flex justify-between items-start">
                                                                 <div className="space-y-1">
                                                                     <div className="flex items-center gap-2 text-xs sm:text-sm font-black tracking-tight uppercase">
                                                                         <ClockIcon className="h-4 w-4 opacity-60" />
-                                                                        {slot.startTime} - {slot.endTime}
+                                                                        {formatSlotHourRange(slot.startTime, slot.endTime)}
                                                                     </div>
                                                                     <div className={twMerge(
                                                                         "text-[9px] sm:text-[10px] font-bold uppercase tracking-widest",
@@ -237,11 +294,7 @@ const FindProfessional = () => {
                                                                     <MapPinIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                                                 </div>
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-xs font-bold leading-none">{slot.venue?.name || 'Local Court'}</span>
-                                                                    <span className={twMerge(
-                                                                        "text-[10px] font-medium opacity-60 mt-1",
-                                                                        "text-slate-500"
-                                                                    )}>{slot.venue?.city || selectedPro.city}</span>
+                                                                    <span className="text-xs font-bold leading-none text-slate-400">Court selected when you request</span>
                                                                 </div>
                                                             </div>
                                                         </button>
@@ -260,6 +313,46 @@ const FindProfessional = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {selectedSlot && (
+                                <div className="border-t border-slate-100 p-6 sm:p-8 bg-slate-50/80 space-y-5">
+                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Choose venue</h3>
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Court / hall</label>
+                                        <select
+                                            value={selectedCourtId}
+                                            onChange={(e) => setSelectedCourtId(e.target.value)}
+                                            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white font-semibold text-sm focus:ring-4 focus:ring-indigo-100 outline-none"
+                                        >
+                                            <option value="">Select a court…</option>
+                                            {courts.map((court) => (
+                                                <option key={court._id} value={court._id}>
+                                                    {court.name} — {court.location?.city}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Message (optional)</label>
+                                        <textarea
+                                            value={requestMessage}
+                                            onChange={(e) => setRequestMessage(e.target.value)}
+                                            rows={2}
+                                            placeholder="Introduce yourself or add a note…"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white font-medium text-sm focus:ring-4 focus:ring-indigo-100 outline-none resize-none"
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={handleSendRequest}
+                                        isLoading={submitting}
+                                        disabled={!selectedCourtId}
+                                        fullWidth
+                                        className="h-14 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+                                    >
+                                        Send Sparring Request
+                                    </Button>
+                                </div>
+                            )}
                         </motion.div>
                     </div>
                 )}

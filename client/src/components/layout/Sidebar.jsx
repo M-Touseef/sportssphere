@@ -39,6 +39,7 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
         navigation.push({ name: 'My Tournaments', href: '/app/tournaments', icon: FireIcon });
         navigation.push({ name: 'Create Tournament', href: '/app/tournaments/create', icon: TrophyIcon });
         navigation.push({ name: 'My Courts', href: '/org/courts', icon: MapPinIcon });
+        navigation.push({ name: 'Coaching Requests', href: '/org/coaching-requests', icon: ClockIcon });
     } else if (user?.role === 'player') {
         navigation.push({ name: 'Book a Court', href: '/courts', icon: MapPinIcon });
         navigation.push({ name: 'Find Mentors', href: '/coaches', icon: AcademicCapIcon });

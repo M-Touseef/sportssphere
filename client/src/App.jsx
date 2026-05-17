@@ -38,11 +38,15 @@ import PendingVerification from './pages/PendingVerification';
 import ProfileSetup from './pages/ProfileSetup';
 import RoleSelection from './pages/RoleSelection';
 import PaymentReturn from './pages/PaymentReturn';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import TermsOfService from './pages/legal/TermsOfService';
+import SupportCenter from './pages/legal/SupportCenter';
 
 // Coach Pages
 import CoachLayout from './components/layout/CoachLayout';
 import CoachProfileEditor from './pages/coach/CoachProfileEditor';
 import CoachAvailabilityManager from './pages/coach/CoachAvailabilityManager';
+import CoachCourtBookings from './pages/coach/CoachCourtBookings';
 import CoachBookingRequests from './pages/coach/CoachBookingRequests';
 
 // Professional Player Pages
@@ -58,6 +62,7 @@ import FindProfessional from './pages/sparring/FindProfessional';
 import MyBookings from './pages/MyBookings';
 import MySparringRequests from './pages/sparring/MySparringRequestsV2';
 import OrganizerCourts from './pages/organizer/OrganizerCourts';
+import OrganizerCoachingRequests from './pages/organizer/OrganizerCoachingRequests';
 import CreateCourt from './pages/organizer/CreateCourt';
 
 const AnimatedRoutes = () => {
@@ -135,6 +140,9 @@ const AnimatedRoutes = () => {
           <Route path="/pending-verification" element={<PageTransition><PendingVerification /></PageTransition>} />
           {/* JazzCash return URL — no auth required, browser redirect from JazzCash */}
           <Route path="/payment/return" element={<PaymentReturn />} />
+          <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
+          <Route path="/support" element={<PageTransition><SupportCenter /></PageTransition>} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
@@ -185,6 +193,7 @@ const AnimatedRoutes = () => {
             {/* Organizer Routes */}
             <Route element={<ProtectedRoute allowedRoles={['organizer']} />}>
               <Route path="/org/courts" element={<PageTransition><OrganizerCourts /></PageTransition>} />
+              <Route path="/org/coaching-requests" element={<PageTransition><OrganizerCoachingRequests /></PageTransition>} />
               <Route path="/org/courts/create" element={<PageTransition><CreateCourt /></PageTransition>} />
               <Route path="/org/courts/:courtId/edit" element={<PageTransition><CreateCourt /></PageTransition>} />
             </Route>
@@ -206,6 +215,7 @@ const AnimatedRoutes = () => {
             <Route path="/coach" element={<CoachLayout />}>
               <Route path="dashboard" element={<PageTransition><CoachDashboard /></PageTransition>} />
               <Route path="profile" element={<PageTransition><CoachProfileEditor /></PageTransition>} />
+              <Route path="court-bookings" element={<PageTransition><CoachCourtBookings /></PageTransition>} />
               <Route path="availability" element={<PageTransition><CoachAvailabilityManager /></PageTransition>} />
               <Route path="requests" element={<PageTransition><CoachBookingRequests /></PageTransition>} />
             </Route>

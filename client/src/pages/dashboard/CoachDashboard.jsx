@@ -54,9 +54,11 @@ const CoachDashboard = () => {
                 maxStudents: session.maxStudents || 1,
                 message: session.notes || 'Coaching Session Booking',
                 paymentPlan: session.planType,
+                responseDeadline: session.responseDeadline,
                 status: session.status === 'pending' ? 'PENDING_RESPONSE' :
-                    session.status === 'confirmed' ? 'ACCEPTED' :
-                        session.status === 'cancelled' ? 'REJECTED' : session.status,
+                    session.status === 'pending_payment' ? 'ACCEPTED' :
+                        session.status === 'confirmed' ? 'ACCEPTED' :
+                            session.status === 'cancelled' ? 'REJECTED' : session.status,
                 createdAt: session.createdAt
             }));
 

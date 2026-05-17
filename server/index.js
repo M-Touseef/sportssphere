@@ -13,6 +13,8 @@ const app = express();
 // Connect to MongoDB and seed admin
 connectDB().then(() => {
     seedAdmin();
+    const { startSessionExpiryJob } = require('./services/sessionExpiryJob');
+    startSessionExpiryJob();
 });
 
 const path = require('path');

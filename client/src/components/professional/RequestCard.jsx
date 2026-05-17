@@ -10,6 +10,15 @@ import {
 import { acceptRequest, rejectRequest } from '../../services/professionalService';
 import sessionService from '../../services/sessionService';
 
+const formatDeadline = (deadline) => {
+    if (!deadline) return null;
+    const ms = new Date(deadline) - new Date();
+    if (ms <= 0) return 'Expired';
+    const mins = Math.floor(ms / 60000);
+    const secs = Math.floor((ms % 60000) / 1000);
+    return `${mins}m ${secs}s to respond`;
+};
+
 const RequestCard = ({ request, onStatusChange }) => {
     const [processing, setProcessing] = useState(false);
 
@@ -67,9 +76,20 @@ const RequestCard = ({ request, onStatusChange }) => {
                             </div>
                             <div className="flex items-center text-sm text-slate-600">
                                 <MapPinIcon className="h-4 w-4 mr-2 text-slate-400" />
-                                {request.availabilitySlot?.venue?.name || request.availabilitySlot?.court?.name}, {request.availabilitySlot?.venue?.city || request.availabilitySlot?.court?.location?.city}
+                                {request.booking?.court?.name ||
+                                    request.availabilitySlot?.courtName ||
+                                    request.availabilitySlot?.venue?.name ||
+                                    'Court TBD'}
+                                {(request.booking?.court?.location?.city || request.availabilitySlot?.venue?.city) &&
+                                    `, ${request.booking?.court?.location?.city || request.availabilitySlot?.venue?.city}`}
                             </div>
                         </div>
+
+                        {isPending && request.responseDeadline && (
+                            <p className="mt-3 text-xs font-bold text-amber-600">
+                                {formatDeadline(request.responseDeadline)} — auto-declines if not confirmed
+                            </p>
+                        )}
 
                         {request.message && (
                             <div className="mt-4 p-3 bg-slate-50 rounded-xl text-[11px] sm:text-sm italic text-slate-600 border border-slate-100">

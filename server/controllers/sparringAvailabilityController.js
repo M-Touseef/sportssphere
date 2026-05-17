@@ -2,9 +2,14 @@ const SparringAvailability = require('../models/SparringAvailability'); // Legac
 const SparringSessionRequest = require('../models/SparringSessionRequest');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
+const Court = require('../models/Court');
 const CoachProfile = require('../models/CoachProfile');
 const ProfessionalProfile = require('../models/ProfessionalProfile');
 const { createNotification } = require('./notificationController');
+const { RESPONSE_DEADLINE_MS } = require('../constants/responseDeadlines');
+const { normalizeToHour } = require('../utils/timeUtils');
+
+const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 const resolveUserId = (userRef) => {
     if (!userRef) return null;
@@ -46,7 +51,9 @@ const notifySparringRequester = async (request, { title, message, status }) => {
 // @access  Private (Professional only)
 exports.addRecurringSlot = async (req, res) => {
     try {
-        const { day, startTime, endTime, court, venue, sparringType } = req.body;
+        const { day, startTime: rawStart, endTime: rawEnd, sparringType } = req.body;
+        const startTime = normalizeToHour(rawStart);
+        const endTime = normalizeToHour(rawEnd);
 
         if (!day || !startTime || !endTime) {
             return res.status(400).json({ error: 'Missing required fields: day, startTime, endTime' });
@@ -76,12 +83,11 @@ exports.addRecurringSlot = async (req, res) => {
             return res.status(400).json({ error: 'This time slot overlaps with an existing weekly slot.' });
         }
 
+        // Professionals define time only; requesters choose the venue when booking.
         const newSlot = {
             day,
             startTime,
             endTime,
-            court,
-            venue: venue || undefined,
             sparringType: sparringType || 'singles',
             isActive: true
         };
@@ -105,7 +111,9 @@ exports.addRecurringSlot = async (req, res) => {
 exports.updateRecurringSlot = async (req, res) => {
     try {
         const { slotId } = req.params;
-        const { day, startTime, endTime, court, venue, sparringType } = req.body;
+        const { day, startTime: rawStart, endTime: rawEnd, sparringType } = req.body;
+        const startTime = normalizeToHour(rawStart);
+        const endTime = normalizeToHour(rawEnd);
 
         if (!day || !startTime || !endTime) {
             return res.status(400).json({ error: 'Missing required fields: day, startTime, endTime' });
@@ -138,12 +146,11 @@ exports.updateRecurringSlot = async (req, res) => {
         slot.day = day;
         slot.startTime = startTime;
         slot.endTime = endTime;
-        if (court !== undefined) slot.court = court || undefined;
-        if (venue !== undefined) slot.venue = venue || undefined;
+        slot.court = undefined;
+        slot.venue = undefined;
         if (sparringType) slot.sparringType = sparringType;
 
         await profile.save();
-        await profile.populate('availability.court', 'name location');
 
         res.status(200).json({
             success: true,
@@ -160,8 +167,7 @@ exports.updateRecurringSlot = async (req, res) => {
 // @access  Private (Professional only)
 exports.getMyRecurringAvailability = async (req, res) => {
     try {
-        const profile = await ProfessionalProfile.findOne({ user: req.user.id })
-            .populate('availability.court', 'name location');
+        const profile = await ProfessionalProfile.findOne({ user: req.user.id });
 
         if (!profile) {
             return res.status(200).json({ success: true, data: [] });
@@ -205,21 +211,23 @@ exports.removeRecurringSlot = async (req, res) => {
 // @route   GET /api/sparring/professionals/:id/availability
 exports.getProAvailability = async (req, res) => {
     try {
-        const profile = await ProfessionalProfile.findOne({ user: req.params.id })
-            .populate('availability.court', 'name location');
+        const profile = await ProfessionalProfile.findOne({ user: req.params.id });
 
         if (!profile) {
             return res.status(404).json({ error: 'Profile not found' });
         }
 
-        // Convert recurring slots to include computed dates
+        // Convert recurring slots to include computed dates (time only — no venue on pro availability)
         const slotsWithDates = profile.availability
             .filter(slot => slot.isActive)
-            .map(slot => ({
-                ...slot.toObject(),
-                date: getNextOccurrence(slot.day),
-                matchFee: profile.matchFee
-            }));
+            .map(slot => {
+                const { court, venue, ...timeSlot } = slot.toObject();
+                return {
+                    ...timeSlot,
+                    date: getNextOccurrence(slot.day),
+                    matchFee: profile.matchFee
+                };
+            });
 
         res.status(200).json({
             success: true,
@@ -309,8 +317,7 @@ exports.getAvailableProsForSlot = async (req, res) => {
         };
 
         const profiles = await ProfessionalProfile.find(proQuery)
-            .populate('user', 'name email city skillLevel rank')
-            .populate('availability.court', 'name location');
+            .populate('user', 'name email city skillLevel rank');
 
         const availablePros = [];
 
@@ -400,26 +407,78 @@ exports.getAvailableProsForSlot = async (req, res) => {
 // @access  Private (Non-Professional only)
 exports.sendSparringRequest = async (req, res) => {
     try {
-        const { proId, date, startTime, endTime, courtId, venue, price, message } = req.body;
+        const { proId, date, startTime: rawStart, endTime: rawEnd, courtId, message, availabilitySlotId } = req.body;
+        const startTime = normalizeToHour(rawStart);
+        const endTime = rawEnd ? normalizeToHour(rawEnd) : undefined;
 
-        if (req.user.role === 'professional') {
+        if (req.user.skillLevel === 'professional') {
             return res.status(403).json({ error: 'Professionals cannot send requests.' });
         }
 
-        // Validate duplicates
+        if (!proId || !date || !startTime || !courtId) {
+            return res.status(400).json({ error: 'proId, date, startTime, and courtId are required' });
+        }
+
         const bookingDate = new Date(date);
         bookingDate.setHours(0, 0, 0, 0);
 
-        // Create a Booking directly with status 'pending_pro'.
+        const profile = await ProfessionalProfile.findOne({ user: proId, isActive: true });
+        if (!profile) {
+            return res.status(404).json({ error: 'Professional profile not found' });
+        }
+
+        const dayOfWeek = WEEKDAYS[bookingDate.getDay()];
+        const matchingSlot = profile.availability.find((slot) => {
+            if (!slot.isActive || slot.day !== dayOfWeek || slot.startTime !== startTime) {
+                return false;
+            }
+            if (availabilitySlotId) {
+                return slot._id.toString() === availabilitySlotId;
+            }
+            return true;
+        });
+
+        if (!matchingSlot) {
+            return res.status(400).json({ error: 'Professional is not available at the selected day and time' });
+        }
+
+        const resolvedEndTime = endTime || matchingSlot.endTime;
+
+        const court = await Court.findById(courtId);
+        if (!court) {
+            return res.status(404).json({ error: 'Court not found' });
+        }
+
+        const courtConflict = await Booking.findOne({
+            court: courtId,
+            date: bookingDate,
+            startTime,
+            status: { $nin: ['cancelled'] }
+        });
+        if (courtConflict) {
+            return res.status(400).json({ error: 'This court is already booked for the selected time' });
+        }
+
+        const proConflict = await Booking.findOne({
+            proPlayer: proId,
+            date: bookingDate,
+            startTime,
+            status: { $nin: ['cancelled'] }
+        });
+        if (proConflict) {
+            return res.status(400).json({ error: 'Professional is already booked for this time' });
+        }
+
+        const totalPrice = (court.pricePerHour || 0) + (profile.matchFee || 0);
+
         const booking = await Booking.create({
             user: req.user.id,
             proPlayer: proId,
-            court: (typeof courtId === 'string' && courtId.length === 24) ? courtId : undefined,
-            venue: (typeof courtId === 'object') ? courtId : venue,
+            court: courtId,
             date: bookingDate,
             startTime,
-            endTime,
-            totalPrice: price || 0,
+            endTime: resolvedEndTime,
+            totalPrice,
             status: 'pending_pro'
         });
 
@@ -432,7 +491,8 @@ exports.sendSparringRequest = async (req, res) => {
             booking: booking._id,
             message,
             status: 'PENDING_RESPONSE',
-            responseDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+            responseDeadline: new Date(Date.now() + RESPONSE_DEADLINE_MS)
+            // availabilitySlot omitted — venue lives on booking.court (chosen by requester)
         });
 
         // Link request to booking
@@ -445,7 +505,7 @@ exports.sendSparringRequest = async (req, res) => {
                 userId: proId,
                 type: 'booking',
                 title: 'New Sparring Request',
-                message: 'You have received a new sparring request. Please accept or reject it.',
+                message: 'You have received a new sparring request. Please respond within 30 minutes.',
                 meta: {
                     kind: 'incoming_sparring_request',
                     requestId: request._id,
@@ -535,11 +595,14 @@ exports.getProfessionalsWithAvailability = async (req, res) => {
                 profile: profile,
                 availableSlots: profile.availability
                     .filter(slot => slot.isActive)
-                    .map(slot => ({
-                        ...slot.toObject(),
-                        date: getNextOccurrence(slot.day),
-                        matchFee: profile.matchFee // Fallback match fee from profile
-                    }))
+                    .map(slot => {
+                        const { court, venue, ...timeSlot } = slot.toObject();
+                        return {
+                            ...timeSlot,
+                            date: getNextOccurrence(slot.day),
+                            matchFee: profile.matchFee
+                        };
+                    })
             }));
 
         res.status(200).json({
@@ -582,6 +645,14 @@ exports.acceptRequest = async (req, res) => {
         const request = await SparringSessionRequest.findById(req.params.id).populate('booking');
         if (!request || request.proPlayer.toString() !== req.user.id) {
             return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        if (request.status !== 'PENDING_RESPONSE') {
+            return res.status(400).json({ error: 'Request is no longer pending' });
+        }
+
+        if (request.responseDeadline && new Date() > request.responseDeadline) {
+            return res.status(400).json({ error: 'Response window has expired' });
         }
 
         request.status = 'ACCEPTED';
@@ -631,3 +702,5 @@ exports.rejectRequest = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+exports.notifySparringRequester = notifySparringRequester;

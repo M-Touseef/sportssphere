@@ -43,6 +43,10 @@ const coachProfileSchema = new mongoose.Schema({
             ref: 'Court',
             required: true
         },
+        courtBooking: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Booking'
+        },
         maxStudents: {
             type: Number,
             default: 1

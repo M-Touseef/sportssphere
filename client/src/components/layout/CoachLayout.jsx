@@ -8,7 +8,8 @@ import {
     CalendarIcon,
     InboxIcon,
     ArrowLeftOnRectangleIcon,
-    XMarkIcon
+    XMarkIcon,
+    BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
 import DashboardHeader from './DashboardHeader';
 
@@ -21,6 +22,7 @@ const CoachLayout = () => {
     const navigation = [
         { name: 'Dashboard', href: '/coach/dashboard', icon: HomeIcon },
         { name: 'My Profile', href: '/coach/profile', icon: UserCircleIcon },
+        { name: 'Court bookings', href: '/coach/court-bookings', icon: BuildingOffice2Icon },
         { name: 'Availability', href: '/coach/availability', icon: CalendarIcon },
         { name: 'Requests', href: '/coach/requests', icon: InboxIcon },
     ];

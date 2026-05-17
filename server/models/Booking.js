@@ -24,6 +24,15 @@ const bookingSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SparringSessionRequest'
     },
+    purpose: {
+        type: String,
+        enum: ['player', 'coach_reservation'],
+        default: 'player'
+    },
+    linkedSession: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Session'
+    },
     date: {
         type: Date,
         required: true

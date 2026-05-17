@@ -10,5 +10,11 @@ export const getNotificationHref = (item) => {
     if (kind === 'coaching_session_status') {
         return '/app/sessions';
     }
+    if (kind === 'incoming_coaching_court_request') {
+        return '/org/coaching-requests';
+    }
+    if (kind === 'incoming_coaching_request') {
+        return '/coach/requests';
+    }
     return null;
 };

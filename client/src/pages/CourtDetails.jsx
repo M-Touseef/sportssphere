@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import courtService from '../services/courtService';
+import { formatSlotHour } from '../utils/timeFormat';
 import { payForBooking } from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -109,8 +110,8 @@ const CourtDetails = () => {
         try {
             setBookingLoading(true);
 
-            const [hours, minutes] = selectedSlot.time.split(':');
-            const endTime = `${(parseInt(hours) + 1).toString().padStart(2, '0')}:${minutes}`;
+            const hours = parseInt(selectedSlot.time.split(':')[0], 10);
+            const endTime = `${(hours + 1).toString().padStart(2, '0')}:00`;
 
             const bookingPayload = {
                 courtId: id,
@@ -394,7 +395,7 @@ const CourtDetails = () => {
                                                                     : "bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50"
                                                         )}
                                                     >
-                                                        {slot.time}
+                                                        {formatSlotHour(slot.time)}
                                                         {!slot.available && (
                                                             <div className="absolute inset-0 flex items-center justify-center opacity-10 rotate-12">
                                                                 <span className="text-xs font-black uppercase">BOOKED</span>

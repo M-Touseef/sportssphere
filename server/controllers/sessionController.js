@@ -1,7 +1,11 @@
 const Session = require('../models/Session');
 const CoachProfile = require('../models/CoachProfile');
 const Court = require('../models/Court');
+const Booking = require('../models/Booking');
 const { createNotification } = require('./notificationController');
+const { validateCoachCourtBookingForSlot } = require('./coachCourtBookingController');
+
+const { RESPONSE_DEADLINE_MS: COACH_RESPONSE_MS } = require('../constants/responseDeadlines');
 
 const resolveUserId = (userRef) => {
     if (!userRef) return null;
@@ -30,15 +34,62 @@ const notifySessionStudents = async (session, { title, message, status }) => {
     );
 };
 
+const applyPendingStudentRequest = (session) => {
+    if (session.status === 'pending' && session.students?.length > 0) {
+        session.responseDeadline = new Date(Date.now() + COACH_RESPONSE_MS);
+    }
+};
+
+const notifyCourtOwnerOfSessionRequest = async (session) => {
+    try {
+        const court = await Court.findById(session.court).select('name owner');
+        if (!court?.owner) return;
+
+        await createNotification({
+            userId: court.owner,
+            type: 'booking',
+            title: 'Coaching Session Request',
+            message: `A player requested a coaching session at ${court.name}. Awaiting coach confirmation.`,
+            meta: {
+                kind: 'incoming_coaching_court_request',
+                sessionId: session._id,
+                courtId: court._id
+            }
+        });
+    } catch (err) {
+        console.error('Failed to notify court owner of coaching request:', err);
+    }
+};
+
+const notifyCoachOfSessionRequest = async (session, requesterId) => {
+    try {
+        await createNotification({
+            userId: session.coach,
+            type: 'booking',
+            title: 'New Coaching Session Request',
+            message: 'A player requested one of your coaching sessions. Please respond within 30 minutes.',
+            meta: {
+                kind: 'incoming_coaching_request',
+                sessionId: session._id,
+                requesterId
+            }
+        });
+    } catch (notifyErr) {
+        console.error('Failed to create coaching request notification:', notifyErr);
+    }
+};
+
 // @desc    Publish a coaching session (Coach creates available slot)
 // @route   POST /api/sessions/publish
 // @access  Private (Coach)
 exports.publishSession = async (req, res) => {
     try {
-        const { courtId, date, startTime, endTime, duration, planType, sessionType, notes, maxStudents } = req.body;
+        const { courtBookingId, date, startTime, endTime, duration, planType, sessionType, notes, maxStudents } = req.body;
 
-        if (!courtId || !date || !startTime || !endTime || !duration) {
-            return res.status(400).json({ error: 'Missing required session fields' });
+        if (!courtBookingId || !date || !startTime || !endTime || !duration) {
+            return res.status(400).json({
+                error: 'Missing required fields. Book a court first and provide courtBookingId.'
+            });
         }
 
         const coachProfile = await CoachProfile.findOne({ user: req.user.id });
@@ -46,18 +97,35 @@ exports.publishSession = async (req, res) => {
             return res.status(404).json({ error: 'Coach profile not found' });
         }
 
+        const booking = await Booking.findById(courtBookingId);
+        if (!booking || booking.user.toString() !== req.user.id || booking.purpose !== 'coach_reservation') {
+            return res.status(400).json({ error: 'Invalid court reservation' });
+        }
+        if (booking.status === 'cancelled') {
+            return res.status(400).json({ error: 'Court reservation was cancelled' });
+        }
+
+        const courtId = booking.court.toString();
         const court = await Court.findById(courtId);
         if (!court) {
             return res.status(404).json({ error: 'Court not found' });
         }
 
+        const sessionDate = new Date(date);
+        sessionDate.setHours(0, 0, 0, 0);
+        const bookingDate = new Date(booking.date);
+        bookingDate.setHours(0, 0, 0, 0);
+
+        if (sessionDate.getTime() !== bookingDate.getTime()) {
+            return res.status(400).json({ error: 'Session date must match your court reservation date' });
+        }
+        if (startTime !== booking.startTime || endTime !== booking.endTime) {
+            return res.status(400).json({ error: 'Session times must match your court reservation' });
+        }
+
         const courtFee = (court.pricePerHour || 0) * duration;
         const totalPrice = planType === 'monthly' ? coachProfile.monthlyFee : coachProfile.hourlyRate * duration;
 
-        const sessionDate = new Date(date);
-        sessionDate.setHours(0, 0, 0, 0);
-
-        // Check for existing published session at same time
         const conflict = await Session.findOne({
             coach: req.user.id,
             date: sessionDate,
@@ -72,6 +140,7 @@ exports.publishSession = async (req, res) => {
         const session = await Session.create({
             coach: req.user.id,
             court: courtId,
+            courtBooking: courtBookingId,
             date: sessionDate,
             startTime,
             endTime,
@@ -83,8 +152,11 @@ exports.publishSession = async (req, res) => {
             maxStudents: maxStudents || 1,
             notes,
             isPublished: true,
-            status: 'pending' // 'pending' enrollment
+            status: 'pending'
         });
+
+        booking.linkedSession = session._id;
+        await booking.save();
 
         res.status(201).json({
             success: true,
@@ -149,25 +221,12 @@ exports.requestSession = async (req, res) => {
         }
 
         session.students.push(req.user.id);
-        session.status = 'pending'; // Confirmation needed from coach
+        session.status = 'pending';
+        applyPendingStudentRequest(session);
         await session.save();
 
-        // Notify coach about incoming coaching session request.
-        try {
-            await createNotification({
-                userId: session.coach,
-                type: 'booking',
-                title: 'New Coaching Session Request',
-                message: 'A player requested one of your coaching sessions. Please review it.',
-                meta: {
-                    kind: 'incoming_coaching_request',
-                    sessionId: session._id,
-                    requesterId: req.user.id
-                }
-            });
-        } catch (notifyErr) {
-            console.error('Failed to create coaching request notification:', notifyErr);
-        }
+        await notifyCoachOfSessionRequest(session, req.user.id);
+        await notifyCourtOwnerOfSessionRequest(session);
 
         res.status(200).json({
             success: true,
@@ -285,7 +344,12 @@ exports.confirmSession = async (req, res) => {
             return res.status(400).json({ error: 'Session is not pending' });
         }
 
+        if (session.responseDeadline && new Date() > session.responseDeadline) {
+            return res.status(400).json({ error: 'Response window has expired' });
+        }
+
         session.status = 'pending_payment';
+        session.responseDeadline = undefined;
         // session.paymentStatus = 'paid'; // In a real app, this might trigger payment capture
         await session.save();
 
@@ -351,24 +415,46 @@ exports.rejectSession = async (req, res) => {
 // @access  Public
 exports.getCoachRealizedAvailability = async (req, res) => {
     try {
-        const coachProfile = await CoachProfile.findById(req.params.coachId).populate('availability.court', 'name location');
+        const coachProfile = await CoachProfile.findById(req.params.coachId)
+            .populate('availability.court', 'name location')
+            .populate('availability.courtBooking');
+
         if (!coachProfile) {
             return res.status(404).json({ error: 'Coach profile not found' });
         }
 
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const realizedSlots = [];
         const today = new Date();
-        // Look ahead 30 days
+        today.setHours(0, 0, 0, 0);
+
+        const activeBookings = await Booking.find({
+            user: coachProfile.user,
+            purpose: 'coach_reservation',
+            status: { $ne: 'cancelled' },
+            date: { $gte: today }
+        }).select('_id date');
+
+        const activeBookingIds = new Set(activeBookings.map((b) => b._id.toString()));
+
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const realizedSlots = [];
         for (let i = 0; i < 30; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
             date.setHours(0, 0, 0, 0);
 
-            const dayName = days[date.getDay()];
+            const dayName = dayNames[date.getDay()];
 
-            // Find all matching recurring slots for this day
-            const recurringSlots = coachProfile.availability.filter(slot => slot.day === dayName);
+            const recurringSlots = coachProfile.availability.filter((slot) => {
+                if (slot.day !== dayName) return false;
+                if (!slot.courtBooking) return false;
+                const bookingId = slot.courtBooking._id?.toString() || slot.courtBooking.toString();
+                if (!activeBookingIds.has(bookingId)) return false;
+                const booking = activeBookings.find((b) => b._id.toString() === bookingId);
+                if (!booking) return false;
+                const bDate = new Date(booking.date);
+                bDate.setHours(0, 0, 0, 0);
+                return bDate.getTime() === date.getTime();
+            });
 
             for (const slot of recurringSlots) {
                 // Check for existing session at this specific slot
@@ -415,7 +501,6 @@ exports.requestRecurringSession = async (req, res) => {
     try {
         const { coachId, date, startTime, endTime, courtId, planType, message } = req.body;
 
-        // Verify coach exists
         const coachProfile = await CoachProfile.findOne({ user: coachId });
         if (!coachProfile) {
             return res.status(404).json({ error: 'Coach not found' });
@@ -423,6 +508,39 @@ exports.requestRecurringSession = async (req, res) => {
 
         const sessionDate = new Date(date);
         sessionDate.setHours(0, 0, 0, 0);
+
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayName = days[sessionDate.getDay()];
+        const recurringSlot = coachProfile.availability.find(
+            (s) => s.day === dayName && s.startTime === startTime
+        );
+
+        if (!recurringSlot) {
+            return res.status(400).json({ error: 'No coaching availability for this slot' });
+        }
+
+        const slotCourtId = recurringSlot.court?._id?.toString() || recurringSlot.court?.toString();
+        if (courtId && slotCourtId && courtId !== slotCourtId) {
+            return res.status(400).json({ error: 'Court does not match coach availability for this slot' });
+        }
+
+        const resolvedCourtId = slotCourtId || courtId;
+        if (!resolvedCourtId) {
+            return res.status(400).json({ error: 'Court is required for this coaching slot' });
+        }
+
+        let courtBookingId = recurringSlot.courtBooking?._id || recurringSlot.courtBooking;
+        if (courtBookingId) {
+            try {
+                await validateCoachCourtBookingForSlot(coachId, courtBookingId, {
+                    day: dayName,
+                    startTime,
+                    endTime: endTime || recurringSlot.endTime
+                });
+            } catch (err) {
+                return res.status(err.statusCode || 400).json({ error: err.message });
+            }
+        }
 
         // Double check availability
         const conflict = await Session.findOne({
@@ -449,52 +567,33 @@ exports.requestRecurringSession = async (req, res) => {
             }
 
             conflict.students.push(req.user.id);
+            conflict.status = 'pending';
+            applyPendingStudentRequest(conflict);
             await conflict.save();
 
-            // Notify coach about incoming coaching session request.
-            try {
-                await createNotification({
-                    userId: conflict.coach,
-                    type: 'booking',
-                    title: 'New Coaching Session Request',
-                    message: 'A player requested one of your coaching sessions. Please review it.',
-                    meta: {
-                        kind: 'incoming_coaching_request',
-                        sessionId: conflict._id,
-                        requesterId: req.user.id
-                    }
-                });
-            } catch (notifyErr) {
-                console.error('Failed to create coaching request notification:', notifyErr);
-            }
+            await notifyCoachOfSessionRequest(conflict, req.user.id);
+            await notifyCourtOwnerOfSessionRequest(conflict);
 
             return res.status(200).json({ success: true, data: conflict });
         }
 
-        // Calculate price
-        // Simple duration calculation assuming standard formats like "HH:MM"
-        const start = parseInt(startTime.split(':')[0]);
-        const end = parseInt(endTime.split(':')[0]);
+        const start = parseInt(startTime.split(':')[0], 10);
+        const end = parseInt((endTime || recurringSlot.endTime).split(':')[0], 10);
         const duration = end - start || 1;
 
-        // Fetch Court for fee calculation
-        const court = await Court.findById(courtId);
+        const court = await Court.findById(resolvedCourtId);
         const courtFee = (court?.pricePerHour || 0) * duration;
 
         const totalPrice = planType === 'monthly' ? coachProfile.monthlyFee : (coachProfile.hourlyRate * duration);
 
-        // Find the matching recurring slot to get maxStudents
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const dayName = days[sessionDate.getDay()];
-        const recurringSlot = coachProfile.availability.find(s => s.day === dayName && s.startTime === startTime);
-
         const session = await Session.create({
             coach: coachId,
             students: [req.user.id],
-            court: courtId,
+            court: resolvedCourtId,
+            courtBooking: courtBookingId || undefined,
             date: sessionDate,
             startTime,
-            endTime,
+            endTime: endTime || recurringSlot.endTime,
             duration,
             totalPrice,
             courtFee,
@@ -502,25 +601,14 @@ exports.requestRecurringSession = async (req, res) => {
             maxStudents: recurringSlot?.maxStudents || 1,
             notes: message,
             status: 'pending',
-            isPublished: false // Created on demand
+            isPublished: false
         });
 
-        // Notify coach about incoming coaching session request.
-        try {
-            await createNotification({
-                userId: coachId,
-                type: 'booking',
-                title: 'New Coaching Session Request',
-                message: 'A player requested one of your coaching sessions. Please review it.',
-                meta: {
-                    kind: 'incoming_coaching_request',
-                    sessionId: session._id,
-                    requesterId: req.user.id
-                }
-            });
-        } catch (notifyErr) {
-            console.error('Failed to create coaching request notification:', notifyErr);
-        }
+        applyPendingStudentRequest(session);
+        await session.save();
+
+        await notifyCoachOfSessionRequest(session, req.user.id);
+        await notifyCourtOwnerOfSessionRequest(session);
 
         res.status(201).json({
             success: true,

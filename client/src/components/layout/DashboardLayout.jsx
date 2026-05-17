@@ -3,7 +3,7 @@ import { Dialog, Transition, Menu } from '@headlessui/react'
 import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 import Sidebar from './Sidebar'
 import DashboardHeader from './DashboardHeader'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Breadcrumbs from '../ui/Breadcrumbs'
 
@@ -71,18 +71,18 @@ export default function DashboardLayout() {
                                 © 2026 SportSphere. All rights reserved.
                             </p>
                             <div className="flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
-                                <button
-                                    type="button"
+                                <Link
+                                    to="/privacy"
                                     className="rounded-full border border-indigo-200/80 bg-white/70 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-indigo-700 hover:bg-white hover:border-indigo-300 transition-colors"
                                 >
                                     Privacy Policy
-                                </button>
-                                <button
-                                    type="button"
+                                </Link>
+                                <Link
+                                    to="/support"
                                     className="rounded-full border border-violet-200/80 bg-white/70 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-violet-700 hover:bg-white hover:border-violet-300 transition-colors"
                                 >
                                     Support
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>

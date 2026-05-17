@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import coachService from '../../services/coachService';
-import { getAllCourts } from '../../services/courtService';
+import FriendlyTimePicker from '../../components/professional/FriendlyTimePicker';
+import { formatSlotHourRange } from '../../utils/timeFormat';
+import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { TrashIcon, MapPinIcon, PlusIcon, CalendarIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { useToast } from '../../context/ToastContext';
 
 const CoachAvailabilityManager = () => {
     const [slots, setSlots] = useState([]);
-    const [courts, setCourts] = useState([]);
+    const [courtBookings, setCourtBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingSlotId, setEditingSlotId] = useState(null);
     const { success, error: toastError } = useToast();
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
         defaultValues: {
             day: 'monday',
-            maxStudents: 1
+            startTime: '09:00',
+            endTime: '10:00',
+            maxStudents: 1,
+            courtBookingId: ''
         }
     });
 
@@ -34,15 +39,15 @@ const CoachAvailabilityManager = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [profileData, courtsData] = await Promise.all([
+                const [profileData, bookingsData] = await Promise.all([
                     coachService.getMyProfile(),
-                    getAllCourts()
+                    coachService.getCourtBookings()
                 ]);
 
                 if (profileData.success) {
                     setSlots(profileData.data.availability || []);
                 }
-                setCourts(courtsData.data || courtsData);
+                setCourtBookings(bookingsData.data || []);
             } catch (error) {
                 console.error('Error fetching data:', error);
                 toastError('Failed to sync schedule.');
@@ -59,7 +64,7 @@ const CoachAvailabilityManager = () => {
                 day: data.day,
                 startTime: data.startTime,
                 endTime: data.endTime,
-                court: data.court,
+                courtBookingId: data.courtBookingId,
                 maxStudents: parseInt(data.maxStudents, 10) || 1
             };
 
@@ -72,7 +77,7 @@ const CoachAvailabilityManager = () => {
 
             if (response.success) {
                 setSlots(response.data);
-                reset({ day: 'monday', maxStudents: 1, startTime: '', endTime: '', court: '' });
+                reset({ day: 'monday', maxStudents: 1, startTime: '09:00', endTime: '10:00', courtBookingId: '' });
                 setShowAddForm(false);
                 setEditingSlotId(null);
                 success(editingSlotId ? 'Slot updated.' : 'Weekly slot added.');
@@ -92,7 +97,7 @@ const CoachAvailabilityManager = () => {
                 if (editingSlotId === id) {
                     setEditingSlotId(null);
                     setShowAddForm(false);
-                    reset({ day: 'monday', maxStudents: 1, startTime: '', endTime: '', court: '' });
+                    reset({ day: 'monday', maxStudents: 1, startTime: '09:00', endTime: '10:00', courtBookingId: '' });
                 }
                 success('Slot removed.');
             }
@@ -103,14 +108,14 @@ const CoachAvailabilityManager = () => {
     };
 
     const openEditSlot = (slot) => {
-        const courtId = slot.court?._id?.toString?.() || slot.court?.toString?.() || slot.court || '';
+        const bookingId = slot.courtBooking?._id?.toString?.() || slot.courtBooking?.toString?.() || '';
         setEditingSlotId(slot._id);
         setShowAddForm(true);
         reset({
             day: slot.day,
             startTime: slot.startTime,
             endTime: slot.endTime,
-            court: courtId,
+            courtBookingId: bookingId,
             maxStudents: slot.maxStudents || 1
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -118,7 +123,7 @@ const CoachAvailabilityManager = () => {
 
     const toggleForm = () => {
         if (showAddForm) {
-            reset({ day: 'monday', maxStudents: 1, startTime: '', endTime: '', court: '' });
+            reset({ day: 'monday', maxStudents: 1, startTime: '', endTime: '', courtBookingId: '' });
             setEditingSlotId(null);
         }
         setShowAddForm(!showAddForm);
@@ -138,7 +143,12 @@ const CoachAvailabilityManager = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Coaching schedule</h1>
-                    <p className="mt-1 text-sm text-slate-500">Manage your recurring weekly training availability.</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Link weekly slots to a court you have already reserved.{' '}
+                        <Link to="/coach/court-bookings" className="text-emerald-600 font-bold hover:underline">
+                            Book a court first
+                        </Link>
+                    </p>
                 </div>
                 <button
                     type="button"
@@ -169,7 +179,7 @@ const CoachAvailabilityManager = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    reset({ day: 'monday', maxStudents: 1, startTime: '', endTime: '', court: '' });
+                                    reset({ day: 'monday', maxStudents: 1, startTime: '09:00', endTime: '10:00', courtBookingId: '' });
                                     setEditingSlotId(null);
                                     setShowAddForm(false);
                                 }}
@@ -192,38 +202,65 @@ const CoachAvailabilityManager = () => {
                             </select>
                         </div>
 
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Start time</label>
-                            <input
-                                type="time"
-                                {...register('startTime', { required: 'Start time is required' })}
-                                className="block w-full rounded-xl border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2.5"
-                            />
-                        </div>
-
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">End time</label>
-                            <input
-                                type="time"
-                                {...register('endTime', { required: 'End time is required' })}
-                                className="block w-full rounded-xl border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2.5"
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Start hour</label>
+                            <Controller
+                                name="startTime"
+                                control={control}
+                                rules={{ required: 'Start time is required' }}
+                                render={({ field }) => (
+                                    <FriendlyTimePicker
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        error={errors.startTime}
+                                    />
+                                )}
                             />
                         </div>
 
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Court</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">End hour</label>
+                            <Controller
+                                name="endTime"
+                                control={control}
+                                rules={{ required: 'End time is required' }}
+                                render={({ field }) => (
+                                    <FriendlyTimePicker
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        error={errors.endTime}
+                                    />
+                                )}
+                            />
+                            <p className="mt-2 text-xs text-slate-500">Whole hours only (e.g. 9 AM – 11 AM).</p>
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Court reservation</label>
                             <select
-                                {...register('court', { required: 'Court is required' })}
+                                {...register('courtBookingId', { required: 'Reserve a court first' })}
                                 className="block w-full rounded-xl border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2.5"
                             >
-                                <option value="">Select a court…</option>
-                                {courts.map(court => (
-                                    <option key={court._id} value={court._id}>
-                                        {court.name} — {court.location?.city}
-                                    </option>
-                                ))}
+                                <option value="">Select a reserved court slot…</option>
+                                {courtBookings.map((b) => {
+                                    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                    const day = dayNames[new Date(b.date).getDay()];
+                                    return (
+                                        <option key={b._id} value={b._id}>
+                                            {b.court?.name} — {new Date(b.date).toLocaleDateString()} ({day}) {b.startTime}–{b.endTime}
+                                        </option>
+                                    );
+                                })}
                             </select>
-                            {errors.court && <span className="text-red-500 text-xs">{errors.court.message}</span>}
+                            {errors.courtBookingId && (
+                                <span className="text-red-500 text-xs">{errors.courtBookingId.message}</span>
+                            )}
+                            {courtBookings.length === 0 && (
+                                <p className="mt-2 text-xs text-amber-600 font-medium">
+                                    No reservations.{' '}
+                                    <Link to="/coach/court-bookings" className="underline">Reserve a court</Link> first.
+                                </p>
+                            )}
                         </div>
 
                         <div className="col-span-2 md:col-span-1">
@@ -242,7 +279,7 @@ const CoachAvailabilityManager = () => {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        reset({ day: 'monday', maxStudents: 1, startTime: '', endTime: '', court: '' });
+                                        reset({ day: 'monday', maxStudents: 1, startTime: '09:00', endTime: '10:00', courtBookingId: '' });
                                         setEditingSlotId(null);
                                         setShowAddForm(false);
                                     }}
@@ -285,7 +322,7 @@ const CoachAvailabilityManager = () => {
                                             {slot.day}
                                         </span>
                                         <span className="text-sm font-medium text-slate-900">
-                                            {slot.startTime} – {slot.endTime}
+                                            {formatSlotHourRange(slot.startTime, slot.endTime)}
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap items-center text-sm text-slate-500 gap-y-2 gap-x-4 mt-2">

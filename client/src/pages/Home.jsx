@@ -226,10 +226,10 @@ const Home = () => {
                             </div>
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Premium Sports Management Platform</p>
                         </div>
-                        <div className="flex gap-8">
-                            <Link to="#" className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Privacy Policy</Link>
-                            <Link to="#" className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Terms of Service</Link>
-                            <Link to="#" className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Support Center</Link>
+                        <div className="flex flex-wrap justify-center md:justify-end gap-4 sm:gap-8">
+                            <Link to="/privacy" className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Privacy Policy</Link>
+                            <Link to="/terms" className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Terms of Service</Link>
+                            <Link to="/support" className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Support Center</Link>
                         </div>
                     </div>
                     <div className="mt-16 text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">SportsSphere 2026</div>

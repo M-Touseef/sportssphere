@@ -1,5 +1,7 @@
 const CoachProfile = require('../models/CoachProfile');
 const User = require('../models/User');
+const { validateCoachCourtBookingForSlot } = require('./coachCourtBookingController');
+const { normalizeToHour } = require('../utils/timeUtils');
 
 // @desc    Create or update coach profile
 // @route   POST /api/coaches/profile
@@ -174,16 +176,31 @@ exports.getCoachAvailability = async (req, res) => {
 // @access  Private (Coach)
 exports.addAvailabilitySlot = async (req, res) => {
     try {
-        const { day, startTime, endTime, court, maxStudents } = req.body;
+        const { day, startTime: rawStart, endTime: rawEnd, courtBookingId, maxStudents } = req.body;
+        const startTime = normalizeToHour(rawStart);
+        const endTime = normalizeToHour(rawEnd);
 
-        if (!day || !startTime || !endTime) {
-            return res.status(400).json({ error: 'Please provide day, startTime, and endTime' });
+        if (!day || !startTime || !endTime || !courtBookingId) {
+            return res.status(400).json({
+                error: 'Please provide day, startTime, endTime, and courtBookingId (book a court first)'
+            });
         }
 
         const profile = await CoachProfile.findOne({ user: req.user.id });
 
         if (!profile) {
             return res.status(404).json({ error: 'Coach profile not found' });
+        }
+
+        let booking;
+        try {
+            booking = await validateCoachCourtBookingForSlot(req.user.id, courtBookingId, {
+                day,
+                startTime,
+                endTime
+            });
+        } catch (err) {
+            return res.status(err.statusCode || 500).json({ error: err.message });
         }
 
         // Check for overlaps
@@ -198,11 +215,20 @@ exports.addAvailabilitySlot = async (req, res) => {
             return res.status(400).json({ error: 'Slot overlaps with existing availability' });
         }
 
-        profile.availability.push({ day, startTime, endTime, court, maxStudents: maxStudents || 1 });
+        profile.availability.push({
+            day,
+            startTime,
+            endTime,
+            court: booking.court._id || booking.court,
+            courtBooking: courtBookingId,
+            maxStudents: maxStudents || 1
+        });
         await profile.save();
 
-        // Populate court info for the response
-        await profile.populate('availability.court', 'name location');
+        await profile.populate([
+            { path: 'availability.court', select: 'name location' },
+            { path: 'availability.courtBooking', populate: { path: 'court', select: 'name location' } }
+        ]);
 
         res.status(200).json({
             success: true,
@@ -220,10 +246,14 @@ exports.addAvailabilitySlot = async (req, res) => {
 exports.updateAvailabilitySlot = async (req, res) => {
     try {
         const { slotId } = req.params;
-        const { day, startTime, endTime, court, maxStudents } = req.body;
+        const { day, startTime: rawStart, endTime: rawEnd, courtBookingId, maxStudents } = req.body;
+        const startTime = normalizeToHour(rawStart);
+        const endTime = normalizeToHour(rawEnd);
 
-        if (!day || !startTime || !endTime) {
-            return res.status(400).json({ error: 'Please provide day, startTime, and endTime' });
+        if (!day || !startTime || !endTime || !courtBookingId) {
+            return res.status(400).json({
+                error: 'Please provide day, startTime, endTime, and courtBookingId'
+            });
         }
 
         const profile = await CoachProfile.findOne({ user: req.user.id });
@@ -235,6 +265,17 @@ exports.updateAvailabilitySlot = async (req, res) => {
         const slot = profile.availability.id(slotId);
         if (!slot) {
             return res.status(404).json({ error: 'Slot not found' });
+        }
+
+        let booking;
+        try {
+            booking = await validateCoachCourtBookingForSlot(req.user.id, courtBookingId, {
+                day,
+                startTime,
+                endTime
+            });
+        } catch (err) {
+            return res.status(err.statusCode || 500).json({ error: err.message });
         }
 
         const hasOverlap = profile.availability.some((s) =>
@@ -252,11 +293,15 @@ exports.updateAvailabilitySlot = async (req, res) => {
         slot.day = day;
         slot.startTime = startTime;
         slot.endTime = endTime;
-        if (court) slot.court = court;
+        slot.court = booking.court._id || booking.court;
+        slot.courtBooking = courtBookingId;
         slot.maxStudents = maxStudents != null ? maxStudents : 1;
 
         await profile.save();
-        await profile.populate('availability.court', 'name location');
+        await profile.populate([
+            { path: 'availability.court', select: 'name location' },
+            { path: 'availability.courtBooking', populate: { path: 'court', select: 'name location' } }
+        ]);
 
         res.status(200).json({
             success: true,

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import sparringService from '../../services/sparringService';
+import { getAllCourts } from '../../services/courtService';
 import Button from '../../components/ui/Button';
 import {
     MapPinIcon,
@@ -16,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatSlotHour, formatSlotHourRange } from '../../utils/timeFormat';
 
 const BrowseProfessionals = () => {
     const navigate = useNavigate();
@@ -28,10 +30,15 @@ const BrowseProfessionals = () => {
     const [selectedPro, setSelectedPro] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [requestMessage, setRequestMessage] = useState('');
+    const [selectedCourtId, setSelectedCourtId] = useState('');
+    const [courts, setCourts] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         fetchProfessionals();
+        getAllCourts()
+            .then((res) => setCourts(res.data || res || []))
+            .catch(() => setCourts([]));
     }, []);
 
     const fetchProfessionals = async () => {
@@ -54,6 +61,7 @@ const BrowseProfessionals = () => {
     const handleSelectSlot = (pro, slot) => {
         setSelectedPro(pro);
         setSelectedSlot(slot);
+        setSelectedCourtId('');
     };
 
     const handleSendRequest = async () => {
@@ -62,18 +70,32 @@ const BrowseProfessionals = () => {
             return;
         }
 
-        if (user?.role === 'professional') {
+        if (user?.skillLevel === 'professional') {
             toastError('Professionals cannot send sparring requests. Post your own availability instead.');
+            return;
+        }
+
+        if (!selectedCourtId) {
+            toastError('Please select a court for this session.');
             return;
         }
 
         try {
             setSubmitting(true);
-            await sparringService.sendSparringRequest(selectedSlot._id, requestMessage);
-            success('Request sent! The professional has 2 hours to respond.');
+            await sparringService.sendSparringRequest({
+                proId: selectedPro.player._id,
+                date: selectedSlot.date,
+                startTime: selectedSlot.startTime,
+                endTime: selectedSlot.endTime,
+                courtId: selectedCourtId,
+                availabilitySlotId: selectedSlot._id,
+                message: requestMessage
+            });
+            success('Request sent! The professional has 30 minutes to respond, or it will be auto-cancelled.');
             setSelectedSlot(null);
             setSelectedPro(null);
             setRequestMessage('');
+            setSelectedCourtId('');
             fetchProfessionals();
         } catch (err) {
             toastError(err.response?.data?.error || 'Failed to send request');
@@ -160,7 +182,7 @@ const BrowseProfessionals = () => {
                                                     onClick={() => handleSelectSlot({ player, availableSlots }, slot)}
                                                     className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all"
                                                 >
-                                                    {formatDate(slot.date)} • {slot.startTime}
+                                                    {formatDate(slot.date)} • {formatSlotHour(slot.startTime)}
                                                 </button>
                                             ))}
                                             {availableSlots.length > 4 && (
@@ -216,11 +238,11 @@ const BrowseProfessionals = () => {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <ClockIcon className="h-5 w-5 text-indigo-500" />
-                                    <span className="font-medium text-slate-600">{selectedSlot.startTime} - {selectedSlot.endTime}</span>
+                                    <span className="font-medium text-slate-600">{formatSlotHourRange(selectedSlot.startTime, selectedSlot.endTime)}</span>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <MapPinIcon className="h-5 w-5 text-indigo-500" />
-                                    <span className="font-medium text-slate-600">{selectedSlot.venue?.name}, {selectedSlot.venue?.city}</span>
+                                <div className="flex items-center gap-3 text-slate-500 text-sm">
+                                    <MapPinIcon className="h-5 w-5 text-indigo-500 shrink-0" />
+                                    <span>You choose the court below</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <BoltIcon className="h-5 w-5 text-indigo-500" />
@@ -229,6 +251,19 @@ const BrowseProfessionals = () => {
                             </div>
 
                             <div className="mb-6">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Court / venue</label>
+                                <select
+                                    value={selectedCourtId}
+                                    onChange={(e) => setSelectedCourtId(e.target.value)}
+                                    className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 font-semibold text-sm focus:ring-4 focus:ring-indigo-100 outline-none mb-4"
+                                >
+                                    <option value="">Select a court…</option>
+                                    {courts.map((court) => (
+                                        <option key={court._id} value={court._id}>
+                                            {court.name} — {court.location?.city}
+                                        </option>
+                                    ))}
+                                </select>
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Message (Optional)</label>
                                 <textarea
                                     value={requestMessage}

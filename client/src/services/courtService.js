@@ -32,6 +32,11 @@ export const getMyCourts = async () => {
     return response.data;
 };
 
+export const getCoachingRequestsForMyCourts = async () => {
+    const response = await axiosInstance.get(`${API_ENDPOINTS.COURTS}/my/coaching-requests`);
+    return response.data;
+};
+
 export const updateCourt = async (id, courtData) => {
     const response = await axiosInstance.put(`${API_ENDPOINTS.COURTS}/${id}`, courtData);
     return response.data;
@@ -69,7 +74,8 @@ const courtService = {
     getMyCourts,
     deleteCourt,
     createCourt,
-    updateCourt
+    updateCourt,
+    getCoachingRequestsForMyCourts
 };
 
 export const getAllCourts = getCourts;

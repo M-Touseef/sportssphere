@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import sparringService from '../../services/sparringService';
+import { formatSlotHourRange } from '../../utils/timeFormat';
 import courtService from '../../services/courtService';
 import Button from '../../components/ui/Button';
 import {
@@ -121,7 +122,7 @@ const MySparringRequestsV2 = () => {
                 label: 'EXPIRED',
                 icon: ExclamationCircleIcon,
                 iconColor: 'text-slate-400',
-                message: 'Response window expired'
+                message: 'No response within 30 minutes'
             };
         }
 
@@ -131,7 +132,11 @@ const MySparringRequestsV2 = () => {
                 label: isPro ? 'ACTION REQUIRED' : 'AWAITING RESPONSE',
                 icon: ClockIcon,
                 iconColor: 'text-amber-500',
-                message: timeRemaining ? `⏱️ ${timeRemaining.hours}h ${timeRemaining.minutes}m remaining` : 'Waiting for response'
+                message: timeRemaining
+                    ? timeRemaining.hours > 0
+                        ? `⏱️ ${timeRemaining.hours}h ${timeRemaining.minutes}m remaining`
+                        : `⏱️ ${timeRemaining.minutes}m remaining (30 min limit)`
+                    : 'Waiting for response (30 min limit)'
             },
             'ACCEPTED': {
                 badge: 'bg-emerald-50 text-emerald-600 border-emerald-100',
@@ -152,7 +157,7 @@ const MySparringRequestsV2 = () => {
                 label: 'AUTO-REJECTED',
                 icon: ExclamationCircleIcon,
                 iconColor: 'text-slate-400',
-                message: 'Response window expired'
+                message: 'No response within 30 minutes'
             }
         };
 
@@ -224,7 +229,7 @@ const MySparringRequestsV2 = () => {
                                                         </span>
                                                         <span className="flex items-center gap-1.5">
                                                             <ClockIcon className="h-4 w-4 text-indigo-500" />
-                                                            {req.availabilitySlot.startTime} - {req.availabilitySlot.endTime}
+                                                            {formatSlotHourRange(req.availabilitySlot.startTime, req.availabilitySlot.endTime)}
                                                         </span>
                                                         <span className="flex items-center gap-1.5">
                                                             <MapPinIcon className="h-4 w-4 text-indigo-500" />

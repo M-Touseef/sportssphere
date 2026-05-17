@@ -1,30 +1,19 @@
 import React, { useMemo } from 'react';
-import { format, setHours, setMinutes } from 'date-fns';
+import { format, setHours } from 'date-fns';
 import { ClockIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
-const MINUTE_OPTIONS = [0, 15, 30, 45];
-
-/** Snap to nearest quarter hour for display/sync */
-function snapMinutes(m) {
-    return MINUTE_OPTIONS.reduce((best, cur) =>
-        Math.abs(cur - m) < Math.abs(best - m) ? cur : best
-    , 0);
-}
-
 function parseHHmm(value) {
     if (!value || typeof value !== 'string' || !/^\d{1,2}:\d{2}$/.test(value.trim())) {
-        return { h24: 18, minute: 0 };
+        return { h24: 18 };
     }
-    const [hs, ms] = value.trim().split(':');
+    const [hs] = value.trim().split(':');
     const h = Math.min(23, Math.max(0, parseInt(hs, 10)));
-    const mRaw = parseInt(ms, 10);
-    const minute = Number.isFinite(mRaw) ? snapMinutes(Math.min(59, Math.max(0, mRaw))) : 0;
-    return { h24: h, minute };
+    return { h24: Number.isNaN(h) ? 18 : h };
 }
 
-function toHHmm(h24, minute) {
-    return `${String(h24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+function toHHmm(h24) {
+    return `${String(h24).padStart(2, '0')}:00`;
 }
 
 function h24To12Parts(h24) {
@@ -44,15 +33,14 @@ function partsToH24(h12, period) {
 }
 
 function addOneHour(hhmm) {
-    const { h24, minute } = parseHHmm(hhmm);
-    const endH = (h24 + 1) % 24;
-    return toHHmm(endH, minute);
+    const { h24 } = parseHHmm(hhmm);
+    return toHHmm((h24 + 1) % 24);
 }
 
 function formatFriendly(hhmm) {
-    const { h24, minute } = parseHHmm(hhmm);
-    const d = setMinutes(setHours(new Date(2000, 0, 1), h24), minute);
-    return format(d, 'h:mm a');
+    const { h24 } = parseHHmm(hhmm);
+    const d = setHours(new Date(2000, 0, 1), h24);
+    return format(d, 'h a');
 }
 
 const PRESETS = [
@@ -65,19 +53,19 @@ const PRESETS = [
 ];
 
 /**
- * Visual time chooser for weekly slots (outputs HH:mm 24h for the API).
+ * Hour-only time chooser for weekly slots (outputs HH:00 for the API).
  */
 const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
-    const { h24, minute } = useMemo(() => parseHHmm(value), [value]);
+    const { h24 } = useMemo(() => parseHHmm(value), [value]);
     const { h12, period } = h24To12Parts(h24);
     const endPreview = value ? addOneHour(value) : '';
 
-    const commit = (nextH24, nextMin) => {
-        onChange(toHHmm(nextH24, nextMin));
+    const commit = (nextH24) => {
+        onChange(toHHmm(nextH24));
     };
 
-    const setFrom12 = (nextH12, nextPeriod, min = minute) => {
-        commit(partsToH24(nextH12, nextPeriod), min);
+    const setFrom12 = (nextH12, nextPeriod) => {
+        commit(partsToH24(nextH12, nextPeriod));
     };
 
     return (
@@ -94,7 +82,7 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                 <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">Session start</p>
                     <p className="truncate text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                        {value ? formatFriendly(value) : 'Choose a time'}
+                        {value ? formatFriendly(value) : 'Choose an hour'}
                     </p>
                     {value && (
                         <p className="mt-0.5 text-sm text-slate-600">
@@ -126,8 +114,8 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                 ))}
             </div>
 
-            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
-                <div className="sm:col-span-4">
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end">
+                <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Hour</label>
                     <select
                         disabled={disabled}
@@ -142,23 +130,7 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                         ))}
                     </select>
                 </div>
-                <div className="hidden items-center justify-center pb-2 text-2xl font-bold text-slate-400 sm:col-span-1 sm:flex">:</div>
-                <div className="sm:col-span-3">
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Minutes</label>
-                    <select
-                        disabled={disabled}
-                        value={minute}
-                        onChange={(e) => commit(h24, Number(e.target.value))}
-                        className="block w-full rounded-xl border-slate-200 bg-white py-3 pl-3 pr-8 text-center text-lg font-semibold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                    >
-                        {MINUTE_OPTIONS.map((m) => (
-                            <option key={m} value={m}>
-                                {String(m).padStart(2, '0')}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="sm:col-span-4">
+                <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Period</label>
                     <div className="grid grid-cols-2 gap-2">
                         <button
@@ -191,35 +163,9 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                 </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-indigo-100/80 pt-3">
-                <span className="text-xs text-slate-500">24-hour: {value || '—'}</span>
-                <div className="flex gap-2">
-                    <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                            let total = h24 * 60 + minute - 15;
-                            if (total < 0) total += 24 * 60;
-                            commit(Math.floor(total / 60) % 24, total % 60);
-                        }}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                        −15 min
-                    </button>
-                    <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                            let total = h24 * 60 + minute + 15;
-                            total %= 24 * 60;
-                            commit(Math.floor(total / 60), total % 60);
-                        }}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                        +15 min
-                    </button>
-                </div>
-            </div>
+            <p className="mt-3 text-xs text-slate-500 border-t border-indigo-100/80 pt-3">
+                Sessions are booked in full-hour blocks ({value || '—'}).
+            </p>
         </div>
     );
 };

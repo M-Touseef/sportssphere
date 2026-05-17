@@ -42,6 +42,18 @@ const coachService = {
     removeAvailabilitySlot: async (id) => {
         const response = await api.delete(`/coaches/availability/${id}`);
         return response.data;
+    },
+    getCourtBookings: async () => {
+        const response = await api.get('/coaches/court-bookings');
+        return response.data;
+    },
+    createCourtBooking: async (data) => {
+        const response = await api.post('/coaches/court-bookings', data);
+        return response.data;
+    },
+    cancelCourtBooking: async (id) => {
+        const response = await api.put(`/coaches/court-bookings/${id}/cancel`);
+        return response.data;
     }
 };
 

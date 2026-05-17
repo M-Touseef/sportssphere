@@ -20,6 +20,7 @@ import {
     ClockIcon
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatSlotHourRange } from '../utils/timeFormat';
 
 const CoachProfile = () => {
     const { id } = useParams();
@@ -85,7 +86,7 @@ const CoachProfile = () => {
 
             await sessionService.requestRecurringSession(payload);
 
-            success('Training request sent successfully! The coach will confirm shortly.');
+            success('Training request sent! The coach has 30 minutes to confirm, or it will be auto-declined.');
             // Reset selection
             setSelectedSlot(null);
             setBookingMessage('');
@@ -288,7 +289,7 @@ const CoachProfile = () => {
                                                 </div>
                                                 <div className="flex items-center text-sm text-slate-500 font-medium">
                                                     <ClockIcon className="h-4 w-4 mr-1" />
-                                                    {slot.startTime} - {slot.endTime}
+                                                    {formatSlotHourRange(slot.startTime, slot.endTime)}
                                                 </div>
                                             </div>
                                         ))}
