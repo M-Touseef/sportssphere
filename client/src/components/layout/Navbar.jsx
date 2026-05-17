@@ -38,7 +38,7 @@ export default function Navbar() {
                                     </span>
                                 </Link>
 
-                                {/* Desktop Links */}
+                                {user && (
                                 <div className="hidden lg:flex gap-6">
                                     {navigation.map((item) => {
                                         const isActive = location.pathname === item.href;
@@ -59,10 +59,12 @@ export default function Navbar() {
                                         );
                                     })}
                                 </div>
+                                )}
                             </div>
 
                             {/* Actions Section */}
                             <div className="flex items-center gap-3">
+                                {user && (
                                 <div className="hidden sm:flex items-center gap-2">
                                     <Menu as="div" className="relative">
                                         <Menu.Button className="p-2 text-slate-400 hover:text-slate-900 transition-colors relative outline-none">
@@ -176,6 +178,7 @@ export default function Navbar() {
                                         </Transition>
                                     </Menu>
                                 </div>
+                                )}
 
                                 {user ? (
                                     <Menu as="div" className="relative ml-2">
@@ -255,7 +258,7 @@ export default function Navbar() {
 
                     <Disclosure.Panel className="lg:hidden border-t border-slate-50 bg-white/95 backdrop-blur-md animate-enter">
                         <div className="p-4 space-y-1">
-                            {navigation.map((item) => (
+                            {user && navigation.map((item) => (
                                 <Disclosure.Button
                                     key={item.name}
                                     as={Link}

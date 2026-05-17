@@ -314,18 +314,11 @@ const MySparringRequestsV2 = () => {
                         <h3 className="text-2xl font-extrabold text-slate-900">
                             {isPro ? 'No Incoming Requests' : 'No Sparring Requests'}
                         </h3>
-                        <p className="text-slate-500 mt-2 mb-8">
+                        <p className="text-slate-500 mt-2">
                             {isPro
                                 ? "You haven't received any requests yet."
-                                : "You haven't sent any sparring requests yet. Find a pro to play with!"}
+                                : "You haven't sent any sparring requests yet."}
                         </p>
-                        {!isPro && (
-                            <Link to="/sparring/browse">
-                                <Button className="px-8 h-12 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
-                                    Find Pro Partners
-                                </Button>
-                            </Link>
-                        )}
                     </div>
                 )}
             </AnimatePresence>

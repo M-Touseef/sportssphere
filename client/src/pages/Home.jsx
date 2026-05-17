@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
     TrophyIcon,
     CalendarDaysIcon,
@@ -16,6 +17,11 @@ import { twMerge } from 'tailwind-merge';
 import { motion } from 'framer-motion';
 
 const Home = () => {
+    const { user } = useAuth();
+
+    const authLink = (targetHref) =>
+        user ? targetHref : { pathname: '/login', state: { from: { pathname: targetHref } } };
+
     return (
         <div className="bg-white text-slate-900 overflow-x-hidden">
             {/* Nav Padding Offset - Increased for sticky navbar */}
@@ -36,7 +42,7 @@ const Home = () => {
                             <div className="relative flex items-center gap-x-4 rounded-full px-6 py-2.5 text-xs font-bold leading-6 text-indigo-600 ring-1 ring-indigo-200 bg-indigo-50/20 backdrop-blur-sm hover:bg-indigo-50/40 transition-all">
                                 <span className="flex items-center gap-1.5"><SparklesIcon className="h-4 w-4" /> 2025 Platform Update</span>
                                 <div className="h-3 w-px bg-indigo-200" />
-                                <Link to="/tournaments" className="flex items-center gap-x-1 text-slate-600 hover:text-indigo-600 transition-colors">
+                                <Link to={authLink('/tournaments')} className="flex items-center gap-x-1 text-slate-600 hover:text-indigo-600 transition-colors">
                                     View Rankings
                                     <ArrowRightIcon className="h-3 w-3" />
                                 </Link>
@@ -73,7 +79,7 @@ const Home = () => {
                                     Join the Network
                                 </Button>
                             </Link>
-                            <Link to="/tournaments" className="group text-sm font-black text-slate-900 flex items-center gap-3 hover:text-indigo-600 transition-all uppercase tracking-widest">
+                            <Link to={authLink('/tournaments')} className="group text-sm font-black text-slate-900 flex items-center gap-3 hover:text-indigo-600 transition-all uppercase tracking-widest">
                                 Discover Events
                                 <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-slate-50 border border-slate-200 group-hover:bg-white group-hover:shadow-md group-hover:border-indigo-100 transition-all">
                                     <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -146,7 +152,10 @@ const Home = () => {
                                     </div>
 
                                     <div className="relative z-10 mt-12">
-                                        <Link to={feature.href} className="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 bg-indigo-50 px-6 py-3 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all duration-300">
+                                        <Link
+                                            to={authLink(feature.href)}
+                                            className="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 bg-indigo-50 px-6 py-3 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all duration-300"
+                                        >
                                             Get Started
                                             <ArrowRightIcon className="h-3.5 w-3.5" />
                                         </Link>

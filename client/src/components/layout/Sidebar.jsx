@@ -42,17 +42,18 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
     } else if (user?.role === 'player') {
         navigation.push({ name: 'Book a Court', href: '/courts', icon: MapPinIcon });
         navigation.push({ name: 'Find Mentors', href: '/coaches', icon: AcademicCapIcon });
+        navigation.push({ name: 'Tournaments', href: '/tournaments', icon: TrophyIcon });
         navigation.push({ name: 'My Schedule', href: '/app/bookings', icon: CalendarIcon });
         navigation.push({ name: 'Coaching Sessions', href: '/app/sessions', icon: ClockIcon });
 
         if (user.skillLevel === 'professional') {
             navigation.push({ name: 'Sparring Manager', href: '/app/sparring', icon: UsersIcon });
             navigation.push({ name: 'Sparring Invites', href: '/app/sparring/requests', icon: CalendarIcon });
-            navigation.push({ name: 'My Tournaments', href: '/app/tournaments', icon: FireIcon });
-            // Pro players usually have their own layout, but include links if they use this one
+            navigation.push({ name: 'My Registrations', href: '/pro/registrations', icon: FireIcon });
         } else {
             navigation.push({ name: 'Find Players', href: '/app/sparring', icon: UsersIcon });
             navigation.push({ name: 'Sparring Invites', href: '/app/sparring/requests', icon: CalendarIcon });
+            navigation.push({ name: 'My Registrations', href: '/app/registrations', icon: FireIcon });
         }
     } else if (user?.role === 'coach') {
         // Coaches should primarily use /coach dashboard, but providing links here just in case they land on Main Dashboard
@@ -93,7 +94,9 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
                         </div>
                         <ul role="list" className="space-y-2">
                             {navigation.map((item) => {
-                                const isActive = location.pathname === item.href;
+                                const isActive =
+                                    location.pathname === item.href ||
+                                    (item.href === '/tournaments' && location.pathname.startsWith('/tournaments'));
                                 return (
                                     <li key={item.name}>
                                         <motion.div whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>
