@@ -499,29 +499,6 @@ const CourtDetails = () => {
                                     </div>
                                 )}
                             </div>
-
-                            <div className="p-6 sm:p-8 pt-0">
-                                <div className="p-6 sm:p-8 bg-slate-50/50 rounded-[2rem] border border-slate-100">
-                                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 mb-6 uppercase tracking-widest flex items-center gap-2.5">
-                                        <ShieldCheckIcon className="h-4 w-4 text-indigo-600" />
-                                        Rules & Policies
-                                    </h4>
-                                    <ul className="space-y-5">
-                                        <li className="flex items-start gap-4">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
-                                                Cancellations within 24 operational cycles grant 100% credit return.
-                                            </p>
-                                        </li>
-                                        <li className="flex items-start gap-4">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
-                                                Please wear non-marking shoes on court.
-                                            </p>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

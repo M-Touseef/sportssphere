@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext'
 import Button from '../ui/Button'
 import Tooltip from '../ui/Tooltip'
 import { useNotifications } from '../../hooks/useNotifications'
+import { getNotificationHref } from '../../utils/notificationLinks'
 
 const navigation = [
     { name: 'Championships', href: '/tournaments' },
@@ -99,6 +100,7 @@ export default function Navbar() {
                                                         notifications.map((item) => {
                                                             const pendingReview =
                                                                 item.meta?.kind === 'pending_verification' && user?.role === 'admin';
+                                                            const href = getNotificationHref(item);
                                                             const rowClass = (active) =>
                                                                 twMerge(
                                                                     'w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 transition-colors flex gap-3',
@@ -135,9 +137,9 @@ export default function Navbar() {
                                                             return (
                                                                 <Menu.Item key={item._id}>
                                                                     {({ active }) =>
-                                                                        pendingReview ? (
+                                                                        pendingReview || href ? (
                                                                             <Link
-                                                                                to="/admin/dashboard?tab=verification"
+                                                                                to={href || '/admin/dashboard?tab=verification'}
                                                                                 onClick={() => {
                                                                                     if (!item.isRead) markNotificationRead(item._id);
                                                                                 }}

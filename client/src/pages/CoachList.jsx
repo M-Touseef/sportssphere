@@ -9,7 +9,6 @@ import EmptyState from '../components/ui/EmptyState';
 import {
     AcademicCapIcon,
     MapPinIcon,
-    StarIcon,
     AdjustmentsHorizontalIcon,
     MagnifyingGlassIcon,
     ArrowRightIcon,
@@ -121,22 +120,6 @@ const CoachList = () => {
         fetchCoaches(filters);
     };
 
-    const renderStars = (rating) => {
-        return (
-            <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                    <StarIcon
-                        key={i}
-                        className={twMerge(
-                            "h-3 w-3",
-                            i < Math.round(rating) ? "text-amber-400 fill-current" : "text-slate-200"
-                        )}
-                    />
-                ))}
-            </div>
-        );
-    };
-
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32">
             {/* Header Section */}
@@ -239,18 +222,16 @@ const CoachList = () => {
                                 transition={{ type: 'spring', stiffness: 280, damping: 24 }}
                                 className="group bg-gradient-to-b from-white to-indigo-50/30 rounded-[2.5rem] shadow-[0_20px_55px_-20px_rgba(79,70,229,0.25)] border border-indigo-100/70 overflow-hidden transition-all duration-500 flex flex-col h-full"
                             >
-                                {/* Card Header - Identity & Rating */}
+                                {/* Card Header */}
                                 <div className="p-8 pb-6 flex items-center gap-6">
                                     <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-xl shadow-indigo-200 ring-4 ring-white group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                                         {coach.user?.name?.[0]?.toUpperCase() || 'C'}
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-1.5">
-                                            <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-                                                <StarIcon className="h-3 w-3 text-amber-500 fill-current group-hover:scale-110 transition-transform duration-300" />
-                                                <span className="text-[11px] font-bold text-amber-700">{coach.rating.average.toFixed(2)}</span>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{coach.rating.count} Sessions</span>
+                                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">
+                                                {coach.experience} yrs experience
+                                            </span>
                                         </div>
                                         <h3 className="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight truncate">
                                             {coach.user?.name || 'Coach'}

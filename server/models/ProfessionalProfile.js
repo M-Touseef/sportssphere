@@ -7,18 +7,6 @@ const professionalProfileSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    rating: {
-        average: {
-            type: Number,
-            default: 0,
-            min: 0,
-            max: 5
-        },
-        count: {
-            type: Number,
-            default: 0
-        }
-    },
     matchFee: {
         type: Number,
         required: true,
@@ -93,6 +81,5 @@ professionalProfileSchema.pre('save', function (next) {
 
 // Index for efficient queries
 professionalProfileSchema.index({ isActive: 1 });
-professionalProfileSchema.index({ 'rating.average': -1 });
 
 module.exports = mongoose.model('ProfessionalProfile', professionalProfileSchema);

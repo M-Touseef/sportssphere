@@ -239,7 +239,7 @@ const features = [
     },
     {
         name: 'Court Booking',
-        description: 'Book quality courts in your area with verified ratings and detailed facility information.',
+        description: 'Book quality courts in your area with detailed facility information and easy scheduling.',
         icon: CalendarDaysIcon,
         href: '/courts',
     },

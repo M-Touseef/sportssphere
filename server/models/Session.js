@@ -73,15 +73,6 @@ const sessionSchema = new mongoose.Schema({
         default: 'pending'
     },
     notes: String,
-    rating: {
-        score: {
-            type: Number,
-            min: 1,
-            max: 5
-        },
-        review: String,
-        createdAt: Date
-    },
     createdAt: {
         type: Date,
         default: Date.now

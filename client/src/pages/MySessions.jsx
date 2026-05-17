@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import sessionService from '../services/sessionService';
-import SessionRating from '../components/SessionRating';
 import * as paymentService from '../services/paymentService';
 
 const MySessions = () => {
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, upcoming, past
-    const [selectedSession, setSelectedSession] = useState(null);
 
     useEffect(() => {
         fetchSessions();
@@ -190,18 +188,6 @@ const MySessions = () => {
                                     </div>
                                 )}
 
-                                {session.rating && (
-                                    <div className="mb-4 p-3 bg-yellow-50 rounded-md">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-yellow-500">{'⭐'.repeat(session.rating.score)}</span>
-                                            <span className="text-sm text-gray-600">Your Rating</span>
-                                        </div>
-                                        {session.rating.review && (
-                                            <p className="text-sm text-gray-600 italic">"{session.rating.review}"</p>
-                                        )}
-                                    </div>
-                                )}
-
                                 <div className="flex gap-3 pt-4 border-t border-gray-200">
                                     {(session.status === 'confirmed' || session.status === 'pending') && new Date(session.date) > new Date() && (
                                         <button
@@ -211,29 +197,8 @@ const MySessions = () => {
                                             Cancel Session
                                         </button>
                                     )}
-                                    {session.status === 'completed' && !session.rating && (
-                                        <button
-                                            onClick={() => setSelectedSession(session)}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
-                                        >
-                                            Rate Session
-                                        </button>
-                                    )}
                                 </div>
                             </div>
-
-                            {/* Rating Form */}
-                            {selectedSession?._id === session._id && (
-                                <div className="border-t border-gray-200 p-6 bg-gray-50">
-                                    <SessionRating
-                                        session={session}
-                                        onRatingSubmitted={() => {
-                                            setSelectedSession(null);
-                                            fetchSessions();
-                                        }}
-                                    />
-                                </div>
-                            )}
                         </div>
                     ))}
                 </div>

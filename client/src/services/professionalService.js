@@ -29,11 +29,6 @@ export const getAllProfessionals = async (params) => {
     return response.data;
 };
 
-export const rateProfessional = async (id, rating) => {
-    const response = await api.post(`${PROFESSIONAL_URL}/${id}/rate`, { rating });
-    return response.data;
-};
-
 // Availability Management
 // Recurring Availability
 export const addRecurringSlot = async (slotData) => {

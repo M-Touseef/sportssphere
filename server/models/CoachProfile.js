@@ -48,18 +48,6 @@ const coachProfileSchema = new mongoose.Schema({
             default: 1
         }
     }],
-    rating: {
-        average: {
-            type: Number,
-            default: 0,
-            min: 0,
-            max: 5
-        },
-        count: {
-            type: Number,
-            default: 0
-        }
-    },
     location: {
         city: String,
         areas: [String] // Areas where coach provides services

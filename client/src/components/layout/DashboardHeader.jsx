@@ -1,10 +1,11 @@
 import { Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
-import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import { Link, useLocation } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import Tooltip from '../ui/Tooltip'
 import { useNotifications } from '../../hooks/useNotifications'
+import { getNotificationHref } from '../../utils/notificationLinks'
 
 const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
     const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications()
@@ -15,6 +16,9 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
         .slice(-1)[0]
         ?.replace(/-/g, ' ')
         ?.replace(/\b\w/g, (char) => char.toUpperCase()) || 'Dashboard';
+    const userRoleLabel = user?.role === 'player'
+        ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
+        : user?.role;
     const userNavigation = [
         { name: 'My Profile', href: '/profile', icon: UserIcon },
         { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon },
@@ -36,24 +40,8 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                         <span className="text-xs font-black">SS</span>
                     </div>
                     <div className="min-w-0">
-                        <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-indigo-500">Control Center</p>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">{currentSection}</h2>
-                            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                Live
-                            </span>
-                        </div>
+                        <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">{currentSection}</h2>
                     </div>
-                </div>
-
-                <div className="hidden md:flex relative max-w-sm w-full group">
-                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-300 pointer-events-none group-focus-within:text-indigo-600 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Search courts, coaches or players..."
-                        className="w-full h-12 pl-12 pr-4 bg-slate-50/30 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/30 outline-none transition-all placeholder:font-medium placeholder:text-slate-400"
-                    />
                 </div>
             </div>
 
@@ -97,6 +85,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                                     notifications.map((item) => {
                                         const pendingReview =
                                             item.meta?.kind === 'pending_verification' && user?.role === 'admin';
+                                        const href = getNotificationHref(item);
                                         const rowClass = (active) =>
                                             twMerge(
                                                 'w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 transition-colors flex gap-3',
@@ -133,9 +122,9 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                                         return (
                                             <Menu.Item key={item._id}>
                                                 {({ active }) =>
-                                                    pendingReview ? (
+                                                    pendingReview || href ? (
                                                         <Link
-                                                            to="/admin/dashboard?tab=verification"
+                                                            to={href || '/admin/dashboard?tab=verification'}
                                                             onClick={() => {
                                                                 if (!item.isRead) markNotificationRead(item._id);
                                                             }}
@@ -178,7 +167,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                     <Menu.Button className="flex items-center gap-3 p-1 group">
                         <div className="hidden lg:flex flex-col items-end mr-1 text-right">
                             <span className="text-[13px] font-extrabold text-slate-900 leading-none">{user?.name}</span>
-                            <span className="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-widest">{user?.role}</span>
+                            <span className="text-[10px] font-semibold text-slate-500 mt-1.5 tracking-wide max-w-[11rem] truncate" title={userRoleLabel}>{userRoleLabel}</span>
                         </div>
                         <div className="h-11 w-11 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-xl shadow-indigo-100 group-hover:scale-105 transition-all">
                             {user?.name?.[0]?.toUpperCase() || 'U'}

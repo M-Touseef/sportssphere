@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import coachService from '../services/coachService';
 import sessionService from '../services/sessionService';
@@ -160,11 +161,8 @@ const CoachDashboard = () => {
                     <div className="text-3xl font-bold text-green-600">{pastSessions.filter(s => s.status === 'completed').length}</div>
                 </div>
                 <div className="bg-white p-6 rounded-lg shadow">
-                    <div className="text-gray-500 text-sm mb-1">Rating</div>
-                    <div className="text-3xl font-bold text-yellow-600">
-                        {profile?.rating?.average?.toFixed(1) || 'N/A'}
-                        {profile?.rating?.average && <span className="text-lg text-gray-500"> / 5</span>}
-                    </div>
+                    <div className="text-gray-500 text-sm mb-1">Pending requests</div>
+                    <div className="text-3xl font-bold text-amber-600">{pendingRequests.length}</div>
                 </div>
             </div>
 
@@ -294,14 +292,6 @@ const CoachDashboard = () => {
                                                             <span>📅 {new Date(session.date).toLocaleDateString()}</span>
                                                             <span>🕐 {session.startTime} - {session.endTime}</span>
                                                         </div>
-                                                        {session.rating && (
-                                                            <div className="mt-2">
-                                                                <span className="text-yellow-500">{'⭐'.repeat(session.rating.score)}</span>
-                                                                {session.rating.review && (
-                                                                    <p className="text-sm text-gray-600 mt-1 italic">"{session.rating.review}"</p>
-                                                                )}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                     <div className="text-right">
                                                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(session.status)}`}>

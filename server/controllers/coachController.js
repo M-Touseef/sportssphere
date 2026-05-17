@@ -85,7 +85,7 @@ exports.getCoaches = async (req, res) => {
 
         const coaches = await CoachProfile.find(query)
             .populate('user', 'name email city skillLevel')
-            .sort({ 'rating.average': -1 });
+            .sort({ experience: -1, createdAt: -1 });
 
         res.status(200).json({
             success: true,

@@ -142,7 +142,7 @@ exports.getPublicProfile = async (req, res) => {
 // @access  Public
 exports.getAllProfessionals = async (req, res) => {
     try {
-        const { city, minRating, maxFee, specialization } = req.query;
+        const { city, maxFee, specialization } = req.query;
 
         const query = { isActive: true };
 
@@ -158,15 +158,12 @@ exports.getAllProfessionals = async (req, res) => {
                 select: 'name city rank achievements skillLevel',
                 match: Object.keys(userFilter).length > 0 ? userFilter : undefined
             })
-            .sort({ 'rating.average': -1 });
+            .sort({ createdAt: -1 });
 
         // Filter out profiles where user didn't match city filter
         profiles = profiles.filter(p => p.user !== null);
 
         // Apply additional filters
-        if (minRating) {
-            profiles = profiles.filter(p => p.rating.average >= parseFloat(minRating));
-        }
         if (maxFee) {
             profiles = profiles.filter(p => p.matchFee <= parseFloat(maxFee));
         }
@@ -181,50 +178,6 @@ exports.getAllProfessionals = async (req, res) => {
         });
     } catch (error) {
         console.error('Get all professionals error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Server error'
-        });
-    }
-};
-
-// @desc    Rate a professional player (after completed session)
-// @route   POST /api/professional/:id/rate
-// @access  Private (Non-professional only)
-exports.rateProfessional = async (req, res) => {
-    try {
-        const { rating } = req.body;
-
-        if (!rating || rating < 1 || rating > 5) {
-            return res.status(400).json({
-                success: false,
-                error: 'Rating must be between 1 and 5'
-            });
-        }
-
-        const profile = await ProfessionalProfile.findOne({ user: req.params.id });
-
-        if (!profile) {
-            return res.status(404).json({
-                success: false,
-                error: 'Professional profile not found'
-            });
-        }
-
-        // Calculate new average
-        const newCount = profile.rating.count + 1;
-        const newAverage = ((profile.rating.average * profile.rating.count) + rating) / newCount;
-
-        profile.rating.average = Math.round(newAverage * 10) / 10; // Round to 1 decimal
-        profile.rating.count = newCount;
-        await profile.save();
-
-        res.status(200).json({
-            success: true,
-            data: profile
-        });
-    } catch (error) {
-        console.error('Rate professional error:', error);
         res.status(500).json({
             success: false,
             error: 'Server error'

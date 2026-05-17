@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CalendarDaysIcon, StarIcon, ClockIcon, UserIcon, CheckCircleIcon, XCircleIcon, SparklesIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ClockIcon, UserIcon, CheckCircleIcon, XCircleIcon, SparklesIcon, MapPinIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
 import StatCard from '../../components/ui/StatCard';
 import { useAuth } from '../../context/AuthContext';
 import sparringService from '../../services/sparringService';
@@ -15,7 +15,6 @@ const CoachDashboard = () => {
     const { success, error: toastError } = useToast();
     const [stats, setStats] = useState({
         totalSessions: 0,
-        averageRating: 0,
         totalStudents: 0,
         hoursCoached: 0
     });
@@ -30,14 +29,16 @@ const CoachDashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const [reqs, sessions, profile] = await Promise.all([
+            const [reqs, sessionsRes, profile] = await Promise.all([
                 sparringService.getIncomingRequests(),
                 sessionService.getCoachSessions(),
                 coachService.getMyProfile()
             ]);
 
+            const coachingSessionsList = sessionsRes?.data || sessionsRes || [];
+
             // Normalize Coaching Sessions to match Request structure
-            const coachingRequests = (sessions?.data || sessions || []).map(session => ({
+            const coachingRequests = coachingSessionsList.map(session => ({
                 _id: session._id,
                 type: 'COACHING_SESSION',
                 requester: session.student,
@@ -67,10 +68,8 @@ const CoachDashboard = () => {
 
             setRequests(allRequests);
 
-            // Mocking stats for now based on profile/requests
             setStats({
-                totalSessions: profile.data?.rating?.count || 0,
-                averageRating: profile.data?.rating?.average || 0,
+                totalSessions: coachingSessionsList.length,
                 totalStudents: 12, // Placeholder
                 hoursCoached: 24   // Placeholder
             });
@@ -150,10 +149,10 @@ const CoachDashboard = () => {
                     color="indigo"
                 />
                 <StatCard
-                    title="Average Rating"
-                    value={stats.averageRating}
-                    icon={StarIcon}
-                    color="yellow"
+                    title="Total Sessions"
+                    value={stats.totalSessions}
+                    icon={CheckBadgeIcon}
+                    color="blue"
                 />
                 <StatCard
                     title="Total Students"
@@ -320,7 +319,7 @@ const CoachDashboard = () => {
                         <div className="px-6 sm:px-10 py-6 sm:py-8 flex items-center justify-between border-b border-slate-50">
                             <div className="flex items-center gap-3">
                                 <div className="h-8 w-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-                                    <StarIcon className="h-5 w-5" />
+                                    <CalendarDaysIcon className="h-5 w-5" />
                                 </div>
                                 <h2 className="text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Confirmed Schedule</h2>
                             </div>

@@ -6,6 +6,37 @@ const CoachProfile = require('../models/CoachProfile');
 const ProfessionalProfile = require('../models/ProfessionalProfile');
 const { createNotification } = require('./notificationController');
 
+const resolveUserId = (userRef) => {
+    if (!userRef) return null;
+    if (typeof userRef === 'string') return userRef;
+    return userRef._id || userRef;
+};
+
+const notifySparringRequester = async (request, { title, message, status }) => {
+    const requesterId = resolveUserId(request.requester);
+    if (!requesterId) {
+        console.error('Sparring notification skipped: missing requester on request', request._id);
+        return;
+    }
+
+    try {
+        await createNotification({
+            userId: requesterId,
+            type: 'booking',
+            title,
+            message,
+            meta: {
+                kind: 'sparring_request_status',
+                status,
+                requestId: request._id,
+                bookingId: request.booking?._id || request.booking || null
+            }
+        });
+    } catch (notifyErr) {
+        console.error('Failed to create sparring status notification:', notifyErr);
+    }
+};
+
 // =============================================================================
 // RECURRING AVAILABILITY MANAGEMENT (Professional Players)
 // =============================================================================
@@ -561,23 +592,11 @@ exports.acceptRequest = async (req, res) => {
             await Booking.findByIdAndUpdate(request.booking._id, { status: 'pending_payment' });
         }
 
-        // Notify requester (non-professional player) that request was accepted.
-        try {
-            await createNotification({
-                userId: request.requester,
-                type: 'booking',
-                title: 'Sparring Request Accepted',
-                message: 'Your sparring request has been accepted. Please complete your booking payment.',
-                meta: {
-                    kind: 'sparring_request_status',
-                    status: 'ACCEPTED',
-                    requestId: request._id,
-                    bookingId: request.booking?._id || request.booking || null
-                }
-            });
-        } catch (notifyErr) {
-            console.error('Failed to create acceptance notification:', notifyErr);
-        }
+        await notifySparringRequester(request, {
+            title: 'Sparring Request Accepted',
+            message: 'Your sparring request has been accepted. Please complete your booking payment.',
+            status: 'ACCEPTED'
+        });
 
         res.status(200).json({ success: true, data: request });
     } catch (error) {
@@ -601,23 +620,11 @@ exports.rejectRequest = async (req, res) => {
             await Booking.findByIdAndUpdate(request.booking._id, { status: 'cancelled' });
         }
 
-        // Notify requester (non-professional player) that request was rejected.
-        try {
-            await createNotification({
-                userId: request.requester,
-                type: 'booking',
-                title: 'Sparring Request Rejected',
-                message: 'Your sparring request was rejected by the professional player.',
-                meta: {
-                    kind: 'sparring_request_status',
-                    status: 'REJECTED',
-                    requestId: request._id,
-                    bookingId: request.booking?._id || request.booking || null
-                }
-            });
-        } catch (notifyErr) {
-            console.error('Failed to create rejection notification:', notifyErr);
-        }
+        await notifySparringRequester(request, {
+            title: 'Sparring Request Cancelled',
+            message: 'Your sparring request was cancelled by the professional player.',
+            status: 'REJECTED'
+        });
 
         res.status(200).json({ success: true, data: request });
     } catch (error) {

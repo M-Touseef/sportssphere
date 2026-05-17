@@ -9,7 +9,6 @@ import { useToast } from '../context/ToastContext';
 import {
     MapPinIcon,
     AcademicCapIcon,
-    StarIcon,
     BriefcaseIcon,
     CalendarDaysIcon,
     CurrencyDollarIcon,
@@ -20,7 +19,6 @@ import {
     CheckBadgeIcon,
     ClockIcon
 } from '@heroicons/react/24/outline';
-import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CoachProfile = () => {
@@ -105,22 +103,6 @@ const CoachProfile = () => {
     };
 
 
-    const renderStars = (rating) => {
-        return (
-            <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                    <StarIcon
-                        key={i}
-                        className={twMerge(
-                            "h-5 w-5",
-                            i < Math.round(rating) ? "text-amber-400 fill-current" : "text-slate-200"
-                        )}
-                    />
-                ))}
-            </div>
-        );
-    };
-
     if (loading) {
         return (
             <div className="flex flex-col justify-center items-center h-[60vh] gap-6">
@@ -171,12 +153,10 @@ const CoachProfile = () => {
                                     </div>
                                     <div className="pb-4">
                                         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tighter mb-4">{coach.user.name}</h1>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-2xl border border-amber-100">
-                                                {renderStars(coach.rating.average)}
-                                                <span className="text-sm font-bold text-amber-700 ml-1">{coach.rating.average}</span>
-                                            </div>
-                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">({coach.rating.count} Verified Logs)</span>
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-2 rounded-2xl border border-indigo-100">
+                                                {coach.experience} years experience
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

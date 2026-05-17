@@ -131,8 +131,7 @@ const FindProfessional = () => {
                             professional={{
                                 ...pro.profile.toObject?.() || pro.profile,
                                 user: pro.player,
-                                matchFee: pro.availableSlots?.[0]?.matchFee || pro.profile?.matchFee || 'Variable',
-                                rating: pro.profile?.rating || { average: '5.0', count: 12 }
+                                matchFee: pro.availableSlots?.[0]?.matchFee || pro.profile?.matchFee || 'Variable'
                             }}
                             onSelect={() => handleViewAvailability(pro)}
                         />

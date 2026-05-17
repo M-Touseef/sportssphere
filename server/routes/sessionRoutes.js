@@ -8,7 +8,6 @@ const {
     getMySessions,
     getCoachSessions,
     cancelSession,
-    rateSession,
     confirmSession,
     rejectSession,
     getCoachRealizedAvailability,
@@ -27,7 +26,6 @@ router.post('/', auth, bookSession); // Keep for legacy if needed
 router.get('/my', auth, getMySessions);
 router.get('/coach', auth, authorize('coach'), getCoachSessions);
 router.put('/:id/cancel', auth, cancelSession);
-router.put('/:id/rate', auth, rateSession);
 router.put('/:id/confirm', auth, authorize('coach'), confirmSession);
 router.put('/:id/reject', auth, authorize('coach'), rejectSession);
 

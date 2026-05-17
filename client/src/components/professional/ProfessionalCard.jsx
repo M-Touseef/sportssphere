@@ -1,9 +1,9 @@
 import React from 'react';
-import { UserCircleIcon, StarIcon, TrophyIcon } from '@heroicons/react/24/solid';
+import { UserCircleIcon } from '@heroicons/react/24/solid';
 import { MapPinIcon } from '@heroicons/react/24/outline';
 
 const ProfessionalCard = ({ professional, onSelect }) => {
-    const { user, rating, matchFee, specializations, experienceYears, bio } = professional;
+    const { user, matchFee, specializations, experienceYears, bio } = professional;
 
     // Safety check just in case user object is missing
     if (!user) return null;
@@ -24,13 +24,6 @@ const ProfessionalCard = ({ professional, onSelect }) => {
                             </div>
                         </div>
                     </div>
-                    {rating && (
-                        <div className="flex items-center bg-amber-50 px-2 py-1 rounded-lg">
-                            <StarIcon className="h-4 w-4 text-amber-500 mr-1" />
-                            <span className="text-sm font-bold text-amber-700">{rating.average}</span>
-                            <span className="text-xs text-amber-600 ml-1">({rating.count})</span>
-                        </div>
-                    )}
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -64,7 +57,7 @@ const ProfessionalCard = ({ professional, onSelect }) => {
                     onClick={() => onSelect(professional)}
                     className="w-full py-3 px-4 bg-slate-900 text-white rounded-xl sm:rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-sm flex items-center justify-center gap-2 group text-xs sm:text-sm"
                 >
-                    View Availability
+                    Players Details
                     <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>

@@ -3,6 +3,33 @@ const CoachProfile = require('../models/CoachProfile');
 const Court = require('../models/Court');
 const { createNotification } = require('./notificationController');
 
+const resolveUserId = (userRef) => {
+    if (!userRef) return null;
+    if (typeof userRef === 'string') return userRef;
+    return userRef._id || userRef;
+};
+
+const notifySessionStudents = async (session, { title, message, status }) => {
+    const studentIds = (session.students || []).map((s) => resolveUserId(s)).filter(Boolean);
+    await Promise.all(
+        studentIds.map((studentId) =>
+            createNotification({
+                userId: studentId,
+                type: 'booking',
+                title,
+                message,
+                meta: {
+                    kind: 'coaching_session_status',
+                    status,
+                    sessionId: session._id
+                }
+            }).catch((err) => {
+                console.error('Failed to create coaching session status notification:', err);
+            })
+        )
+    );
+};
+
 // @desc    Publish a coaching session (Coach creates available slot)
 // @route   POST /api/sessions/publish
 // @access  Private (Coach)
@@ -219,53 +246,13 @@ exports.cancelSession = async (req, res) => {
         session.status = 'cancelled';
         await session.save();
 
-        res.status(200).json({
-            success: true,
-            data: session
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Server error' });
-    }
-};
-
-// @desc    Rate a session
-// @route   PUT /api/sessions/:id/rate
-// @access  Private (Student)
-exports.rateSession = async (req, res) => {
-    try {
-        const { score, review } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Only student can rate
-        if (!session.students.includes(req.user.id)) {
-            return res.status(401).json({ error: 'Not authorized' });
-        }
-
-        // Session must be completed
-        if (session.status !== 'completed') {
-            return res.status(400).json({ error: 'Can only rate completed sessions' });
-        }
-
-        // Update session rating
-        session.rating = {
-            score,
-            review,
-            createdAt: new Date()
-        };
-        await session.save();
-
-        // Update coach's overall rating
-        const coachProfile = await CoachProfile.findOne({ user: session.coach });
-        if (coachProfile) {
-            const totalRating = (coachProfile.rating.average * coachProfile.rating.count) + score;
-            coachProfile.rating.count += 1;
-            coachProfile.rating.average = totalRating / coachProfile.rating.count;
-            await coachProfile.save();
+        const cancelledByCoach = session.coach.toString() === req.user.id;
+        if (cancelledByCoach) {
+            await notifySessionStudents(session, {
+                title: 'Coaching Session Cancelled',
+                message: 'Your coaching session was cancelled by the coach.',
+                status: 'CANCELLED'
+            });
         }
 
         res.status(200).json({
@@ -277,6 +264,7 @@ exports.rateSession = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
 // @desc    Confirm a session
 // @route   PUT /api/sessions/:id/confirm
 // @access  Private (Coach)
@@ -303,6 +291,12 @@ exports.confirmSession = async (req, res) => {
 
         // Populate details for response
         await session.populate('students', 'name email');
+
+        await notifySessionStudents(session, {
+            title: 'Coaching Request Accepted',
+            message: 'Your coaching request was accepted. Please complete payment to confirm your session.',
+            status: 'ACCEPTED'
+        });
 
         res.status(200).json({
             success: true,
@@ -336,6 +330,12 @@ exports.rejectSession = async (req, res) => {
 
         session.status = 'cancelled';
         await session.save();
+
+        await notifySessionStudents(session, {
+            title: 'Coaching Request Cancelled',
+            message: 'Your coaching request was not accepted by the coach.',
+            status: 'REJECTED'
+        });
 
         res.status(200).json({
             success: true,
