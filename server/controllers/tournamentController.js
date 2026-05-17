@@ -3,6 +3,32 @@ const TournamentRegistration = require('../models/TournamentRegistration');
 const Match = require('../models/Match');
 const Court = require('../models/Court');
 
+const TOURNAMENT_GRADES = ['division', 'national', 'international'];
+
+const normalizeContactPhone = (phone) => {
+    if (phone == null || phone === '') return phone;
+    const digits = String(phone).replace(/\D/g, '');
+    if (digits.length !== 11) {
+        const err = new Error('Contact phone must be exactly 11 digits');
+        err.statusCode = 400;
+        throw err;
+    }
+    return digits;
+};
+
+const validateCategoryGrades = (categories) => {
+    if (!Array.isArray(categories)) return;
+    for (const cat of categories) {
+        if (cat.skillLevel && !TOURNAMENT_GRADES.includes(cat.skillLevel)) {
+            const err = new Error(
+                `Invalid tactical grade. Must be one of: ${TOURNAMENT_GRADES.join(', ')}`
+            );
+            err.statusCode = 400;
+            throw err;
+        }
+    }
+};
+
 // @desc    Create a new tournament
 // @route   POST /api/tournaments
 // @access  Private (Organizer only)
@@ -26,8 +52,12 @@ exports.createTournament = async (req, res, next) => {
             });
         }
 
+        validateCategoryGrades(req.body.categories);
+        const contactPhone = normalizeContactPhone(req.body.contactPhone);
+
         const tournamentData = {
             ...req.body,
+            contactPhone,
             organizer: req.user.id,
             venue: court.name, // Auto-fill venue name from court
             city: court.location.city // Auto-fill city from court
@@ -147,9 +177,15 @@ exports.updateTournament = async (req, res, next) => {
             return res.status(401).json({ error: 'Not authorized' });
         }
 
+        validateCategoryGrades(req.body.categories);
+        const updates = { ...req.body };
+        if (updates.contactPhone !== undefined) {
+            updates.contactPhone = normalizeContactPhone(updates.contactPhone);
+        }
+
         tournament = await Tournament.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            updates,
             { new: true, runValidators: true }
         );
 

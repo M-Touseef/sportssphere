@@ -1,9 +1,11 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+    const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -85,10 +87,11 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
+    const logout = useCallback(() => {
         authService.logout();
         setUser(null);
-    };
+        navigate('/', { replace: true });
+    }, [navigate]);
 
     const updateProfile = async (userData) => {
         setLoading(true);

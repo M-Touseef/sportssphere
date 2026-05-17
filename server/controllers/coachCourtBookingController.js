@@ -260,33 +260,4 @@ exports.cancelCoachCourtBooking = async (req, res) => {
     }
 };
 
-// @desc    Court owner: pending coaching session requests on their venues
-// @route   GET /api/courts/my/coaching-requests
-// @access  Private (Organizer)
-exports.getCourtCoachingRequests = async (req, res) => {
-    try {
-        const courts = await Court.find({ owner: req.user.id }).select('_id');
-        const courtIds = courts.map((c) => c._id);
-
-        const sessions = await Session.find({
-            court: { $in: courtIds },
-            status: 'pending',
-            students: { $exists: true, $not: { $size: 0 } }
-        })
-            .populate('coach', 'name email')
-            .populate('students', 'name email')
-            .populate('court', 'name location')
-            .sort({ createdAt: -1 });
-
-        res.status(200).json({
-            success: true,
-            count: sessions.length,
-            data: sessions
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Server error' });
-    }
-};
-
 exports.assertCourtSlotAvailable = assertCourtSlotAvailable;

@@ -39,7 +39,6 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
         navigation.push({ name: 'My Tournaments', href: '/app/tournaments', icon: FireIcon });
         navigation.push({ name: 'Create Tournament', href: '/app/tournaments/create', icon: TrophyIcon });
         navigation.push({ name: 'My Courts', href: '/org/courts', icon: MapPinIcon });
-        navigation.push({ name: 'Coaching Requests', href: '/org/coaching-requests', icon: ClockIcon });
     } else if (user?.role === 'player') {
         navigation.push({ name: 'Book a Court', href: '/courts', icon: MapPinIcon });
         navigation.push({ name: 'Find Mentors', href: '/coaches', icon: AcademicCapIcon });
@@ -59,7 +58,7 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
     } else if (user?.role === 'coach') {
         // Coaches should primarily use /coach dashboard, but providing links here just in case they land on Main Dashboard
         navigation.push({ name: 'Requests', href: '/coach/requests', icon: UsersIcon });
-        navigation.push({ name: 'Availability', href: '/coach/availability', icon: CalendarIcon });
+        navigation.push({ name: 'Schedule & courts', href: '/coach/schedule', icon: CalendarIcon });
     }
 
     const secondaryNav = []

@@ -1,5 +1,5 @@
 import React, { useState, Fragment } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Dialog, Transition } from '@headlessui/react';
 import {
@@ -20,7 +20,6 @@ const ProfessionalLayout = () => {
     const { user, logout } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
-    const navigate = useNavigate();
 
     const navigation = [
         { name: 'Dashboard', href: '/pro/dashboard', icon: HomeIcon },
@@ -34,9 +33,8 @@ const ProfessionalLayout = () => {
         { name: 'Matching Requests', href: '/pro/requests', icon: InboxIcon },
     ];
 
-    const handleLogout = async () => {
-        await logout();
-        navigate('/login');
+    const handleLogout = () => {
+        logout();
     };
 
     const SidebarContent = ({ isMobile = false }) => (

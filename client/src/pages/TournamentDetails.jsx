@@ -26,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatTournamentGrade, TOURNAMENT_FORMAT_LABEL } from '../shared/constants';
 
 // Internal component to handle bracket data fetching
 const TournamentBracketWrapper = ({ tournamentId }) => {
@@ -423,7 +424,7 @@ const TournamentDetails = () => {
                                             <div className="bg-slate-50 border border-slate-100 rounded-3xl p-8">
                                                 <div className="flex items-center gap-4 mb-4">
                                                     <span className="h-10 w-10 rounded-full bg-white border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs uppercase tracking-widest">Type</span>
-                                                    <p className="text-xl font-bold text-slate-800 capitalize">{tournament.format.replace('_', ' ')} Elimination</p>
+                                                    <p className="text-xl font-bold text-slate-800">{TOURNAMENT_FORMAT_LABEL}</p>
                                                 </div>
                                                 <div className="h-px bg-slate-200/50 w-full mb-4" />
                                                 <p className="text-slate-500 font-medium leading-relaxed">System-generated brackets will follow standardized international protocols for high-performance athletic engagement.</p>
@@ -460,7 +461,7 @@ const TournamentDetails = () => {
                                                         <h4 className="text-2xl sm:text-3xl font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{getCategoryLabel(category.name)}</h4>
                                                         <div className="flex items-center gap-3 mt-3">
                                                             <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
-                                                                {category.skillLevel} Division
+                                                                {formatTournamentGrade(category.skillLevel)}
                                                             </span>
                                                             <span className="h-1.5 w-1.5 rounded-full bg-slate-200" />
                                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">

@@ -3,12 +3,12 @@ import { CalendarDaysIcon, ClockIcon, UserIcon, CheckCircleIcon, XCircleIcon, Sp
 import StatCard from '../../components/ui/StatCard';
 import { useAuth } from '../../context/AuthContext';
 import sparringService from '../../services/sparringService';
-import coachService from '../../services/coachService';
 import sessionService from '../../services/sessionService';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/ui/Button';
 import { Link } from 'react-router-dom';
 import * as paymentService from '../../services/paymentService';
+import { sumCoachingHours, formatCoachingHours } from '../../utils/timeFormat';
 
 const CoachDashboard = () => {
     const { user } = useAuth();
@@ -29,10 +29,9 @@ const CoachDashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const [reqs, sessionsRes, profile] = await Promise.all([
+            const [reqs, sessionsRes] = await Promise.all([
                 sparringService.getIncomingRequests(),
-                sessionService.getCoachSessions(),
-                coachService.getMyProfile()
+                sessionService.getCoachSessions()
             ]);
 
             const coachingSessionsList = sessionsRes?.data || sessionsRes || [];
@@ -70,10 +69,16 @@ const CoachDashboard = () => {
 
             setRequests(allRequests);
 
+            const uniqueStudents = new Set(
+                coachingSessionsList.flatMap((s) =>
+                    (s.students || []).map((st) => (typeof st === 'object' ? st._id : st)?.toString())
+                )
+            );
+
             setStats({
                 totalSessions: coachingSessionsList.length,
-                totalStudents: 12, // Placeholder
-                hoursCoached: 24   // Placeholder
+                totalStudents: uniqueStudents.size,
+                hoursCoached: sumCoachingHours(coachingSessionsList)
             });
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
@@ -134,7 +139,7 @@ const CoachDashboard = () => {
                     </p>
                 </div>
                 <div className="flex gap-4">
-                    <Link to="/coach/availability">
+                    <Link to="/coach/schedule">
                         <Button variant="primary" className="h-14 px-8 rounded-2xl shadow-xl shadow-indigo-100 font-bold">
                             Manage Availability
                         </Button>
@@ -143,13 +148,7 @@ const CoachDashboard = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title="Action Items"
-                    value={requests.filter(r => r.status === 'PENDING_RESPONSE').length}
-                    icon={CalendarDaysIcon}
-                    color="indigo"
-                />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <StatCard
                     title="Total Sessions"
                     value={stats.totalSessions}
@@ -164,7 +163,7 @@ const CoachDashboard = () => {
                 />
                 <StatCard
                     title="Hours Coached"
-                    value={stats.hoursCoached}
+                    value={formatCoachingHours(stats.hoursCoached)}
                     icon={ClockIcon}
                     color="green"
                 />

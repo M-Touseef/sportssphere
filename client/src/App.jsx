@@ -45,8 +45,7 @@ import SupportCenter from './pages/legal/SupportCenter';
 // Coach Pages
 import CoachLayout from './components/layout/CoachLayout';
 import CoachProfileEditor from './pages/coach/CoachProfileEditor';
-import CoachAvailabilityManager from './pages/coach/CoachAvailabilityManager';
-import CoachCourtBookings from './pages/coach/CoachCourtBookings';
+import CoachSchedule from './pages/coach/CoachSchedule';
 import CoachBookingRequests from './pages/coach/CoachBookingRequests';
 
 // Professional Player Pages
@@ -57,12 +56,10 @@ import AvailabilityManager from './pages/professional/AvailabilityManager';
 import BookingRequests from './pages/professional/BookingRequests';
 
 // Sparring System (Unified)
-import ProSparringDashboard from './pages/sparring/ProSparringDashboard';
 import FindProfessional from './pages/sparring/FindProfessional';
 import MyBookings from './pages/MyBookings';
 import MySparringRequests from './pages/sparring/MySparringRequestsV2';
 import OrganizerCourts from './pages/organizer/OrganizerCourts';
-import OrganizerCoachingRequests from './pages/organizer/OrganizerCoachingRequests';
 import CreateCourt from './pages/organizer/CreateCourt';
 
 const AnimatedRoutes = () => {
@@ -193,7 +190,7 @@ const AnimatedRoutes = () => {
             {/* Organizer Routes */}
             <Route element={<ProtectedRoute allowedRoles={['organizer']} />}>
               <Route path="/org/courts" element={<PageTransition><OrganizerCourts /></PageTransition>} />
-              <Route path="/org/coaching-requests" element={<PageTransition><OrganizerCoachingRequests /></PageTransition>} />
+              <Route path="/org/coaching-requests" element={<Navigate to="/org/courts" replace />} />
               <Route path="/org/courts/create" element={<PageTransition><CreateCourt /></PageTransition>} />
               <Route path="/org/courts/:courtId/edit" element={<PageTransition><CreateCourt /></PageTransition>} />
             </Route>
@@ -215,8 +212,9 @@ const AnimatedRoutes = () => {
             <Route path="/coach" element={<CoachLayout />}>
               <Route path="dashboard" element={<PageTransition><CoachDashboard /></PageTransition>} />
               <Route path="profile" element={<PageTransition><CoachProfileEditor /></PageTransition>} />
-              <Route path="court-bookings" element={<PageTransition><CoachCourtBookings /></PageTransition>} />
-              <Route path="availability" element={<PageTransition><CoachAvailabilityManager /></PageTransition>} />
+              <Route path="schedule" element={<PageTransition><CoachSchedule /></PageTransition>} />
+              <Route path="court-bookings" element={<Navigate to="/coach/schedule?tab=courts" replace />} />
+              <Route path="availability" element={<Navigate to="/coach/schedule?tab=weekly" replace />} />
               <Route path="requests" element={<PageTransition><CoachBookingRequests /></PageTransition>} />
             </Route>
           </Route>
@@ -292,16 +290,16 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <ToastProvider>
-          <BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <SocketProvider>
             <AnimatedRoutes />
             <ChatWindow />
-          </BrowserRouter>
-        </ToastProvider>
-      </SocketProvider>
-    </AuthProvider>
+          </SocketProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ToastProvider>
   )
 }
 

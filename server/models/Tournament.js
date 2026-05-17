@@ -62,8 +62,8 @@ const tournamentSchema = new mongoose.Schema({
         },
         skillLevel: {
             type: String,
-            enum: ['professional', 'non-professional', 'open'],
-            default: 'open'
+            enum: ['division', 'national', 'international'],
+            default: 'division'
         }
     }],
     status: {
@@ -73,7 +73,7 @@ const tournamentSchema = new mongoose.Schema({
     },
     format: {
         type: String,
-        enum: ['single_elimination', 'double_elimination', 'round_robin', 'swiss'],
+        enum: ['single_elimination'],
         default: 'single_elimination'
     },
     rules: {
@@ -84,7 +84,14 @@ const tournamentSchema = new mongoose.Schema({
         required: true
     },
     contactPhone: {
-        type: String
+        type: String,
+        validate: {
+            validator(v) {
+                if (!v) return true;
+                return /^[0-9]{11}$/.test(String(v).replace(/\D/g, ''));
+            },
+            message: 'Contact phone must be exactly 11 digits'
+        }
     },
     banner: {
         type: String // URL to banner image

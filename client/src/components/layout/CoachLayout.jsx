@@ -1,5 +1,5 @@
 import React, { useState, Fragment } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Dialog, Transition } from '@headlessui/react';
 import {
@@ -9,7 +9,6 @@ import {
     InboxIcon,
     ArrowLeftOnRectangleIcon,
     XMarkIcon,
-    BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
 import DashboardHeader from './DashboardHeader';
 
@@ -17,19 +16,16 @@ const CoachLayout = () => {
     const { user, logout } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
-    const navigate = useNavigate();
 
     const navigation = [
         { name: 'Dashboard', href: '/coach/dashboard', icon: HomeIcon },
         { name: 'My Profile', href: '/coach/profile', icon: UserCircleIcon },
-        { name: 'Court bookings', href: '/coach/court-bookings', icon: BuildingOffice2Icon },
-        { name: 'Availability', href: '/coach/availability', icon: CalendarIcon },
+        { name: 'Schedule & courts', href: '/coach/schedule', icon: CalendarIcon },
         { name: 'Requests', href: '/coach/requests', icon: InboxIcon },
     ];
 
-    const handleLogout = async () => {
-        await logout();
-        navigate('/login');
+    const handleLogout = () => {
+        logout();
     };
 
     const SidebarContent = ({ isMobile = false }) => (
@@ -47,7 +43,11 @@ const CoachLayout = () => {
             <div className="flex-1 flex flex-col overflow-y-auto p-4">
                 <nav className="flex-1 space-y-2">
                     {navigation.map((item) => {
-                        const isActive = location.pathname === item.href;
+                        const isActive =
+                            location.pathname === item.href ||
+                            (item.href === '/coach/schedule' &&
+                                (location.pathname === '/coach/court-bookings' ||
+                                    location.pathname === '/coach/availability'));
                         return (
                             <Link
                                 key={item.name}

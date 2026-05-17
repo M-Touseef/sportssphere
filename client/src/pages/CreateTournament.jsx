@@ -19,6 +19,12 @@ import {
     InformationCircleIcon
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+    TOURNAMENT_GRADES,
+    TOURNAMENT_FORMAT,
+    TOURNAMENT_FORMAT_LABEL,
+    validateMobile11Digits
+} from '../shared/constants';
 
 const CreateTournament = () => {
     const navigate = useNavigate();
@@ -42,7 +48,7 @@ const CreateTournament = () => {
             endDate: '',
             registrationDeadline: '',
             court: '',
-            format: 'single_elimination',
+            format: TOURNAMENT_FORMAT,
             rules: '',
             contactEmail: user?.email || '',
             contactPhone: '',
@@ -51,7 +57,7 @@ const CreateTournament = () => {
                 name: 'mens_singles',
                 maxParticipants: 16,
                 entryFee: 0,
-                skillLevel: 'open',
+                skillLevel: 'division',
                 prizePool: { first: 0, second: 0, third: 0 }
             }]
         }
@@ -90,7 +96,11 @@ const CreateTournament = () => {
                 setLoading(false);
                 return;
             }
-            await tournamentService.createTournament(data);
+            const payload = {
+                ...data,
+                contactPhone: String(data.contactPhone || '').replace(/\D/g, '')
+            };
+            await tournamentService.createTournament(payload);
             success('Championship deployment successful! Redirecting to command center.');
             setTimeout(() => navigate('/app/tournaments'), 2000);
         } catch (error) {
@@ -204,15 +214,13 @@ const CreateTournament = () => {
 
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Combat Format</label>
-                            <select
-                                className="w-full h-11 px-4 rounded-xl border border-input bg-background font-bold text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
-                                {...register('format')}
-                            >
-                                <option value="single_elimination">Single Elimination (Knockout)</option>
-                                <option value="double_elimination">Double Elimination</option>
-                                <option value="round_robin">Round Robin</option>
-                                <option value="swiss">Swiss System</option>
-                            </select>
+                            <input type="hidden" {...register('format')} value={TOURNAMENT_FORMAT} />
+                            <div className="flex h-11 items-center px-4 rounded-xl border border-input bg-muted/40 font-bold text-sm text-foreground">
+                                {TOURNAMENT_FORMAT_LABEL}
+                            </div>
+                            <p className="text-xs text-muted-foreground pl-1">
+                                All championships use knockout single elimination.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -232,7 +240,7 @@ const CreateTournament = () => {
                                 name: 'mens_singles',
                                 maxParticipants: 16,
                                 entryFee: 0,
-                                skillLevel: 'open',
+                                skillLevel: 'division',
                                 prizePool: { first: 0, second: 0, third: 0 }
                             })}
                             className="gap-2"
@@ -294,13 +302,13 @@ const CreateTournament = () => {
                                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Tactical Grade</label>
                                             <select
                                                 className="w-full h-11 px-4 rounded-xl border border-input bg-background font-bold text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
-                                                {...register(`categories.${index}.skillLevel`)}
+                                                {...register(`categories.${index}.skillLevel`, { required: 'Tactical grade is required' })}
                                             >
-                                                <option value="open">Open Intel</option>
-                                                <option value="beginner">Beginner Class</option>
-                                                <option value="intermediate">Intermediate Class</option>
-                                                <option value="advanced">Advanced (Elite)</option>
-                                                <option value="professional">Professional Division</option>
+                                                {TOURNAMENT_GRADES.map((grade) => (
+                                                    <option key={grade.value} value={grade.value}>
+                                                        {grade.label}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
 
@@ -353,9 +361,15 @@ const CreateTournament = () => {
                         />
                         <Input
                             label="Emergency Signal (Phone)"
-                            placeholder="+92 000 0000000"
+                            placeholder="03XXXXXXXXX"
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={11}
                             error={errors.contactPhone}
-                            {...register('contactPhone')}
+                            {...register('contactPhone', {
+                                required: 'Mobile number is required',
+                                validate: validateMobile11Digits
+                            })}
                         />
                         <div className="md:col-span-2 space-y-2">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Championship Rules (Protocol)</label>

@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { getCourts, getCourt, createCourt, getAvailability, updateCourt, deleteCourt, getMyCourts } = require('../controllers/courtController');
-const { getCourtCoachingRequests } = require('../controllers/coachCourtBookingController');
 const { auth, authorize } = require('../middleware/auth');
 
 // Public routes
@@ -12,7 +11,6 @@ router.get('/:id', getCourt);
 
 // Protected routes
 router.use(auth); // Protect all routes defined after this
-router.get('/my/coaching-requests', authorize('organizer', 'admin'), getCourtCoachingRequests);
 router.get('/my/all', authorize('organizer', 'admin'), getMyCourts);
 router.post('/', authorize('organizer', 'admin'), createCourt);
 router.put('/:id', authorize('organizer', 'admin'), updateCourt);
