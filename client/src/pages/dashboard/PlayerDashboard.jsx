@@ -19,6 +19,7 @@ import { useToast } from '../../context/ToastContext';
 import StatCard from '../../components/ui/StatCard';
 import { Link } from 'react-router-dom';
 import EmptyState from '../../components/ui/EmptyState';
+import Button from '../../components/ui/Button';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { motion } from 'framer-motion';
 
@@ -38,7 +39,8 @@ export default function PlayerDashboard() {
             setLoading(true);
             setFetchError(false);
             const data = await courtService.getMyBookings();
-            setUpcomingBookings(data.data.map(b => ({
+            const bookings = Array.isArray(data?.data) ? data.data : [];
+            setUpcomingBookings(bookings.map(b => ({
                 id: b._id,
                 court: b.court.name,
                 date: new Date(b.date).toLocaleDateString(),
