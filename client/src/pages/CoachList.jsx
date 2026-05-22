@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getCoaches } from '../services/coachService';
 import { getAllCourts } from '../services/courtService';
 import { useToast } from '../context/ToastContext';
@@ -9,15 +10,68 @@ import EmptyState from '../components/ui/EmptyState';
 import {
     AcademicCapIcon,
     MapPinIcon,
-    AdjustmentsHorizontalIcon,
     MagnifyingGlassIcon,
     ArrowRightIcon,
     ExclamationTriangleIcon,
     BuildingStorefrontIcon,
-    CurrencyDollarIcon
+    BanknotesIcon,
+    SparklesIcon
 } from '@heroicons/react/24/outline';
-import { twMerge } from 'tailwind-merge';
-import { motion, AnimatePresence } from 'framer-motion';
+
+const SPEC_LABELS = {
+    singles: 'Singles',
+    doubles: 'Doubles',
+    footwork: 'Footwork',
+    strategy: 'Strategy',
+    fitness: 'Fitness',
+    mental_game: 'Mental game'
+};
+
+const formatSpec = (spec) =>
+    SPEC_LABELS[spec] || spec?.replace(/_/g, ' ') || spec;
+
+const DEFAULT_FILTERS = {
+    city: '',
+    skillLevel: '',
+    court: '',
+    minRate: '',
+    maxRate: '',
+    paymentType: 'hourly'
+};
+
+const normalizeCourtId = (courtValue) => {
+    if (!courtValue) return '';
+    if (typeof courtValue === 'string') return courtValue;
+    if (typeof courtValue === 'object') return courtValue._id || courtValue.id || '';
+    return '';
+};
+
+const applyClientFilters = (coachList, activeFilters) => {
+    const selectedCourt = activeFilters.court?.trim();
+    const maxRate = activeFilters.maxRate !== '' ? Number(activeFilters.maxRate) : null;
+    const paymentType = activeFilters.paymentType || 'hourly';
+
+    return coachList.filter((coach) => {
+        if (selectedCourt) {
+            const hasCourtMatch =
+                Array.isArray(coach.availability) &&
+                coach.availability.some((slot) => normalizeCourtId(slot?.court) === selectedCourt);
+            if (!hasCourtMatch) return false;
+        }
+
+        if (paymentType === 'monthly' && (coach.monthlyFee === null || coach.monthlyFee === undefined)) {
+            return false;
+        }
+
+        if (maxRate !== null && !Number.isNaN(maxRate)) {
+            const selectedRate =
+                paymentType === 'monthly' ? Number(coach.monthlyFee) : Number(coach.hourlyRate);
+            if (Number.isNaN(selectedRate) || selectedRate > maxRate) return false;
+        }
+
+        return true;
+    });
+};
 
 const CoachList = () => {
     const [coaches, setCoaches] = useState([]);
@@ -25,94 +79,50 @@ const CoachList = () => {
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(false);
     const { error } = useToast();
-    const [filters, setFilters] = useState({
-        city: '',
-        skillLevel: '',
-        court: '',
-        minRate: '',
-        maxRate: '',
-        paymentType: 'hourly' // hourly or monthly
-    });
+    const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
-    const normalizeCourtId = (courtValue) => {
-        if (!courtValue) return '';
-        if (typeof courtValue === 'string') return courtValue;
-        if (typeof courtValue === 'object') return courtValue._id || courtValue.id || '';
-        return '';
-    };
-
-    const applyClientFilters = (coachList, activeFilters) => {
-        const selectedCourt = activeFilters.court?.trim();
-        const maxRate = activeFilters.maxRate !== '' ? Number(activeFilters.maxRate) : null;
-        const paymentType = activeFilters.paymentType || 'hourly';
-
-        return coachList.filter((coach) => {
-            if (selectedCourt) {
-                const hasCourtMatch = Array.isArray(coach.availability) && coach.availability.some((slot) => (
-                    normalizeCourtId(slot?.court) === selectedCourt
-                ));
-
-                if (!hasCourtMatch) return false;
+    const fetchCoaches = useCallback(
+        async (activeFilters = filters) => {
+            try {
+                setLoading(true);
+                setFetchError(false);
+                const data = await getCoaches(activeFilters);
+                setCoaches(applyClientFilters(data.data || [], activeFilters));
+            } catch (err) {
+                console.error('Error fetching coaches:', err);
+                setFetchError(true);
+                error('Could not load coaches. Please check your connection.');
+            } finally {
+                setLoading(false);
             }
-
-            if (paymentType === 'monthly' && (coach.monthlyFee === null || coach.monthlyFee === undefined)) {
-                return false;
-            }
-
-            if (maxRate !== null && !Number.isNaN(maxRate)) {
-                const selectedRate = paymentType === 'monthly'
-                    ? Number(coach.monthlyFee)
-                    : Number(coach.hourlyRate);
-
-                if (Number.isNaN(selectedRate) || selectedRate > maxRate) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-    };
+        },
+        [filters, error]
+    );
 
     useEffect(() => {
         const initData = async () => {
             try {
+                setLoading(true);
+                setFetchError(false);
                 const [coachesData, courtsData] = await Promise.all([
-                    getCoaches(filters),
+                    getCoaches(DEFAULT_FILTERS),
                     getAllCourts()
                 ]);
-                setCoaches(applyClientFilters(coachesData.data || [], filters));
-                setCourts(courtsData.data || courtsData);
+                setCoaches(applyClientFilters(coachesData.data || [], DEFAULT_FILTERS));
+                setCourts(Array.isArray(courtsData?.data) ? courtsData.data : courtsData || []);
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setFetchError(true);
-                error('Data synchronization failed.');
+                error('Could not load coaches. Please check your connection.');
             } finally {
                 setLoading(false);
             }
         };
         initData();
-    }, []);
-
-    const fetchCoaches = async (activeFilters = filters) => {
-        try {
-            setLoading(true);
-            setFetchError(false);
-            const data = await getCoaches(activeFilters);
-            setCoaches(applyClientFilters(data.data || [], activeFilters));
-        } catch (err) {
-            console.error('Error fetching coaches:', err);
-            setFetchError(true);
-            error('Coach database synchronization failed.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [error]);
 
     const handleFilterChange = (e) => {
-        setFilters({
-            ...filters,
-            [e.target.name]: e.target.value
-        });
+        setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const handleSearch = (e) => {
@@ -120,62 +130,122 @@ const CoachList = () => {
         fetchCoaches(filters);
     };
 
-    return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32">
-            {/* Header Section */}
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-10 mb-10 sm:mb-16">
-                <div className="max-w-3xl">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">Performance Mentors</h1>
-                    <p className="mt-3 sm:mt-4 text-base sm:text-lg lg:text-xl text-slate-500 font-medium leading-relaxed">
-                        Accelerate your technical mastery with personalized mentorship from world-class pro-circuit coaches.
-                    </p>
-                </div>
-            </div>
+    const resetFilters = () => {
+        setFilters(DEFAULT_FILTERS);
+        fetchCoaches(DEFAULT_FILTERS);
+    };
 
-            {/* Matrix Search Filter */}
-            <div className="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.04)] border border-slate-100 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 mb-10 sm:mb-16">
-                <form onSubmit={handleSearch} className="space-y-4 sm:space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+    const hasActiveFilters = Boolean(
+        filters.court || filters.maxRate !== '' || filters.paymentType !== 'hourly'
+    );
+
+    const selectedCourtName = useMemo(() => {
+        if (!filters.court) return null;
+        const court = courts.find((c) => c._id === filters.court);
+        return court ? `${court.name}` : 'Selected hall';
+    }, [filters.court, courts]);
+
+    const stats = useMemo(() => {
+        const withMonthly = coaches.filter((c) => c.monthlyFee != null).length;
+        return { total: coaches.length, withMonthly };
+    }, [coaches]);
+
+    return (
+        <div className="pb-32">
+            {/* Hero */}
+            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-amber-200/60 shadow-[0_24px_70px_-28px_rgba(30,27,75,0.4)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-violet-900 to-indigo-900" />
+                <div className="absolute -top-20 -right-10 h-64 w-64 rounded-full bg-amber-400/20 blur-3xl" />
+                <div className="absolute -bottom-16 -left-8 h-56 w-56 rounded-full bg-violet-400/15 blur-3xl" />
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23fbbf24\' fill-opacity=\'0.04\'%3E%3Cpath d=\'M20 20h20v20H20V20zm-20 0h20v20H0V20z\'/%3E%3C/g%3E%3C/svg%3E')]" />
+
+                <div className="relative px-6 sm:px-10 lg:px-12 py-10 sm:py-14">
+                    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                        <div className="max-w-2xl">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/15 backdrop-blur-md border border-amber-300/30 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-100 mb-5">
+                                <AcademicCapIcon className="h-4 w-4 text-amber-300" />
+                                Coaching roster
+                            </div>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.1]">
+                                Performance
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-violet-200">
+                                    mentors
+                                </span>
+                            </h1>
+                            <p className="mt-4 text-base sm:text-lg text-indigo-100/85 font-medium leading-relaxed max-w-xl">
+                                Book personalized sessions with certified coaches — filter by venue, fee plan, and budget.
+                            </p>
+                        </div>
+
+                        {!loading && !fetchError && (
+                            <div className="flex flex-wrap gap-3 lg:justify-end">
+                                <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 px-5 py-4 min-w-[6.5rem]">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100/70">Coaches</p>
+                                    <p className="text-2xl font-black text-white mt-1">{stats.total}</p>
+                                </div>
+                                <div className="rounded-2xl bg-violet-500/20 backdrop-blur-md border border-violet-300/25 px-5 py-4 min-w-[6.5rem]">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-violet-100/80">Monthly plans</p>
+                                    <p className="text-2xl font-black text-white mt-1">{stats.withMonthly}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
+
+            {/* Filters */}
+            <div className="relative -mt-4 sm:-mt-6 mb-10 sm:mb-14 z-10">
+                <div className="rounded-3xl sm:rounded-[2rem] bg-white/95 backdrop-blur-xl border border-amber-100/90 shadow-[0_20px_50px_-20px_rgba(30,27,75,0.15)] p-6 sm:p-8">
+                    <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
                         <div className="md:col-span-4">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block ml-1">Location / Hall</label>
+                            <label className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1">
+                                Location / hall
+                            </label>
                             <div className="relative">
-                                <BuildingStorefrontIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500 pointer-events-none" />
+                                <BuildingStorefrontIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-800 pointer-events-none" />
                                 <select
                                     name="court"
-                                    className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 bg-slate-50/50 font-semibold text-sm focus:ring-4 focus:ring-indigo-100 outline-none transition-all appearance-none"
+                                    className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-2xl border border-amber-100 bg-gradient-to-br from-slate-50 to-amber-50/40 font-semibold text-sm text-slate-900 focus:ring-4 focus:ring-amber-200/50 focus:border-amber-300/80 outline-none transition-all appearance-none"
                                     value={filters.court}
                                     onChange={handleFilterChange}
                                 >
-                                    <option value="">All Halls</option>
-                                    {courts.map(court => (
-                                        <option key={court._id} value={court._id}>{court.name} - {court.location?.city}</option>
+                                    <option value="">All halls</option>
+                                    {courts.map((court) => (
+                                        <option key={court._id} value={court._id}>
+                                            {court.name} — {court.location?.city}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                         </div>
 
                         <div className="md:col-span-3">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block ml-1">Fee Plan</label>
+                            <label className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1">
+                                Fee plan
+                            </label>
                             <select
                                 name="paymentType"
-                                className="w-full h-14 px-5 rounded-2xl border border-slate-200 bg-slate-50/50 font-bold text-sm focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
+                                className="w-full h-12 sm:h-14 px-5 rounded-2xl border border-amber-100 bg-gradient-to-br from-slate-50 to-amber-50/40 font-bold text-sm text-slate-900 focus:ring-4 focus:ring-amber-200/50 focus:border-amber-300/80 outline-none transition-all"
                                 value={filters.paymentType}
                                 onChange={handleFilterChange}
                             >
-                                <option value="hourly">Hourly Rate</option>
-                                <option value="monthly">Monthly Fee</option>
+                                <option value="hourly">Hourly rate</option>
+                                <option value="monthly">Monthly fee</option>
                             </select>
                         </div>
 
                         <div className="md:col-span-3">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block ml-1">Max Fee (PKR)</label>
+                            <label className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1">
+                                Max fee (PKR)
+                            </label>
                             <div className="relative">
-                                <CurrencyDollarIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500 pointer-events-none" />
+                                <BanknotesIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-800 pointer-events-none" />
                                 <input
                                     type="number"
                                     name="maxRate"
+                                    min="0"
                                     placeholder="Any"
-                                    className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 bg-slate-50/50 font-semibold text-sm focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
+                                    className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-2xl border border-amber-100 bg-gradient-to-br from-slate-50 to-amber-50/40 font-semibold text-sm text-slate-900 focus:ring-4 focus:ring-amber-200/50 focus:border-amber-300/80 outline-none transition-all placeholder:text-slate-400"
                                     value={filters.maxRate}
                                     onChange={handleFilterChange}
                                 />
@@ -183,121 +253,197 @@ const CoachList = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                            <Button type="submit" fullWidth size="lg" className="h-14 shadow-xl shadow-indigo-100 rounded-2xl font-bold bg-slate-900 hover:bg-slate-800 text-white">
-                                Filter
+                            <Button
+                                type="submit"
+                                fullWidth
+                                size="lg"
+                                className="min-h-[3rem] sm:min-h-[3.25rem] rounded-2xl font-bold text-base bg-indigo-950 hover:bg-indigo-900 text-amber-50 shadow-lg shadow-indigo-900/25 border-b-4 border-indigo-800 active:border-b-0 gap-2"
+                            >
+                                <MagnifyingGlassIcon className="h-5 w-5" />
+                                Search
                             </Button>
                         </div>
-                    </div>
-                </form>
+                    </form>
+
+                    {hasActiveFilters && !loading && (
+                        <div className="mt-5 flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest">
+                                Active filters
+                            </span>
+                            {selectedCourtName && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 px-3 py-1 text-xs font-bold border border-amber-200 max-w-[200px] truncate">
+                                    {selectedCourtName}
+                                </span>
+                            )}
+                            {filters.paymentType !== 'hourly' && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-900 px-3 py-1 text-xs font-bold border border-violet-200">
+                                    Monthly fee
+                                </span>
+                            )}
+                            {filters.maxRate !== '' && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 text-indigo-900 px-3 py-1 text-xs font-bold border border-indigo-200">
+                                    Max Rs. {filters.maxRate}
+                                </span>
+                            )}
+                            <span className="text-xs font-semibold text-slate-500 ml-auto">
+                                {stats.total} result{stats.total === 1 ? '' : 's'}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                                className="text-xs font-bold text-indigo-800 hover:text-indigo-950 underline underline-offset-2"
+                            >
+                                Clear all
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <AnimatePresence mode="wait">
                 {loading ? (
-                    <motion.div key="loader">
+                    <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <CardSkeleton count={6} />
                     </motion.div>
                 ) : fetchError ? (
                     <motion.div
                         key="error"
-                        className="p-24 flex flex-col items-center text-center bg-rose-50 border border-rose-100 rounded-[3rem]"
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-12 sm:p-16 flex flex-col items-center text-center rounded-[2rem] bg-gradient-to-br from-amber-50 to-rose-50 border-2 border-dashed border-amber-200"
                     >
-                        <ExclamationTriangleIcon className="h-16 w-16 text-rose-300 mb-6" />
-                        <h3 className="text-2xl font-extrabold text-slate-800 tracking-tight">System Desync</h3>
-                        <p className="text-slate-500 max-w-sm font-medium mt-2">Mentor synchronization failed. Please refresh your operational uplink.</p>
-                        <Button onClick={fetchCoaches} className="mt-8 px-10 h-12 shadow-lg shadow-rose-100 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl">
-                            Retry Uplink
+                        <ExclamationTriangleIcon className="h-14 w-14 text-amber-700 mb-5" />
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+                            Couldn&apos;t load coaches
+                        </h3>
+                        <p className="text-slate-600 max-w-sm font-medium mb-8">
+                            Check your connection and try again.
+                        </p>
+                        <Button
+                            onClick={() => fetchCoaches(filters)}
+                            className="px-10 h-12 bg-indigo-950 hover:bg-indigo-900 text-amber-50 font-bold rounded-2xl shadow-lg"
+                        >
+                            Retry
                         </Button>
                     </motion.div>
                 ) : coaches.length > 0 ? (
                     <motion.div
                         key="grid"
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
                     >
-                        {coaches.map((coach) => (
-                            <motion.div
-                                key={coach._id}
-                                whileHover={{ y: -10, scale: 1.01 }}
-                                transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-                                className="group bg-gradient-to-b from-white to-indigo-50/30 rounded-[2.5rem] shadow-[0_20px_55px_-20px_rgba(79,70,229,0.25)] border border-indigo-100/70 overflow-hidden transition-all duration-500 flex flex-col h-full"
-                            >
-                                {/* Card Header */}
-                                <div className="p-8 pb-6 flex items-center gap-6">
-                                    <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-xl shadow-indigo-200 ring-4 ring-white group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                                        {coach.user?.name?.[0]?.toUpperCase() || 'C'}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2 mb-1.5">
-                                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">
-                                                {coach.experience} yrs experience
-                                            </span>
-                                        </div>
-                                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight truncate">
-                                            {coach.user?.name || 'Coach'}
-                                        </h3>
-                                        <div className="flex items-center gap-1.5 text-slate-400 mt-1">
-                                            <MapPinIcon className="h-3.5 w-3.5 text-indigo-500 group-hover:-translate-y-0.5 transition-transform duration-300" />
-                                            <span className="text-[10px] font-bold uppercase tracking-widest truncate">{coach.user?.city || 'Unknown'} Division</span>
-                                        </div>
-                                    </div>
-                                </div>
+                        {coaches.map((coach, index) => {
+                            const specs = Array.isArray(coach.specialization) ? coach.specialization : [];
 
-                                {/* Content Section */}
-                                <div className="px-8 pb-6 flex-1">
-                                    <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6 line-clamp-3">
-                                        {coach.bio || `Specialized mentor with ${coach.experience} years of intensive tactical and technical instruction.`}
-                                    </p>
+                            return (
+                                <motion.article
+                                    key={coach._id}
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.04 }}
+                                    whileHover={{ y: -6 }}
+                                    className="group relative flex flex-col overflow-hidden rounded-[1.75rem] bg-white border border-amber-100/90 shadow-[0_16px_48px_-20px_rgba(30,27,75,0.12)] hover:shadow-[0_24px_56px_-20px_rgba(30,27,75,0.2)] hover:border-amber-200/90 transition-all duration-300"
+                                >
+                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 to-violet-600" />
 
-                                    <div className="flex flex-wrap gap-2">
-                                        {coach.specialization.slice(0, 3).map((spec, idx) => (
-                                            <span key={idx} className="bg-slate-50 text-slate-500 text-[10px] font-bold px-3 py-1.5 rounded-xl border border-slate-100 uppercase tracking-wider">
-                                                {spec.replace('_', ' ')}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Pricing Bar */}
-                                <div className="px-8 pb-8 pt-2 mt-auto">
-                                    <div className="flex items-center gap-3 p-4 bg-white/80 rounded-[2rem] border border-indigo-100/70 mb-6 shadow-[0_10px_25px_-15px_rgba(79,70,229,0.35)] transition-all duration-500 group-hover:shadow-[0_16px_30px_-18px_rgba(79,70,229,0.45)]">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-0.5">Hourly</p>
-                                            <p className="text-base font-black text-indigo-600 whitespace-nowrap">Rs.{coach.hourlyRate}</p>
-                                        </div>
-                                        <div className="h-8 w-px bg-slate-200" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest mb-0.5">Monthly</p>
-                                            <p className="text-base font-black text-emerald-600 whitespace-nowrap">
-                                                {coach.monthlyFee ? `Rs.${coach.monthlyFee}` : 'N/A'}
-                                            </p>
+                                    {/* Header */}
+                                    <div className="pl-6 pr-6 pt-7 pb-5 border-b border-amber-50/80 bg-gradient-to-br from-slate-50/50 to-amber-50/30">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] shrink-0 rounded-2xl bg-gradient-to-br from-indigo-950 to-violet-800 text-amber-200 flex items-center justify-center text-2xl sm:text-3xl font-black shadow-lg border border-indigo-800 group-hover:scale-105 transition-transform duration-300">
+                                                {coach.user?.profilePicture ? (
+                                                    <img
+                                                        src={coach.user.profilePicture}
+                                                        alt=""
+                                                        className="h-full w-full rounded-2xl object-cover"
+                                                    />
+                                                ) : (
+                                                    coach.user?.name?.[0]?.toUpperCase() || 'C'
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <span className="inline-block text-[10px] font-bold text-amber-800/90 uppercase tracking-wider bg-amber-100/80 px-2.5 py-1 rounded-lg border border-amber-200/80 mb-2">
+                                                    {coach.experience ?? 0} yrs experience
+                                                </span>
+                                                <h3 className="text-xl font-extrabold text-slate-900 tracking-tight truncate group-hover:text-indigo-950 transition-colors">
+                                                    {coach.user?.name || 'Coach'}
+                                                </h3>
+                                                <div className="flex items-center gap-1.5 mt-1.5 text-slate-600">
+                                                    <MapPinIcon className="h-4 w-4 text-amber-700 shrink-0" />
+                                                    <span className="text-xs font-bold truncate">
+                                                        {coach.user?.city || 'Pakistan'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <Link to={`/coaches/${coach._id}`} className="block">
-                                        <Button
-                                            fullWidth
-                                            className="h-14 shadow-lg shadow-indigo-100 rounded-2xl font-bold bg-slate-900 group-hover:bg-indigo-600 group-hover:shadow-indigo-200 text-white transition-all duration-300 flex items-center justify-center gap-2"
-                                        >
-                                            View Professional <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </motion.div>
-                        ))}
+                                    {/* Bio & specs */}
+                                    <div className="px-6 py-5 pl-8 flex-1">
+                                        <p className="text-slate-600 text-sm font-medium leading-relaxed mb-4 line-clamp-3">
+                                            {coach.bio ||
+                                                `Certified coach with ${coach.experience ?? 0} years of technical and tactical training.`}
+                                        </p>
+                                        {specs.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {specs.slice(0, 3).map((spec, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="bg-gradient-to-r from-slate-50 to-amber-50/60 text-indigo-900 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-amber-100/80 uppercase tracking-wide"
+                                                    >
+                                                        {formatSpec(spec)}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Pricing */}
+                                    <div className="px-6 pb-7 pl-8">
+                                        <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-gradient-to-br from-indigo-950/5 to-amber-50 border border-amber-100/80 mb-5">
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/60 mb-0.5">
+                                                    Hourly
+                                                </p>
+                                                <p className="text-lg font-black text-indigo-950">
+                                                    Rs. {coach.hourlyRate?.toLocaleString?.() ?? coach.hourlyRate ?? '—'}
+                                                </p>
+                                            </div>
+                                            <div className="border-l border-amber-200/80 pl-3">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/60 mb-0.5">
+                                                    Monthly
+                                                </p>
+                                                <p className="text-lg font-black text-emerald-800">
+                                                    {coach.monthlyFee != null
+                                                        ? `Rs. ${coach.monthlyFee.toLocaleString?.() ?? coach.monthlyFee}`
+                                                        : '—'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <Link to={`/coaches/${coach._id}`} className="block">
+                                            <Button
+                                                fullWidth
+                                                className="h-12 rounded-xl font-bold bg-indigo-950 hover:bg-indigo-900 text-amber-50 shadow-lg shadow-indigo-900/20 border-b-4 border-indigo-800 active:border-b-0 gap-2 transition-all"
+                                            >
+                                                View profile
+                                                <ArrowRightIcon className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </motion.article>
+                            );
+                        })}
                     </motion.div>
                 ) : (
-                    <motion.div key="empty">
+                    <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <EmptyState
-                            icon={AcademicCapIcon}
-                            title="No Coaches Found"
-                            description="Try adjusting your filters to find available mentors."
-                            actionLabel="Clear Filters"
-                            action={() => {
-                                const resetFilters = { city: '', skillLevel: '', court: '', minRate: '', maxRate: '', paymentType: 'hourly' };
-                                setFilters(resetFilters);
-                                fetchCoaches(resetFilters);
-                            }}
+                            icon={SparklesIcon}
+                            title="No coaches found"
+                            description="Try a different hall, fee plan, or max budget — or clear filters to see everyone."
+                            actionLabel="Clear filters"
+                            action={resetFilters}
                         />
                     </motion.div>
                 )}

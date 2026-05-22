@@ -5,8 +5,6 @@ import Sidebar from './Sidebar'
 import DashboardHeader from './DashboardHeader'
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import Breadcrumbs from '../ui/Breadcrumbs'
-
 export default function DashboardLayout() {
     const { user, logout } = useAuth()
     const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -57,29 +55,29 @@ export default function DashboardLayout() {
 
                 <main className="flex-1 py-6 sm:py-10 overflow-x-hidden">
                     <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10">
-                        <Breadcrumbs />
                         <div className="animate-enter">
                             <Outlet />
                         </div>
                     </div>
                 </main>
 
-                <footer className="mt-auto border-t border-indigo-100/70 bg-gradient-to-r from-indigo-50 via-violet-50 to-cyan-50 px-4 py-6 sm:px-8 lg:px-10">
+                <footer className="mt-auto border-t border-amber-200/60 bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 px-4 py-5 sm:px-8 lg:px-10">
                     <div className="mx-auto max-w-7xl">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="text-center sm:text-left text-[11px] sm:text-xs font-extrabold text-indigo-700/80 uppercase tracking-[0.18em]">
-                                © 2026 SportSphere. All rights reserved.
+                            <p className="text-center sm:text-left text-sm text-indigo-200/90 font-medium">
+                                © 2026 <span className="font-bold text-amber-100">SportSphere</span>. All rights reserved.
                             </p>
-                            <div className="flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
+                            <div className="flex items-center justify-center sm:justify-end gap-3">
                                 <Link
                                     to="/privacy"
-                                    className="rounded-full border border-indigo-200/80 bg-white/70 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-indigo-700 hover:bg-white hover:border-indigo-300 transition-colors"
+                                    className="text-sm font-bold text-amber-200/90 hover:text-amber-100 transition-colors"
                                 >
-                                    Privacy Policy
+                                    Privacy
                                 </Link>
+                                <span className="h-4 w-px bg-white/15" aria-hidden />
                                 <Link
                                     to="/support"
-                                    className="rounded-full border border-violet-200/80 bg-white/70 px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-violet-700 hover:bg-white hover:border-violet-300 transition-colors"
+                                    className="text-sm font-bold text-amber-200/90 hover:text-amber-100 transition-colors"
                                 >
                                     Support
                                 </Link>

@@ -52,7 +52,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
     ];
 
     return (
-        <header className="sticky top-0 z-40 h-20 bg-white/70 backdrop-blur-md border-b border-slate-100 px-6 sm:px-8 lg:px-10 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-40 h-[4.25rem] bg-white/95 backdrop-blur-md border-b border-amber-100/80 shadow-sm shadow-indigo-950/5 px-6 sm:px-8 lg:px-10 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
                 <button
                     type="button"
@@ -64,13 +64,18 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
 
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <div
-                        className="hidden sm:flex h-10 w-10 shrink-0 rounded-xl bg-indigo-600 text-white items-center justify-center shadow-md shadow-indigo-200/80"
+                        className="hidden sm:flex h-10 w-10 shrink-0 rounded-xl bg-indigo-950 text-amber-200 items-center justify-center border border-indigo-800"
                         aria-hidden
                     >
                         <PageIcon className="h-5 w-5" strokeWidth={2} />
                     </div>
                     <div className="min-w-0">
-                        <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">{currentSection}</h2>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800/80 hidden sm:block">
+                            SportsSphere
+                        </p>
+                        <h2 className="text-sm sm:text-base font-black text-indigo-950 truncate leading-tight">
+                            {currentSection}
+                        </h2>
                     </div>
                 </div>
             </div>
@@ -78,7 +83,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
             <div className="flex items-center gap-4">
                 <Menu as="div" className="relative">
                     <Tooltip content="Notifications" position="bottom">
-                        <Menu.Button className="h-11 w-11 flex items-center justify-center text-slate-400 hover:text-indigo-600 bg-white border border-slate-100 rounded-2xl transition-all relative shadow-sm outline-none">
+                        <Menu.Button className="h-11 w-11 flex items-center justify-center text-indigo-900/60 hover:text-indigo-950 bg-white border border-amber-100 rounded-xl transition-all relative shadow-sm outline-none">
                             <BellIcon className="h-5 w-5" />
                             {unreadCount > 0 && (
                                 <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-0.5 flex items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white border-2 border-white leading-none">
@@ -199,7 +204,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                             <span className="text-[13px] font-extrabold text-slate-900 leading-none">{user?.name}</span>
                             <span className="text-[10px] font-semibold text-slate-500 mt-1.5 tracking-wide max-w-[11rem] truncate" title={userRoleLabel}>{userRoleLabel}</span>
                         </div>
-                        <div className="h-11 w-11 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-xl shadow-indigo-100 group-hover:scale-105 transition-all">
+                        <div className="h-11 w-11 rounded-xl bg-indigo-950 flex items-center justify-center text-amber-100 font-black text-sm border border-indigo-800 group-hover:bg-indigo-900 transition-colors">
                             {user?.name?.[0]?.toUpperCase() || 'U'}
                         </div>
                     </Menu.Button>

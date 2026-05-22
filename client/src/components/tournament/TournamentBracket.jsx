@@ -21,10 +21,9 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
             onClick={() => isActionable && onMatchClick && onMatchClick(match.rawMatch)}
         >
             <div className={clsx(
-                "shadow-lg rounded-2xl overflow-hidden border transition-all duration-300",
-                isActionable ? "ring-2 ring-indigo-400 ring-offset-2 border-indigo-100 shadow-indigo-100" : "border-slate-100 shadow-slate-200/50"
+                "rounded-xl overflow-hidden border transition-all duration-200 shadow-sm",
+                isActionable ? "ring-2 ring-amber-300/80 border-amber-200" : "border-slate-200"
             )}>
-                {/* Header/Status Bar */}
                 <div className="bg-slate-50 px-4 py-1.5 flex justify-between items-center border-b border-slate-100">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Match #{match.rawMatch.matchNumber}</span>
                     {isActionable && (
@@ -93,11 +92,8 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
 
 export default function TournamentBracket({ rounds, onMatchClick, isEditable }) {
     if (!rounds || rounds.length === 0) return (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-3xl border border-slate-100 border-dashed">
-            <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 0 01-2-2v-6a2 0 012-2m14 0V9a2 0 00-2-2M5 11V9a2 0 012-2m0 0V5a2 0 012-2h6a2 0 012 2v2M7 7h10" /></svg>
-            </div>
-            <p className="text-slate-400 font-medium">No bracket data generated.</p>
+        <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+            <p className="text-sm font-medium text-slate-500">No bracket data.</p>
         </div>
     );
 
@@ -107,8 +103,8 @@ export default function TournamentBracket({ rounds, onMatchClick, isEditable }) 
                 {rounds.map((round, rIndex) => (
                     <div key={rIndex} className="flex flex-col relative">
                         {/* Round Title */}
-                        <div className="mb-8 text-center sticky top-0 bg-white/95 backdrop-blur z-10 py-2 rounded-xl border border-slate-100 shadow-sm">
-                            <h3 className="font-black text-xs uppercase tracking-[0.2em] text-indigo-900">
+                        <div className="mb-6 text-center py-2 px-3 rounded-lg bg-indigo-950/5 border border-amber-100">
+                            <h3 className="font-bold text-[11px] uppercase tracking-wider text-indigo-950">
                                 {round.title}
                             </h3>
                         </div>
