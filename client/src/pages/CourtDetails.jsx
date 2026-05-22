@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import courtService from '../services/courtService';
 import { formatSlotHour } from '../utils/timeFormat';
-import { payForBooking } from '../services/paymentService';
+import { payForBooking, getPaymentConfig, getPayButtonLabel, getPayButtonHint } from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Button from '../components/ui/Button';
@@ -45,6 +45,8 @@ const CourtDetails = () => {
     const [bookingStep, setBookingStep] = useState('selecting_slot'); // 'selecting_slot' | 'selecting_pro' | 'payment_prompt'
     const [selectedPro, setSelectedPro] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
+    const [paymentLoading, setPaymentLoading] = useState(false);
+    const [paymentMockMode, setPaymentMockMode] = useState(true);
 
     useEffect(() => {
         fetchCourtDetails();
@@ -55,6 +57,13 @@ const CourtDetails = () => {
             fetchAvailability();
         }
     }, [selectedDate, court]);
+
+    useEffect(() => {
+        if (bookingStep !== 'payment_prompt') return;
+        getPaymentConfig()
+            .then((cfg) => setPaymentMockMode(Boolean(cfg?.mockMode)))
+            .catch(() => setPaymentMockMode(true));
+    }, [bookingStep]);
 
     const fetchCourtDetails = async () => {
         try {
@@ -139,20 +148,8 @@ const CourtDetails = () => {
                 setSelectedPro(null);
                 setBookingStep('selecting_slot');
             } else {
-                success(`Booking created. Action Required: Please complete payment.`);
+                success('Booking reserved. Complete payment below to confirm your slot.');
                 setBookingStep('payment_prompt');
-
-                // Keep auto-redirect as a courtesy, but user now has a manual button too
-                setTimeout(async () => {
-                    try {
-                        // Only auto-redirect if we are still on the prompt step
-                        if (window.location.pathname.includes(`/courts/${id}`)) {
-                            await payForBooking(booking._id);
-                        }
-                    } catch (payErr) {
-                        console.error('Auto-redirect failed:', payErr);
-                    }
-                }, 2000);
             }
         } catch (error) {
             console.error('Booking Error:', error);
@@ -166,6 +163,26 @@ const CourtDetails = () => {
             }
         } finally {
             setBookingLoading(false);
+        }
+    };
+
+    const handlePayNow = async () => {
+        if (!selectedBooking?._id) return;
+        try {
+            setPaymentLoading(true);
+            const result = await payForBooking(selectedBooking._id);
+            if (result?.completed) {
+                success('Booking confirmed! (demo payment — JazzCash not connected yet.)');
+                setBookingStep('selecting_slot');
+                setSelectedSlot(null);
+                setSelectedBooking(null);
+                fetchAvailability();
+            }
+        } catch (payErr) {
+            console.error('Payment error:', payErr);
+            toastError(payErr?.response?.data?.error || 'Payment could not be completed. Please try again.');
+        } finally {
+            setPaymentLoading(false);
         }
     };
 
@@ -460,7 +477,11 @@ const CourtDetails = () => {
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-bold text-slate-900">Payment Required</h3>
-                                            <p className="text-base text-slate-500 mt-2 font-medium">To confirm your booking for {selectedSlot?.time}, please complete the JazzCash transaction.</p>
+                                            <p className="text-base text-slate-500 mt-2 font-medium">
+                                                {paymentMockMode
+                                                    ? `Confirm your ${selectedSlot?.time} slot with demo payment (no JazzCash redirect).`
+                                                    : `To confirm your booking for ${selectedSlot?.time}, complete payment via JazzCash.`}
+                                            </p>
                                         </div>
 
                                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-left space-y-2">
@@ -475,17 +496,24 @@ const CourtDetails = () => {
                                         </div>
 
                                         <Button
-                                            onClick={() => payForBooking(selectedBooking?._id)}
+                                            onClick={handlePayNow}
+                                            disabled={!selectedBooking?._id || paymentLoading}
+                                            isLoading={paymentLoading}
                                             fullWidth
                                             size="lg"
                                             className="h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100 flex items-center justify-center gap-3"
                                         >
-                                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                                <rect x="2" y="5" width="20" height="14" rx="2" />
-                                                <path d="M2 10h20" />
-                                            </svg>
-                                            Pay Now via JazzCash
+                                            {!paymentLoading && (
+                                                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                                                    <path d="M2 10h20" />
+                                                </svg>
+                                            )}
+                                            {getPayButtonLabel(paymentMockMode)}
                                         </Button>
+                                        <p className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-widest">
+                                            {getPayButtonHint(paymentMockMode)}
+                                        </p>
 
                                         <button
                                             onClick={() => {

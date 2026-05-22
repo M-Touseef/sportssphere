@@ -157,9 +157,26 @@ function buildPaymentParams({ amount, txnRefNo, description = '', mobileNumber =
     };
 }
 
+const PLACEHOLDER_VALUES = ['your_jazzcash_merchant_id', 'your_jazzcash_password', 'your_jazzcash_integrity_salt'];
+
+function isJazzCashConfigured() {
+    if (process.env.PAYMENT_MOCK_MODE === 'true') {
+        return false;
+    }
+    const merchantId = (process.env.JAZZ_MERCHANT_ID || '').trim();
+    const password = (process.env.JAZZ_PASSWORD || '').trim();
+    const salt = (process.env.JAZZ_INTEGRITY_SALT || '').trim();
+    if (!merchantId || !password || !salt) {
+        return false;
+    }
+    const lower = [merchantId, password, salt].map((v) => v.toLowerCase());
+    return !lower.some((v) => PLACEHOLDER_VALUES.includes(v));
+}
+
 module.exports = {
     generateTxnRefNo,
     generateSecureHash,
     verifySecureHash,
-    buildPaymentParams
+    buildPaymentParams,
+    isJazzCashConfigured
 };

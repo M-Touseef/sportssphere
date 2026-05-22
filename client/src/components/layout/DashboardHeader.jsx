@@ -1,21 +1,48 @@
 import { Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
-import { Bars3Icon, BellIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import {
+    Bars3Icon,
+    BellIcon,
+    UserIcon,
+    ArrowRightOnRectangleIcon,
+    HomeIcon,
+    MapPinIcon,
+    AcademicCapIcon,
+    TrophyIcon,
+    CalendarIcon,
+    InboxIcon,
+    Cog6ToothIcon,
+    FireIcon,
+    CreditCardIcon,
+    ChartBarIcon,
+} from '@heroicons/react/24/outline'
 import { Link, useLocation } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import Tooltip from '../ui/Tooltip'
 import { useNotifications } from '../../hooks/useNotifications'
 import { getNotificationHref } from '../../utils/notificationLinks'
+import { getPageTitleFromPath, getPageIconKeyFromPath } from '../../utils/routeLabels'
+
+const PAGE_ICONS = {
+    dashboard: HomeIcon,
+    venue: MapPinIcon,
+    coach: AcademicCapIcon,
+    tournament: TrophyIcon,
+    organizer: FireIcon,
+    admin: ChartBarIcon,
+    schedule: CalendarIcon,
+    pro: TrophyIcon,
+    profile: UserIcon,
+    payment: CreditCardIcon,
+    requests: InboxIcon,
+    settings: Cog6ToothIcon,
+};
 
 const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
     const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications()
     const location = useLocation()
-    const currentSection = location.pathname
-        .split('/')
-        .filter(Boolean)
-        .slice(-1)[0]
-        ?.replace(/-/g, ' ')
-        ?.replace(/\b\w/g, (char) => char.toUpperCase()) || 'Dashboard';
+    const currentSection = getPageTitleFromPath(location.pathname)
+    const PageIcon = PAGE_ICONS[getPageIconKeyFromPath(location.pathname)] || HomeIcon
     const userRoleLabel = user?.role === 'player'
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
         : user?.role;
@@ -35,9 +62,12 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                     <Bars3Icon className="h-5 w-5" />
                 </button>
 
-                <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="hidden sm:flex h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white items-center justify-center shadow-lg shadow-indigo-200">
-                        <span className="text-xs font-black">SS</span>
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div
+                        className="hidden sm:flex h-10 w-10 shrink-0 rounded-xl bg-indigo-600 text-white items-center justify-center shadow-md shadow-indigo-200/80"
+                        aria-hidden
+                    >
+                        <PageIcon className="h-5 w-5" strokeWidth={2} />
                     </div>
                     <div className="min-w-0">
                         <h2 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">{currentSection}</h2>

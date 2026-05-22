@@ -1,9 +1,24 @@
 import axiosInstance from './axiosInstance';
 import { API_BASE_URL } from './api';
 
+/** Build query string — omit empty values so the API applies filters correctly. */
+export const buildTournamentQueryParams = (filters = {}) => {
+    const params = new URLSearchParams();
+    const city = typeof filters.city === 'string' ? filters.city.trim() : '';
+    if (city) params.set('city', city);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.category) params.set('category', filters.category);
+    // Only restrict to future start dates when browsing all statuses (not when filtering by status)
+    if (!filters.status && filters.upcoming === 'true') {
+        params.set('upcoming', 'true');
+    }
+    return params.toString();
+};
+
 export const getTournaments = async (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const response = await axiosInstance.get(`${API_BASE_URL}/tournaments?${params}`);
+    const query = buildTournamentQueryParams(filters);
+    const url = query ? `${API_BASE_URL}/tournaments?${query}` : `${API_BASE_URL}/tournaments`;
+    const response = await axiosInstance.get(url);
     return response.data;
 };
 

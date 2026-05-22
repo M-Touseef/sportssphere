@@ -4,8 +4,65 @@ const Transaction = require('../models/Transaction');
 const {
     generateTxnRefNo,
     verifySecureHash,
-    buildPaymentParams
+    buildPaymentParams,
+    isJazzCashConfigured
 } = require('../services/jazzcashService');
+
+const loadOrderForTransaction = async (transaction) => {
+    if (transaction.orderType === 'Booking') {
+        return Booking.findById(transaction.orderId);
+    }
+    if (transaction.orderType === 'TournamentRegistration') {
+        return TournamentRegistration.findById(transaction.orderId);
+    }
+    if (transaction.orderType === 'Session' || transaction.orderType === 'SessionCourt') {
+        const Session = require('../models/Session');
+        return Session.findById(transaction.orderId);
+    }
+    return null;
+};
+
+const fulfillPaidTransaction = async (transaction, { jazzcashTxnId, ipnPayload = null } = {}) => {
+    if (transaction.status === 'paid') {
+        const order = await loadOrderForTransaction(transaction);
+        return { order, alreadyPaid: true };
+    }
+
+    transaction.status = 'paid';
+    transaction.jazzcashTxnId = jazzcashTxnId;
+    if (ipnPayload) {
+        transaction.ipnPayload = ipnPayload;
+    }
+    await transaction.save();
+
+    const order = await loadOrderForTransaction(transaction);
+    if (order) {
+        order.paymentStatus = 'paid';
+        if (transaction.orderType === 'Booking') {
+            order.status = 'confirmed';
+        } else if (transaction.orderType === 'TournamentRegistration') {
+            order.status = 'confirmed';
+        } else if (transaction.orderType === 'Session') {
+            order.status = 'confirmed';
+        } else if (transaction.orderType === 'SessionCourt') {
+            order.courtPaymentStatus = 'paid';
+        }
+        order.jazzcashTxnId = jazzcashTxnId;
+        await order.save();
+    }
+
+    return { order, alreadyPaid: false };
+};
+
+// ─── GET /api/payment/config ──────────────────────────────────────────────────
+exports.getPaymentConfig = async (req, res) => {
+    const mockMode = !isJazzCashConfigured();
+    return res.status(200).json({
+        success: true,
+        mockMode,
+        jazzCashEnabled: !mockMode
+    });
+};
 
 // ─── POST /api/payment/initiate ───────────────────────────────────────────────
 // @desc    Initiate a JazzCash payment for a pending booking
@@ -93,17 +150,29 @@ exports.initiatePayment = async (req, res, next) => {
         order.txnRefNo = txnRefNo;
         await order.save();
 
-        // 5. Build JazzCash payment parameters
+        const mockMode = !isJazzCashConfigured();
+        console.log(`[Payment] Initiated ${orderType} txnRefNo=${txnRefNo} for order=${orderId} (mock=${mockMode})`);
+
+        if (mockMode) {
+            return res.status(200).json({
+                success: true,
+                mockMode: true,
+                txnRefNo,
+                transactionId: transaction._id,
+                orderId: order._id,
+                orderType
+            });
+        }
+
         const { params, paymentUrl } = buildPaymentParams({
             amount,
             txnRefNo,
             description
         });
 
-        console.log(`[Payment] Initiated ${orderType} txnRefNo=${txnRefNo} for order=${orderId}`);
-
         return res.status(200).json({
             success: true,
+            mockMode: false,
             txnRefNo,
             transactionId: transaction._id,
             paymentUrl,
@@ -206,37 +275,12 @@ exports.handleIPN = async (req, res, next) => {
             return res.status(200).json({ status: 'amount_mismatch' });
         }
 
-        // 6. Process outcome
-        let order;
-        if (transaction.orderType === 'Booking') {
-            order = await Booking.findById(transaction.orderId);
-        } else if (transaction.orderType === 'TournamentRegistration') {
-            order = await TournamentRegistration.findById(transaction.orderId);
-        } else if (transaction.orderType === 'Session' || transaction.orderType === 'SessionCourt') {
-            const Session = require('../models/Session');
-            order = await Session.findById(transaction.orderId);
-        }
-
         if (responseCode === '000') {
-            // SUCCESS
-            transaction.status = 'paid';
-            transaction.jazzcashTxnId = jazzcashTxnId;
-            transaction.ipnPayload = payload;
-            await transaction.save();
-
+            const { order } = await fulfillPaidTransaction(transaction, {
+                jazzcashTxnId,
+                ipnPayload: payload
+            });
             if (order) {
-                order.paymentStatus = 'paid';
-                if (transaction.orderType === 'Booking') {
-                    order.status = 'confirmed';
-                } else if (transaction.orderType === 'TournamentRegistration') {
-                    order.status = 'confirmed';
-                } else if (transaction.orderType === 'Session') {
-                    order.status = 'confirmed';
-                } else if (transaction.orderType === 'SessionCourt') {
-                    order.courtPaymentStatus = 'paid';
-                }
-                order.jazzcashTxnId = jazzcashTxnId;
-                await order.save();
                 console.log(`[Payment] IPN: PAID — ${transaction.orderType}=${order._id} confirmed`);
             }
         } else {
@@ -245,8 +289,9 @@ exports.handleIPN = async (req, res, next) => {
             transaction.ipnPayload = payload;
             await transaction.save();
 
-            if (order) {
-                console.log(`[Payment] IPN: FAILED (code=${responseCode}) — ${transaction.orderType}=${order._id} unchanged`);
+            const failedOrder = await loadOrderForTransaction(transaction);
+            if (failedOrder) {
+                console.log(`[Payment] IPN: FAILED (code=${responseCode}) — ${transaction.orderType}=${failedOrder._id} unchanged`);
             }
         }
 
@@ -256,6 +301,48 @@ exports.handleIPN = async (req, res, next) => {
         console.error('[Payment] handleIPN error:', error);
         // Still respond 200 to prevent infinite retries
         return res.status(200).json({ status: 'server_error' });
+    }
+};
+
+// ─── POST /api/payment/mock-complete ──────────────────────────────────────────
+// @desc    Complete payment in demo mode (no JazzCash gateway)
+// @access  Private
+exports.mockCompletePayment = async (req, res, next) => {
+    try {
+        if (isJazzCashConfigured()) {
+            return res.status(400).json({ error: 'JazzCash is configured; use the live payment flow.' });
+        }
+
+        const { txnRefNo } = req.body;
+        if (!txnRefNo) {
+            return res.status(400).json({ error: 'txnRefNo is required' });
+        }
+
+        const transaction = await Transaction.findOne({ txnRefNo });
+        if (!transaction) {
+            return res.status(404).json({ error: 'Transaction not found' });
+        }
+
+        if (transaction.userId.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        const { order, alreadyPaid } = await fulfillPaidTransaction(transaction, {
+            jazzcashTxnId: `MOCK_${txnRefNo}`
+        });
+
+        return res.status(200).json({
+            success: true,
+            mockMode: true,
+            alreadyPaid,
+            txnRefNo,
+            orderType: transaction.orderType,
+            orderId: order?._id,
+            order
+        });
+    } catch (error) {
+        console.error('[Payment] mockCompletePayment error:', error);
+        next(error);
     }
 };
 

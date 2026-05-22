@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import { formatSegmentLabel } from '../../utils/routeLabels';
 
 const Breadcrumbs = () => {
     const location = useLocation();
@@ -20,7 +21,7 @@ const Breadcrumbs = () => {
                 {pathnames.map((value, index) => {
                     const last = index === pathnames.length - 1;
                     const to = `/${pathnames.slice(0, index + 1).join('/')}`;
-                    const name = value.replace(/-/g, ' ');
+                    const name = formatSegmentLabel(value, index, pathnames);
 
                     return (
                         <li key={to} className="flex items-center space-x-3">

@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import sessionService from '../services/sessionService';
 import * as paymentService from '../services/paymentService';
+import { useToast } from '../context/ToastContext';
 
 const MySessions = () => {
+    const { success, error: toastError } = useToast();
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, upcoming, past
+    const [payingSessionId, setPayingSessionId] = useState(null);
 
     useEffect(() => {
         fetchSessions();
@@ -40,10 +43,17 @@ const MySessions = () => {
 
     const handlePayment = async (sessionId) => {
         try {
-            await paymentService.payForSession(sessionId);
-        } catch (error) {
-            console.error('Payment error:', error);
-            alert('Failed to initiate payment. Please try again.');
+            setPayingSessionId(sessionId);
+            const result = await paymentService.payForSession(sessionId);
+            if (result?.completed) {
+                success('Session confirmed (demo payment).');
+                fetchSessions();
+            }
+        } catch (err) {
+            console.error('Payment error:', err);
+            toastError(err?.response?.data?.error || 'Failed to complete payment.');
+        } finally {
+            setPayingSessionId(null);
         }
     };
 
@@ -181,9 +191,10 @@ const MySessions = () => {
                                         </div>
                                         <button
                                             onClick={() => handlePayment(session._id)}
-                                            className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-bold shadow-md shadow-amber-200 transition-all text-sm"
+                                            disabled={payingSessionId === session._id}
+                                            className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-bold shadow-md shadow-amber-200 transition-all text-sm disabled:opacity-60"
                                         >
-                                            Pay Now via JazzCash
+                                            {payingSessionId === session._id ? 'Processing…' : 'Confirm payment'}
                                         </button>
                                     </div>
                                 )}

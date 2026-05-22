@@ -91,10 +91,15 @@ const CoachDashboard = () => {
     const handlePayFee = async (sessionId) => {
         try {
             setPayingFeeId(sessionId);
-            await paymentService.payCourtFee(sessionId);
+            const result = await paymentService.payCourtFee(sessionId);
+            if (result?.completed) {
+                success('Court fee recorded (demo payment).');
+                fetchDashboardData();
+            }
+            setPayingFeeId(null);
         } catch (error) {
             console.error(error);
-            toastError('Failed to initiate court fee payment.');
+            toastError(error?.response?.data?.error || 'Failed to complete court fee payment.');
             setPayingFeeId(null);
         }
     };

@@ -108,7 +108,17 @@ const MyRegistrations = () => {
                                     </Link>
                                     {reg.paymentStatus !== 'paid' ? (
                                         <button
-                                            onClick={() => payForTournamentRegistration(reg._id)}
+                                            onClick={async () => {
+                                                try {
+                                                    const result = await payForTournamentRegistration(reg._id);
+                                                    if (result?.completed) {
+                                                        fetchRegistrations();
+                                                    }
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert(err?.response?.data?.error || 'Payment failed.');
+                                                }
+                                            }}
                                             className="flex-1 text-center py-2 px-4 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors"
                                         >
                                             Pay Fee

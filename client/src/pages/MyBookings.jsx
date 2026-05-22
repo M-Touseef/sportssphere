@@ -55,9 +55,12 @@ const MyBookings = () => {
     const handlePayNow = async (bookingId) => {
         try {
             setPayingBookingId(bookingId);
-            // payForBooking initiates payment then auto-submits form → redirect to JazzCash
-            await payForBooking(bookingId);
-            // Note: execution typically doesn't reach here because form.submit() triggers navigation
+            const result = await payForBooking(bookingId);
+            if (result?.completed) {
+                success('Payment confirmed (demo mode). Your booking is active.');
+                await fetchBookings();
+                setPayingBookingId(null);
+            }
         } catch (err) {
             console.error('[PayNow] Error:', err);
             const msg = err?.response?.data?.error || 'Could not initiate payment. Please try again.';

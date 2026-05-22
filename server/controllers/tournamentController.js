@@ -94,7 +94,8 @@ exports.getTournaments = async (req, res, next) => {
             query['categories.name'] = category;
         }
 
-        if (upcoming === 'true') {
+        // Upcoming-only applies when not filtering by a specific status (completed/in_progress need past events)
+        if (upcoming === 'true' && !status) {
             query.startDate = { $gte: new Date() };
         }
 

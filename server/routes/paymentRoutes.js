@@ -5,13 +5,16 @@ const {
     initiatePayment,
     handleReturn,
     handleIPN,
-    getPaymentStatus
+    getPaymentStatus,
+    getPaymentConfig,
+    mockCompletePayment
 } = require('../controllers/paymentController');
 
 const { auth } = require('../middleware/auth');
 
-// Initiate payment — requires logged-in user
+router.get('/config', getPaymentConfig);
 router.post('/initiate', auth, initiatePayment);
+router.post('/mock-complete', auth, mockCompletePayment);
 
 // Return URL — no auth (JazzCash browser redirect)
 router.post('/return', handleReturn);
