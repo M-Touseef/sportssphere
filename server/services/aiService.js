@@ -5,6 +5,7 @@ const PersonalDataEngine = require('../chatbot/engines/PersonalDataEngine');
 const PublicDataEngine = require('../chatbot/engines/PublicDataEngine'); // NEW
 const QueryRouter = require('../chatbot/QueryRouter');
 const ResponseGenerator = require('../chatbot/ResponseGenerator');
+const RAGEngine = require('../chatbot/engines/RAGEngine');
 
 /**
  * AIService - Orchestrates intent resolution using RAG and Personal Data Routing
@@ -16,38 +17,23 @@ class AIService {
 
         // Initialize engines
         this.ruleEngine = new RuleBasedEngine();
-        this.ragEngine = null; // Will be initialized asynchronously
+        this.ragEngine = new RAGEngine(); // Hugging Face via @gradio/client (Sportssphere/chatbot)
         this.personalEngine = new PersonalDataEngine();
-        this.publicEngine = new PublicDataEngine(); // NEW
+        this.publicEngine = new PublicDataEngine();
         this.queryRouter = new QueryRouter();
         this.responseGenerator = new ResponseGenerator();
-
-        // Initialize RAGEngine dynamically (ESM module)
-        this.initRAGEngine();
     }
 
     /**
-     * Initialize RAGEngine dynamically (ESM module)
-     */
-    async initRAGEngine() {
-        try {
-            const { default: RAGEngine } = await import('../chatbot/engines/RAGEngine.mjs');
-            this.ragEngine = new RAGEngine();
-        } catch (error) {
-            console.error('[AIService] Failed to initialize RAGEngine:', error.message);
-            this.ragEngine = null;
-        }
-    }
-
-    /**
-     * Ensure RAGEngine is ready before using
+     * Ensure Gradio RAG client is connected before knowledge queries
      */
     async ensureRAGEngine() {
-        // Wait up to 5 seconds for initialization
-        let attempts = 0;
-        while (!this.ragEngine && attempts < 50) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
+        const maxAttempts = 150; // ~15s for HF space cold start
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            if (this.ragEngine && (await this.ragEngine.isReady())) {
+                return this.ragEngine;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 100));
         }
         return this.ragEngine;
     }
@@ -92,8 +78,8 @@ class AIService {
                 }
             }
 
-            // Step 4: Handle RAG Response (Direct from Hugging Face)
-            if (result && result.intentId === 'RAG_QUERY') {
+            // Step 4: Handle RAG response (Gradio / Hugging Face Space)
+            if (result && (result.intentId === 'RAG_QUERY' || result.intentId === 'RAG_FALLBACK')) {
                 return result.response || this.getDefaultFallback();
             }
 
