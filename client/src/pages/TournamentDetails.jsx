@@ -467,9 +467,21 @@ const TournamentDetails = () => {
                                                 <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-950">Tournament format</h3>
                                             </div>
                                             <div className="bg-gradient-to-br from-indigo-50 to-amber-50 border border-amber-200/60 rounded-3xl p-8">
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <span className="h-10 w-10 rounded-xl bg-indigo-950 text-amber-300 flex items-center justify-center font-bold text-xs uppercase tracking-widest">Format</span>
-                                                    <p className="text-xl font-bold text-slate-900">{TOURNAMENT_FORMAT_LABEL}</p>
+                                                <div className="flex items-start gap-4 mb-4">
+                                                    <div
+                                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-950 text-amber-300 shadow-sm"
+                                                        aria-hidden
+                                                    >
+                                                        <ChartBarIcon className="h-6 w-6" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">
+                                                            Format
+                                                        </p>
+                                                        <p className="text-lg sm:text-xl font-bold text-slate-900 leading-snug break-words">
+                                                            {TOURNAMENT_FORMAT_LABEL}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                                 <div className="h-px bg-amber-200/60 w-full mb-4" />
                                                 <p className="text-slate-600 font-medium leading-relaxed">
