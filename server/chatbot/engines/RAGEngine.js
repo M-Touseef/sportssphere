@@ -1,9 +1,17 @@
 const IIntentResolver = require('../interfaces/IIntentResolver');
-const { Client } = require('@gradio/client');
+
+/** @gradio/client is ESM-only — load via dynamic import from CommonJS */
+let gradioClientPromise = null;
+const loadGradioClient = () => {
+    if (!gradioClientPromise) {
+        gradioClientPromise = import('@gradio/client');
+    }
+    return gradioClientPromise;
+};
 
 /**
  * RAGEngine - Retrieval-Augmented Generation Engine using Hugging Face
- * 
+ *
  * Uses online Hugging Face RAG service instead of local knowledge base.
  * Provides intelligent responses for badminton-related queries.
  */
@@ -20,7 +28,8 @@ class RAGEngine extends IIntentResolver {
      */
     async initClient() {
         try {
-            this.client = await Client.connect("Sportssphere/chatbot");
+            const { Client } = await loadGradioClient();
+            this.client = await Client.connect('Sportssphere/chatbot');
             this.ready = true;
             console.log('[RAGEngine] Initialized with Gradio client');
         } catch (error) {
