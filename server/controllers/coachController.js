@@ -2,6 +2,7 @@ const CoachProfile = require('../models/CoachProfile');
 const User = require('../models/User');
 const { validateCoachCourtBookingForSlot } = require('./coachCourtBookingController');
 const { normalizeToHour } = require('../utils/timeUtils');
+const { dayFromDate, getBookingId, timesOverlap } = require('../utils/coachAvailabilityUtils');
 
 // @desc    Create or update coach profile
 // @route   POST /api/coaches/profile
@@ -185,13 +186,13 @@ exports.getCoachAvailability = async (req, res) => {
 // @access  Private (Coach)
 exports.addAvailabilitySlot = async (req, res) => {
     try {
-        const { day, startTime: rawStart, endTime: rawEnd, courtBookingId, maxStudents } = req.body;
+        const { startTime: rawStart, endTime: rawEnd, courtBookingId, maxStudents } = req.body;
         const startTime = normalizeToHour(rawStart);
         const endTime = normalizeToHour(rawEnd);
 
-        if (!day || !startTime || !endTime || !courtBookingId) {
+        if (!startTime || !endTime || !courtBookingId) {
             return res.status(400).json({
-                error: 'Please provide day, startTime, endTime, and courtBookingId (book a court first)'
+                error: 'Please provide startTime, endTime, and courtBookingId (reserve a court first)'
             });
         }
 
@@ -204,7 +205,6 @@ exports.addAvailabilitySlot = async (req, res) => {
         let booking;
         try {
             booking = await validateCoachCourtBookingForSlot(req.user.id, courtBookingId, {
-                day,
                 startTime,
                 endTime
             });
@@ -212,16 +212,19 @@ exports.addAvailabilitySlot = async (req, res) => {
             return res.status(err.statusCode || 500).json({ error: err.message });
         }
 
-        // Check for overlaps
-        const hasOverlap = profile.availability.some(slot =>
-            slot.day === day &&
-            ((startTime >= slot.startTime && startTime < slot.endTime) ||
-                (endTime > slot.startTime && endTime <= slot.endTime) ||
-                (startTime <= slot.startTime && endTime >= slot.endTime))
+        const day = dayFromDate(booking.date);
+        const bookingIdStr = courtBookingId.toString();
+
+        const hasOverlap = profile.availability.some(
+            (slot) =>
+                getBookingId(slot.courtBooking) === bookingIdStr &&
+                timesOverlap(startTime, endTime, slot.startTime, slot.endTime)
         );
 
         if (hasOverlap) {
-            return res.status(400).json({ error: 'Slot overlaps with existing availability' });
+            return res.status(400).json({
+                error: 'Coaching hours overlap on this court reservation'
+            });
         }
 
         profile.availability.push({
@@ -255,13 +258,13 @@ exports.addAvailabilitySlot = async (req, res) => {
 exports.updateAvailabilitySlot = async (req, res) => {
     try {
         const { slotId } = req.params;
-        const { day, startTime: rawStart, endTime: rawEnd, courtBookingId, maxStudents } = req.body;
+        const { startTime: rawStart, endTime: rawEnd, courtBookingId, maxStudents } = req.body;
         const startTime = normalizeToHour(rawStart);
         const endTime = normalizeToHour(rawEnd);
 
-        if (!day || !startTime || !endTime || !courtBookingId) {
+        if (!startTime || !endTime || !courtBookingId) {
             return res.status(400).json({
-                error: 'Please provide day, startTime, endTime, and courtBookingId'
+                error: 'Please provide startTime, endTime, and courtBookingId'
             });
         }
 
@@ -279,7 +282,6 @@ exports.updateAvailabilitySlot = async (req, res) => {
         let booking;
         try {
             booking = await validateCoachCourtBookingForSlot(req.user.id, courtBookingId, {
-                day,
                 startTime,
                 endTime
             });
@@ -287,16 +289,20 @@ exports.updateAvailabilitySlot = async (req, res) => {
             return res.status(err.statusCode || 500).json({ error: err.message });
         }
 
-        const hasOverlap = profile.availability.some((s) =>
-            s._id.toString() !== slotId &&
-            s.day === day &&
-            ((startTime >= s.startTime && startTime < s.endTime) ||
-                (endTime > s.startTime && endTime <= s.endTime) ||
-                (startTime <= s.startTime && endTime >= s.endTime))
+        const day = dayFromDate(booking.date);
+        const bookingIdStr = courtBookingId.toString();
+
+        const hasOverlap = profile.availability.some(
+            (s) =>
+                s._id.toString() !== slotId &&
+                getBookingId(s.courtBooking) === bookingIdStr &&
+                timesOverlap(startTime, endTime, s.startTime, s.endTime)
         );
 
         if (hasOverlap) {
-            return res.status(400).json({ error: 'Slot overlaps with existing availability' });
+            return res.status(400).json({
+                error: 'Coaching hours overlap on this court reservation'
+            });
         }
 
         slot.day = day;

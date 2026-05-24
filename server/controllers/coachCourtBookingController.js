@@ -1,6 +1,8 @@
 const Booking = require('../models/Booking');
+const CoachProfile = require('../models/CoachProfile');
 const Court = require('../models/Court');
 const Session = require('../models/Session');
+const { getBookingId } = require('../utils/coachAvailabilityUtils');
 const Match = require('../models/Match');
 const SparringAvailability = require('../models/SparringAvailability');
 const { createNotification } = require('./notificationController');
@@ -74,8 +76,8 @@ const assertCourtSlotAvailable = async ({ courtId, bookingDate, startTime, exclu
     }
 };
 
-/** Validate coach owns booking and it can back a weekly slot */
-exports.validateCoachCourtBookingForSlot = async (coachUserId, courtBookingId, { day, startTime, endTime }) => {
+/** Validate coach owns booking and coaching hours fit inside that reservation (one date only). */
+exports.validateCoachCourtBookingForSlot = async (coachUserId, courtBookingId, { startTime, endTime }) => {
     const booking = await Booking.findById(courtBookingId).populate('court', 'name location');
     if (!booking) {
         const err = new Error('Court reservation not found');
@@ -93,14 +95,8 @@ exports.validateCoachCourtBookingForSlot = async (coachUserId, courtBookingId, {
         throw err;
     }
 
-    const bookingDay = days[new Date(booking.date).getDay()];
-    if (bookingDay !== day) {
-        const err = new Error('Weekly slot day must match your court reservation day');
-        err.statusCode = 400;
-        throw err;
-    }
     if (startTime < booking.startTime || endTime > booking.endTime) {
-        const err = new Error('Session times must fall within your court reservation window');
+        const err = new Error('Coaching hours must be within your court reservation time');
         err.statusCode = 400;
         throw err;
     }
@@ -252,6 +248,15 @@ exports.cancelCoachCourtBooking = async (req, res) => {
 
         booking.status = 'cancelled';
         await booking.save();
+
+        const profile = await CoachProfile.findOne({ user: req.user.id });
+        if (profile) {
+            const bookingIdStr = booking._id.toString();
+            profile.availability = profile.availability.filter(
+                (slot) => getBookingId(slot.courtBooking) !== bookingIdStr
+            );
+            await profile.save();
+        }
 
         res.status(200).json({ success: true, data: booking });
     } catch (error) {

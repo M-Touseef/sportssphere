@@ -4,6 +4,7 @@ const Court = require('../models/Court');
 const Booking = require('../models/Booking');
 const { createNotification } = require('./notificationController');
 const { validateCoachCourtBookingForSlot } = require('./coachCourtBookingController');
+const { getBookingId, normalizeDate } = require('../utils/coachAvailabilityUtils');
 
 const { RESPONSE_DEADLINE_MS: COACH_RESPONSE_MS } = require('../constants/responseDeadlines');
 
@@ -471,59 +472,51 @@ exports.getCoachRealizedAvailability = async (req, res) => {
             purpose: 'coach_reservation',
             status: { $ne: 'cancelled' },
             date: { $gte: today }
-        }).select('_id date');
+        })
+            .sort({ date: 1, startTime: 1 })
+            .populate('court', 'name location');
 
-        const activeBookingIds = new Set(activeBookings.map((b) => b._id.toString()));
-
-        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const viewerId = req.user?.id?.toString() || null;
         const realizedSlots = [];
-        for (let i = 0; i < 30; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            date.setHours(0, 0, 0, 0);
 
-            const dayName = dayNames[date.getDay()];
+        // Each court reservation is one calendar day — coaching hours attach to that booking only
+        for (const booking of activeBookings) {
+            const sessionDate = normalizeDate(booking.date);
+            const bookingIdStr = booking._id.toString();
 
-            const recurringSlots = coachProfile.availability.filter((slot) => {
-                if (slot.day !== dayName) return false;
-                if (!slot.courtBooking) return false;
-                const bookingId = slot.courtBooking._id?.toString() || slot.courtBooking.toString();
-                if (!activeBookingIds.has(bookingId)) return false;
-                const booking = activeBookings.find((b) => b._id.toString() === bookingId);
-                if (!booking) return false;
-                const bDate = new Date(booking.date);
-                bDate.setHours(0, 0, 0, 0);
-                return bDate.getTime() === date.getTime();
-            });
+            const coachingSlots = coachProfile.availability.filter(
+                (slot) => getBookingId(slot.courtBooking) === bookingIdStr
+            );
 
-            for (const slot of recurringSlots) {
+            for (const slot of coachingSlots) {
                 const slotTaken = await Session.findOne({
-                    ...sameSlotQuery(coachProfile.user, date, slot.startTime),
+                    ...sameSlotQuery(coachProfile.user, sessionDate, slot.startTime),
                     status: { $in: ['confirmed', 'pending_payment'] }
                 });
                 if (slotTaken) continue;
 
                 const publishedGroup = await Session.findOne({
-                    ...sameSlotQuery(coachProfile.user, date, slot.startTime),
+                    ...sameSlotQuery(coachProfile.user, sessionDate, slot.startTime),
                     isPublished: true,
                     status: { $nin: ['cancelled'] }
                 });
+
+                const courtInfo = slot.court || booking.court;
 
                 if (publishedGroup) {
                     if (publishedGroup.students.length >= publishedGroup.maxStudents) continue;
                     realizedSlots.push({
                         _id: publishedGroup._id,
-                        date: date,
+                        date: sessionDate,
                         startTime: slot.startTime,
                         endTime: slot.endTime,
-                        court: slot.court
-                            ? { name: slot.court.name, location: slot.court.location }
+                        court: courtInfo
+                            ? { name: courtInfo.name, location: courtInfo.location }
                             : undefined,
                         maxStudents: publishedGroup.maxStudents,
                         enrolledCount: publishedGroup.students.length,
                         slotStatus: 'available',
-                        isRecurring: true,
+                        isRecurring: false,
                         isExisting: true,
                         isGroup: true
                     });
@@ -531,7 +524,7 @@ exports.getCoachRealizedAvailability = async (req, res) => {
                 }
 
                 const pendingRequests = await Session.find({
-                    ...sameSlotQuery(coachProfile.user, date, slot.startTime),
+                    ...sameSlotQuery(coachProfile.user, sessionDate, slot.startTime),
                     status: 'pending',
                     isPublished: { $ne: true }
                 }).select('_id students');
@@ -545,16 +538,16 @@ exports.getCoachRealizedAvailability = async (req, res) => {
                 if (viewerPending) {
                     realizedSlots.push({
                         _id: viewerPending._id,
-                        date: date,
+                        date: sessionDate,
                         startTime: slot.startTime,
                         endTime: slot.endTime,
-                        court: slot.court
-                            ? { name: slot.court.name, location: slot.court.location }
+                        court: courtInfo
+                            ? { name: courtInfo.name, location: courtInfo.location }
                             : undefined,
                         maxStudents: 1,
                         enrolledCount: 0,
                         slotStatus: 'your_pending',
-                        isRecurring: true,
+                        isRecurring: false,
                         isExisting: true,
                         isGroup: false
                     });
@@ -562,17 +555,17 @@ exports.getCoachRealizedAvailability = async (req, res) => {
                 }
 
                 realizedSlots.push({
-                    _id: `${dayName}-${date.getTime()}-${slot.startTime}`,
-                    date: date,
+                    _id: `${bookingIdStr}-${slot.startTime}`,
+                    date: sessionDate,
                     startTime: slot.startTime,
                     endTime: slot.endTime,
-                    court: slot.court
-                        ? { name: slot.court.name, location: slot.court.location }
+                    court: courtInfo
+                        ? { name: courtInfo.name, location: courtInfo.location }
                         : undefined,
                     maxStudents: slot.maxStudents || 1,
                     enrolledCount: 0,
                     slotStatus: 'available',
-                    isRecurring: true,
+                    isRecurring: false,
                     isExisting: false,
                     isGroup: (slot.maxStudents || 1) > 1
                 });
@@ -606,19 +599,29 @@ exports.requestRecurringSession = async (req, res) => {
         const sessionDate = new Date(date);
         sessionDate.setHours(0, 0, 0, 0);
 
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const dayName = days[sessionDate.getDay()];
-        const recurringSlot = coachProfile.availability.find(
-            (s) => s.day === dayName && s.startTime === startTime
-        );
+        const bookingsOnDate = await Booking.find({
+            user: coachId,
+            purpose: 'coach_reservation',
+            date: sessionDate,
+            status: { $ne: 'cancelled' }
+        });
 
-        if (!recurringSlot) {
-            return res.status(400).json({ error: 'No coaching availability for this slot' });
+        const coachingSlot = coachProfile.availability.find((s) => {
+            if (s.startTime !== startTime) return false;
+            const slotBookingId = getBookingId(s.courtBooking);
+            if (!slotBookingId) return false;
+            return bookingsOnDate.some((b) => b._id.toString() === slotBookingId);
+        });
+
+        if (!coachingSlot) {
+            return res.status(400).json({
+                error: 'No coaching session on this date and time. The coach may not have opened this court booking yet.'
+            });
         }
 
-        const slotCourtId = recurringSlot.court?._id?.toString() || recurringSlot.court?.toString();
+        const slotCourtId = coachingSlot.court?._id?.toString() || coachingSlot.court?.toString();
         if (courtId && slotCourtId && courtId !== slotCourtId) {
-            return res.status(400).json({ error: 'Court does not match coach availability for this slot' });
+            return res.status(400).json({ error: 'Court does not match this coaching session' });
         }
 
         const resolvedCourtId = slotCourtId || courtId;
@@ -626,13 +629,12 @@ exports.requestRecurringSession = async (req, res) => {
             return res.status(400).json({ error: 'Court is required for this coaching slot' });
         }
 
-        let courtBookingId = recurringSlot.courtBooking?._id || recurringSlot.courtBooking;
+        const courtBookingId = getBookingId(coachingSlot.courtBooking);
         if (courtBookingId) {
             try {
                 await validateCoachCourtBookingForSlot(coachId, courtBookingId, {
-                    day: dayName,
                     startTime,
-                    endTime: endTime || recurringSlot.endTime
+                    endTime: endTime || coachingSlot.endTime
                 });
             } catch (err) {
                 return res.status(err.statusCode || 400).json({ error: err.message });
@@ -680,7 +682,7 @@ exports.requestRecurringSession = async (req, res) => {
         }
 
         const start = parseInt(startTime.split(':')[0], 10);
-        const end = parseInt((endTime || recurringSlot.endTime).split(':')[0], 10);
+        const end = parseInt((endTime || coachingSlot.endTime).split(':')[0], 10);
         const duration = end - start || 1;
 
         const court = await Court.findById(resolvedCourtId);
@@ -695,7 +697,7 @@ exports.requestRecurringSession = async (req, res) => {
             courtBooking: courtBookingId || undefined,
             date: sessionDate,
             startTime,
-            endTime: endTime || recurringSlot.endTime,
+            endTime: endTime || coachingSlot.endTime,
             duration,
             totalPrice,
             courtFee,
