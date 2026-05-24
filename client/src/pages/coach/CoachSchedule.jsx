@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import coachService from '../../services/coachService';
 import { getAllCourts } from '../../services/courtService';
@@ -81,6 +82,7 @@ const CoachSchedule = () => {
     const [courts, setCourts] = useState([]);
     const [slots, setSlots] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
 
     const [showCourtWizard, setShowCourtWizard] = useState(false);
     const [courtStep, setCourtStep] = useState(1);
@@ -115,10 +117,13 @@ const CoachSchedule = () => {
             setCourts(courtsPayload?.data ?? courtsPayload ?? []);
         }
         if (profileResult.status === 'fulfilled') {
-            const profile = profileResult.value?.data ?? profileResult.value;
+            const payload = profileResult.value;
+            const profile = payload?.data ?? payload;
             setSlots(profile?.availability ?? []);
+            setNeedsProfileSetup(Boolean(payload?.needsProfileSetup && !profile));
         } else {
             setSlots([]);
+            setNeedsProfileSetup(false);
         }
 
         if (bookingsResult.status === 'rejected' && courtsResult.status === 'rejected') {
@@ -266,11 +271,18 @@ const CoachSchedule = () => {
                 : await coachService.addAvailabilitySlot(payload);
             if (response.success) {
                 setSlots(response.data);
-                success(
-                    editingSlotId
-                        ? 'Coaching hours updated.'
-                        : 'Players can now request sessions on this date.'
-                );
+                setNeedsProfileSetup(false);
+                if (response.profileAutoCreated) {
+                    success(
+                        'Coaching hours published. Complete your coach profile so players see your rates and bio.'
+                    );
+                } else {
+                    success(
+                        editingSlotId
+                            ? 'Coaching hours updated.'
+                            : 'Players can now request sessions on this date.'
+                    );
+                }
                 closeCoachingForm();
             }
         } catch (error) {
@@ -310,6 +322,20 @@ const CoachSchedule = () => {
                 <span className="font-black">2.</span> Open coaching hours on that reservation → players book that date
                 only
             </div>
+
+            {needsProfileSetup && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-amber-950">
+                        Complete your public coach profile (rates, bio) so players can find you in the coach directory.
+                    </p>
+                    <Link
+                        to="/coach/profile"
+                        className="text-sm font-bold text-indigo-950 underline shrink-0"
+                    >
+                        Set up profile →
+                    </Link>
+                </div>
+            )}
 
             <div className="flex justify-end">
                 {!showCourtWizard && (

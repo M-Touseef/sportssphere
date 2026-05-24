@@ -3,6 +3,7 @@ const CoachProfile = require('../models/CoachProfile');
 const Court = require('../models/Court');
 const Session = require('../models/Session');
 const { getBookingId } = require('../utils/coachAvailabilityUtils');
+const { ensureCoachProfile } = require('../utils/coachProfileUtils');
 const Match = require('../models/Match');
 const SparringAvailability = require('../models/SparringAvailability');
 const { createNotification } = require('./notificationController');
@@ -117,6 +118,8 @@ exports.validateCoachCourtBookingForSlot = async (coachUserId, courtBookingId, {
 // @access  Private (Coach)
 exports.createCoachCourtBooking = async (req, res) => {
     try {
+        await ensureCoachProfile(req.user.id);
+
         const { courtId, date, startTime: rawStart, endTime: rawEnd } = req.body;
         const startTime = normalizeToHour(rawStart);
         const endTime = normalizeToHour(rawEnd);

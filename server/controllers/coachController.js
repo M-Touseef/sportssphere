@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { validateCoachCourtBookingForSlot } = require('./coachCourtBookingController');
 const { normalizeToHour } = require('../utils/timeUtils');
 const { dayFromDate, getBookingId, timesOverlap } = require('../utils/coachAvailabilityUtils');
+const { ensureCoachProfile } = require('../utils/coachProfileUtils');
 
 // @desc    Create or update coach profile
 // @route   POST /api/coaches/profile
@@ -145,12 +146,17 @@ exports.getMyProfile = async (req, res) => {
             .populate('availability.court', 'name location');
 
         if (!profile) {
-            return res.status(404).json({ error: 'Profile not found' });
+            return res.status(200).json({
+                success: true,
+                data: null,
+                needsProfileSetup: true
+            });
         }
 
         res.status(200).json({
             success: true,
-            data: profile
+            data: profile,
+            needsProfileSetup: false
         });
     } catch (error) {
         console.error(error);
@@ -196,11 +202,7 @@ exports.addAvailabilitySlot = async (req, res) => {
             });
         }
 
-        const profile = await CoachProfile.findOne({ user: req.user.id });
-
-        if (!profile) {
-            return res.status(404).json({ error: 'Coach profile not found' });
-        }
+        const { profile, created: profileAutoCreated } = await ensureCoachProfile(req.user.id);
 
         let booking;
         try {
@@ -244,7 +246,8 @@ exports.addAvailabilitySlot = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: profile.availability
+            data: profile.availability,
+            profileAutoCreated
         });
     } catch (error) {
         console.error(error);
@@ -268,11 +271,7 @@ exports.updateAvailabilitySlot = async (req, res) => {
             });
         }
 
-        const profile = await CoachProfile.findOne({ user: req.user.id });
-
-        if (!profile) {
-            return res.status(404).json({ error: 'Coach profile not found' });
-        }
+        const { profile } = await ensureCoachProfile(req.user.id);
 
         const slot = profile.availability.id(slotId);
         if (!slot) {
@@ -336,7 +335,7 @@ exports.removeAvailabilitySlot = async (req, res) => {
         const profile = await CoachProfile.findOne({ user: req.user.id });
 
         if (!profile) {
-            return res.status(404).json({ error: 'Coach profile not found' });
+            return res.status(200).json({ success: true, data: [] });
         }
 
         profile.availability.pull({ _id: req.params.slotId });
