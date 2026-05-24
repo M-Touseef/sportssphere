@@ -105,11 +105,20 @@ exports.getCoaches = async (req, res) => {
 // @access  Public
 exports.getCoachProfile = async (req, res) => {
     try {
-        const profile = await CoachProfile.findById(req.params.id)
+        let profile = await CoachProfile.findById(req.params.id)
             .populate('user', 'name email city phone');
 
         if (!profile) {
+            profile = await CoachProfile.findOne({ user: req.params.id })
+                .populate('user', 'name email city phone');
+        }
+
+        if (!profile) {
             return res.status(404).json({ error: 'Coach profile not found' });
+        }
+
+        if (!profile.user) {
+            return res.status(404).json({ error: 'Coach profile is unavailable' });
         }
 
         res.status(200).json({

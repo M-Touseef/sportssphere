@@ -415,9 +415,15 @@ exports.rejectSession = async (req, res) => {
 // @access  Public
 exports.getCoachRealizedAvailability = async (req, res) => {
     try {
-        const coachProfile = await CoachProfile.findById(req.params.coachId)
+        let coachProfile = await CoachProfile.findById(req.params.coachId)
             .populate('availability.court', 'name location')
             .populate('availability.courtBooking');
+
+        if (!coachProfile) {
+            coachProfile = await CoachProfile.findOne({ user: req.params.coachId })
+                .populate('availability.court', 'name location')
+                .populate('availability.courtBooking');
+        }
 
         if (!coachProfile) {
             return res.status(404).json({ error: 'Coach profile not found' });

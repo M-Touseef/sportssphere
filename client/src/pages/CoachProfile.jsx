@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getCoachProfile, getCoachAvailability } from '../services/coachService';
-import sparringService from '../services/sparringService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { twMerge } from 'tailwind-merge';
+import { getCoachProfile } from '../services/coachService';
 import sessionService from '../services/sessionService';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -9,18 +10,90 @@ import { useToast } from '../context/ToastContext';
 import {
     MapPinIcon,
     AcademicCapIcon,
-    BriefcaseIcon,
-    CalendarDaysIcon,
     CurrencyDollarIcon,
-    ShieldCheckIcon,
-    InformationCircleIcon,
     ArrowLeftIcon,
-    SparklesIcon,
     CheckBadgeIcon,
-    ClockIcon
+    ClockIcon,
+    ChevronRightIcon
 } from '@heroicons/react/24/outline';
-import { motion, AnimatePresence } from 'framer-motion';
+import { CheckIcon } from '@heroicons/react/24/solid';
 import { formatSlotHourRange } from '../utils/timeFormat';
+
+const BOOKING_STEPS = [
+    { id: 1, label: 'Date' },
+    { id: 2, label: 'Time' },
+    { id: 3, label: 'Confirm' }
+];
+
+const SPEC_LABELS = {
+    singles: 'Singles',
+    doubles: 'Doubles',
+    mixed_doubles: 'Mixed doubles',
+    junior_coaching: 'Junior',
+    fitness: 'Fitness',
+    technique: 'Technique',
+    strategy: 'Strategy',
+    performance_analysis: 'Analysis',
+    tactics: 'Tactics',
+    high_performance: 'High performance'
+};
+
+const formatSpec = (spec) => SPEC_LABELS[spec] || spec?.replace(/_/g, ' ') || spec;
+
+const toDateKey = (dateValue) => {
+    const d = new Date(dateValue);
+    d.setHours(12, 0, 0, 0);
+    return d.toISOString().split('T')[0];
+};
+
+const formatDateChip = (dateKey) => {
+    const d = new Date(dateKey + 'T12:00:00');
+    return {
+        weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        day: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+};
+
+const StepBar = ({ current }) => (
+    <div className="flex items-center w-full">
+        {BOOKING_STEPS.map((s, i) => {
+            const done = current > s.id;
+            const active = current === s.id;
+            return (
+                <div key={s.id} className={twMerge('flex items-center', i < BOOKING_STEPS.length - 1 && 'flex-1')}>
+                    <div className="flex flex-col items-center gap-1.5 shrink-0">
+                        <div
+                            className={twMerge(
+                                'h-9 w-9 rounded-full flex items-center justify-center text-xs font-black border-2 transition-colors',
+                                done && 'bg-emerald-600 border-emerald-600 text-white',
+                                active && !done && 'bg-indigo-950 border-indigo-950 text-amber-100',
+                                !done && !active && 'bg-white border-slate-200 text-slate-400'
+                            )}
+                        >
+                            {done ? <CheckIcon className="h-5 w-5" /> : s.id}
+                        </div>
+                        <span
+                            className={twMerge(
+                                'text-[10px] font-bold uppercase tracking-wider hidden sm:block',
+                                active ? 'text-indigo-950' : 'text-slate-400'
+                            )}
+                        >
+                            {s.label}
+                        </span>
+                    </div>
+                    {i < BOOKING_STEPS.length - 1 && (
+                        <div
+                            className={twMerge(
+                                'h-0.5 flex-1 mx-2 sm:mx-3 rounded-full',
+                                current > s.id ? 'bg-emerald-500' : 'bg-slate-200'
+                            )}
+                        />
+                    )}
+                </div>
+            );
+        })}
+    </div>
+);
 
 const CoachProfile = () => {
     const { id } = useParams();
@@ -31,21 +104,24 @@ const CoachProfile = () => {
     const [coach, setCoach] = useState(null);
     const [availability, setAvailability] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [step, setStep] = useState(1);
+    const [selectedDateKey, setSelectedDateKey] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [paymentPlan, setPaymentPlan] = useState('hourly');
     const [bookingLoading, setBookingLoading] = useState(false);
     const [bookingMessage, setBookingMessage] = useState('');
+    const [showAbout, setShowAbout] = useState(false);
+    const [bookingDone, setBookingDone] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Profile and Realized Availability (Recurring)
                 const [profileRes, sessionsRes] = await Promise.all([
                     getCoachProfile(id),
                     sessionService.getCoachRealizedAvailability(id)
                 ]);
                 setCoach(profileRes.data);
-                setAvailability(sessionsRes.data);
+                setAvailability(Array.isArray(sessionsRes.data) ? sessionsRes.data : []);
             } catch (error) {
                 console.error('Error fetching coach details:', error);
                 toastError('Failed to load coach profile.');
@@ -56,45 +132,119 @@ const CoachProfile = () => {
         fetchData();
     }, [id]);
 
-    const handleBooking = async (e) => {
-        e.preventDefault();
+    const openSlots = useMemo(
+        () =>
+            availability.filter((slot) => {
+                const spots = (slot.maxStudents ?? 1) - (slot.enrolledCount ?? 0);
+                return spots > 0;
+            }),
+        [availability]
+    );
 
+    const slotsByDate = useMemo(() => {
+        const map = new Map();
+        for (const slot of openSlots) {
+            const key = toDateKey(slot.date);
+            if (!map.has(key)) map.set(key, []);
+            map.get(key).push(slot);
+        }
+        for (const [, slots] of map) {
+            slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        }
+        return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+    }, [openSlots]);
+
+    const dateKeys = useMemo(() => slotsByDate.map(([key]) => key), [slotsByDate]);
+
+    const slotsForSelectedDate = useMemo(() => {
+        if (!selectedDateKey) return [];
+        return slotsByDate.find(([key]) => key === selectedDateKey)?.[1] ?? [];
+    }, [slotsByDate, selectedDateKey]);
+
+    const selectionSummary = useMemo(() => {
+        if (!selectedSlot || !selectedDateKey) return null;
+        const { weekday, day } = formatDateChip(selectedDateKey);
+        return `${weekday}, ${day} · ${formatSlotHourRange(selectedSlot.startTime, selectedSlot.endTime)}`;
+    }, [selectedSlot, selectedDateKey]);
+
+    const resetBooking = () => {
+        setStep(1);
+        setSelectedDateKey(null);
+        setSelectedSlot(null);
+        setPaymentPlan('hourly');
+        setBookingMessage('');
+        setBookingDone(false);
+    };
+
+    const goBack = () => {
+        if (step === 3) {
+            setStep(2);
+            return;
+        }
+        if (step === 2) {
+            setSelectedSlot(null);
+            setStep(1);
+        }
+    };
+
+    const continueFromDate = () => {
+        if (!selectedDateKey) {
+            toastError('Please pick a date.');
+            return;
+        }
+        setSelectedSlot(null);
+        setStep(2);
+    };
+
+    const continueFromTime = () => {
+        if (!selectedSlot) {
+            toastError('Please pick a time slot.');
+            return;
+        }
         if (!isAuthenticated) {
             navigate('/login', { state: { from: `/coaches/${id}` } });
             return;
         }
+        setStep(3);
+    };
 
+    const handleBooking = async () => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: `/coaches/${id}` } });
+            return;
+        }
         if (!selectedSlot) {
-            toastError("Please select an available training slot.");
+            toastError('Please select a time slot.');
+            return;
+        }
+
+        const coachUserId =
+            coach?.user && typeof coach.user === 'object'
+                ? coach.user._id
+                : typeof coach?.user === 'string'
+                  ? coach.user
+                  : null;
+
+        if (!coachUserId) {
+            toastError('This coach cannot accept bookings right now.');
             return;
         }
 
         try {
             setBookingLoading(true);
-
-            // Request a new session based on the recurring slot
-            // Payload must match requestRecurringSession endpoint
-            const payload = {
-                coachId: coach.user._id, // Coach User ID from profile
+            await sessionService.requestRecurringSession({
+                coachId: coachUserId,
                 date: selectedSlot.date,
                 startTime: selectedSlot.startTime,
                 endTime: selectedSlot.endTime,
-                courtId: selectedSlot.court?._id, // Ensure court is passed if available
+                courtId: selectedSlot.court?._id,
                 planType: paymentPlan,
                 message: bookingMessage
-            };
+            });
 
-            await sessionService.requestRecurringSession(payload);
-
-            success('Training request sent! The coach has 30 minutes to confirm, or it will be auto-declined.');
-            // Reset selection
-            setSelectedSlot(null);
-            setBookingMessage('');
-
-            // Refresh availability to remove the booked slot locally (optional but good UX)
-            // Note: In real-time apps, we'd refetch, but here we can just filter out
-            setAvailability(prev => prev.filter(s => s._id !== selectedSlot._id));
-
+            success('Request sent! The coach has 30 minutes to confirm.');
+            setAvailability((prev) => prev.filter((s) => s._id !== selectedSlot._id));
+            setBookingDone(true);
         } catch (error) {
             console.error(error);
             toastError(error.response?.data?.error || 'Request failed.');
@@ -103,251 +253,409 @@ const CoachProfile = () => {
         }
     };
 
-
     if (loading) {
         return (
-            <div className="flex flex-col justify-center items-center h-[60vh] gap-6">
-                <div className="h-16 w-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin shadow-xl shadow-indigo-100" />
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400 animate-pulse">Syncing Mentor Profile</p>
+            <div className="flex flex-col justify-center items-center h-[50vh] gap-4">
+                <div className="h-14 w-14 border-4 border-amber-200 border-t-indigo-900 rounded-full animate-spin" />
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Loading coach…</p>
             </div>
         );
     }
 
-    if (!coach) {
+    const coachUser = coach?.user && typeof coach.user === 'object' ? coach.user : null;
+    const displayName = coachUser?.name || 'Coach';
+    const displayCity = coachUser?.city || coach?.location?.city || '—';
+    const specializations = Array.isArray(coach?.specialization) ? coach.specialization : [];
+    const hasMonthly = coach?.monthlyFee != null && coach.monthlyFee > 0;
+    const totalPrice = paymentPlan === 'hourly' ? coach?.hourlyRate : coach?.monthlyFee;
+
+    if (!coach || !coachUser) {
         return (
-            <div className="max-w-7xl mx-auto px-4 py-24 text-center">
-                <AcademicCapIcon className="h-20 w-20 text-slate-200 mx-auto mb-6" />
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Profile Missing</h2>
-                <div className="mt-8">
-                    <Link to="/coaches">
-                        <Button variant="outline" className="px-10 h-14 font-bold border-slate-200 rounded-2xl">Return to Directory</Button>
-                    </Link>
-                </div>
+            <div className="max-w-3xl mx-auto px-4 py-24 text-center">
+                <AcademicCapIcon className="h-16 w-16 text-slate-200 mx-auto mb-6" />
+                <h2 className="text-2xl font-extrabold text-slate-900">Profile not found</h2>
+                <p className="text-slate-500 mt-2 text-sm">This coach is unavailable or no longer linked to an account.</p>
+                <Link to="/coaches" className="inline-block mt-8">
+                    <Button variant="outline" className="rounded-xl font-bold">Back to coaches</Button>
+                </Link>
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-32">
-            <div className="mb-8">
-                <Link to="/coaches" className="group flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors">
-                    <ArrowLeftIcon className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                    Mentor Network Registry
-                </Link>
+        <div className="pb-16 max-w-3xl mx-auto px-4 sm:px-6">
+            <Link
+                to="/coaches"
+                className="inline-flex items-center gap-2 text-sm font-bold text-indigo-900/70 hover:text-indigo-950 mb-5"
+            >
+                <ArrowLeftIcon className="h-4 w-4" />
+                Coaches
+            </Link>
+
+            {/* Compact coach header */}
+            <div className="flex gap-4 mb-6 rounded-2xl border border-amber-100 bg-white p-4 shadow-sm">
+                <div className="h-16 w-16 shrink-0 rounded-xl bg-indigo-950 text-amber-100 flex items-center justify-center text-2xl font-black">
+                    {displayName[0]?.toUpperCase() || 'C'}
+                </div>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-lg font-black text-slate-900 truncate">{displayName}</h1>
+                    <p className="text-xs font-bold text-slate-500 flex items-center gap-1 mt-0.5">
+                        <MapPinIcon className="h-3.5 w-3.5" />
+                        {displayCity}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2 text-xs font-bold">
+                        <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md">
+                            {coach.experience} yrs
+                        </span>
+                        <span className="text-indigo-950">
+                            Rs.{coach.hourlyRate?.toLocaleString?.() ?? coach.hourlyRate}/hr
+                        </span>
+                        {hasMonthly && (
+                            <span className="text-emerald-800">
+                                · Rs.{coach.monthlyFee?.toLocaleString?.() ?? coach.monthlyFee}/mo
+                            </span>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-                {/* Left Column: Profile */}
-                <div className="lg:col-span-8 space-y-12">
-                    <div className="bg-white shadow-[0_8px_40px_rgba(0,0,0,0.03)] border border-slate-100 rounded-[3rem] overflow-hidden">
-                        <div className="h-40 bg-gradient-to-r from-indigo-600 to-indigo-900 relative">
-                            <div className="absolute inset-0 bg-slate-900/10" />
-                        </div>
-
-                        <div className="px-10 pb-12">
-                            <div className="relative -mt-16 mb-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
-                                <div className="flex flex-col md:flex-row md:items-end gap-8">
-                                    <div className="h-40 w-40 rounded-[2.5rem] bg-white border-8 border-white flex items-center justify-center text-slate-900 text-6xl font-black shadow-2xl relative overflow-hidden group">
-                                        <div className="absolute inset-0 bg-slate-50 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all duration-700">
-                                            {coach.user.name[0].toUpperCase()}
-                                        </div>
-                                    </div>
-                                    <div className="pb-4">
-                                        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tighter mb-4">{coach.user.name}</h1>
-                                        <div className="flex items-center gap-3 flex-wrap">
-                                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-2 rounded-2xl border border-indigo-100">
-                                                {coach.experience} years experience
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-10 bg-slate-50 rounded-[2.5rem] border border-slate-100 mb-12">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 shadow-sm">
-                                        <MapPinIcon className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base Division</p>
-                                        <p className="text-sm font-bold text-slate-800">{coach.user.city}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 shadow-sm">
-                                        <BriefcaseIcon className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Tenure</p>
-                                        <p className="text-sm font-bold text-slate-800">{coach.experience} Years Experience</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 shadow-sm">
-                                        <CurrencyDollarIcon className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hourly Rate</p>
-                                        <p className="text-sm font-bold text-slate-800">Rs. {coach.hourlyRate} / Session</p>
-                                    </div>
-                                </div>
-                                {coach.monthlyFee && (
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-emerald-600 shadow-sm">
-                                            <CurrencyDollarIcon className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monthly Rate</p>
-                                            <p className="text-sm font-bold text-emerald-800">Rs. {coach.monthlyFee} / Month</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-16">
-                                <section>
-                                    <div className="flex items-center gap-3 mb-8">
-                                        <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                                            <InformationCircleIcon className="h-5 w-5" />
-                                        </div>
-                                        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-900">Professional Dossier</h2>
-                                    </div>
-                                    <p className="text-lg text-slate-500 leading-relaxed font-medium">
-                                        {coach.bio || "Elite performance mentor specializing in high-intensity biomechanical correction and tactical match propagation protocols."}
-                                    </p>
-                                </section>
-
-                                <section>
-                                    <div className="flex items-center gap-3 mb-10">
-                                        <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                                            <AcademicCapIcon className="h-5 w-5" />
-                                        </div>
-                                        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-900">Technical Specializations</h2>
-                                    </div>
-                                    <div className="flex flex-wrap gap-4">
-                                        {coach.specialization.map((spec, index) => (
-                                            <span
-                                                key={index}
-                                                className="px-6 py-3 bg-white border border-slate-100 shadow-sm rounded-2xl text-[10px] font-bold text-slate-500 uppercase tracking-widest cursor-default"
-                                            >
-                                                {spec.replace('_', ' ')}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </section>
-                            </div>
-                        </div>
-                    </div>
+            {/* Booking wizard */}
+            <section className="rounded-[1.75rem] border-2 border-amber-200/80 bg-white shadow-lg overflow-hidden mb-8">
+                <div className="px-5 sm:px-8 py-5 border-b border-amber-50 bg-amber-50/40">
+                    <p className="text-sm font-black text-indigo-950 mb-4">Book a session</p>
+                    <StepBar current={step} />
                 </div>
 
-                {/* Right Column: Booking */}
-                <div className="lg:col-span-4 sticky top-6">
-                    <div className="bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] border border-slate-100 rounded-[3rem] overflow-hidden">
-                        <div className="p-8 bg-slate-900 border-b border-indigo-900/10 flex justify-between items-center text-white">
-                            <div>
-                                <h3 className="text-xl font-extrabold tracking-tight">Sync Session</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Book Coaching</p>
+                <div className="p-5 sm:p-8 min-h-[260px] flex flex-col">
+                    {bookingDone ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-6">
+                            <div className="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <CheckBadgeIcon className="h-8 w-8 text-emerald-600" />
                             </div>
-                            <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
-                                <SparklesIcon className="h-5 w-5" />
+                            <h2 className="text-xl font-black text-slate-900">Request sent</h2>
+                            <p className="text-sm text-slate-500 max-w-xs">
+                                {displayName} has 30 minutes to accept. You will be notified when they respond.
+                            </p>
+                            <div className="flex gap-3 w-full max-w-sm mt-2">
+                                <Button variant="outline" onClick={resetBooking} className="flex-1 h-12 rounded-xl font-bold">
+                                    Book another
+                                </Button>
+                                <Link to="/app/sessions" className="flex-1">
+                                    <Button className="w-full h-12 rounded-xl font-bold bg-indigo-950 text-amber-50">
+                                        My sessions
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
-
-                        <div className="p-8 space-y-8">
-                            {/* Available Slots List */}
-                            <div>
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Available Slots</h4>
-                                {availability.length > 0 ? (
-                                    <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                                        {availability.map((slot) => (
-                                            <div
-                                                key={slot._id}
-                                                onClick={() => setSelectedSlot(slot)}
-                                                className={`p-4 rounded-2xl border cursor-pointer transition-all ${selectedSlot?._id === slot._id
-                                                    ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500'
-                                                    : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-slate-50'
-                                                    }`}
-                                            >
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="font-bold text-slate-900">
-                                                        {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                                    </span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${(slot.maxStudents - slot.enrolledCount) <= 0
-                                                                ? 'bg-rose-50 text-rose-600 border-rose-100'
-                                                                : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                            }`}>
-                                                            {slot.maxStudents - slot.enrolledCount > 0
-                                                                ? `${slot.maxStudents - slot.enrolledCount} spots left`
-                                                                : 'Full'}
-                                                        </span>
-                                                        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
-                                                            {slot.court?.name || 'Main Hall'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center text-sm text-slate-500 font-medium">
-                                                    <ClockIcon className="h-4 w-4 mr-1" />
-                                                    {formatSlotHourRange(slot.startTime, slot.endTime)}
-                                                </div>
+                    ) : (
+                        <>
+                            <AnimatePresence mode="wait">
+                                {step === 1 && (
+                                    <motion.div
+                                        key="date"
+                                        initial={{ opacity: 0, x: 8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -8 }}
+                                        className="flex-1 flex flex-col gap-4"
+                                    >
+                                        {dateKeys.length > 0 ? (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {slotsByDate.map(([dateKey, slots]) => {
+                                                    const { weekday, day } = formatDateChip(dateKey);
+                                                    const selected = selectedDateKey === dateKey;
+                                                    return (
+                                                        <button
+                                                            key={dateKey}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedDateKey(dateKey);
+                                                                setSelectedSlot(null);
+                                                            }}
+                                                            className={twMerge(
+                                                                'p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.98]',
+                                                                selected
+                                                                    ? 'bg-indigo-950 border-indigo-950 text-amber-50'
+                                                                    : 'border-amber-100 hover:border-amber-400 bg-white'
+                                                            )}
+                                                        >
+                                                            <span className="block text-[10px] font-bold uppercase tracking-wider opacity-80">
+                                                                {weekday}
+                                                            </span>
+                                                            <span className="block text-base font-black mt-0.5">{day}</span>
+                                                            <span
+                                                                className={twMerge(
+                                                                    'block text-[10px] font-bold mt-2',
+                                                                    selected ? 'text-amber-200' : 'text-slate-500'
+                                                                )}
+                                                            >
+                                                                {slots.length} slot{slots.length !== 1 ? 's' : ''}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                        <p className="text-sm text-slate-500 font-medium">No slots available currently</p>
-                                    </div>
+                                        ) : (
+                                            <div className="py-14 text-center rounded-2xl border-2 border-dashed border-amber-200">
+                                                <ClockIcon className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                                                <p className="font-bold text-slate-700">No open slots</p>
+                                                <p className="text-sm text-slate-500 mt-1">Check back later or try another coach.</p>
+                                            </div>
+                                        )}
+                                    </motion.div>
                                 )}
-                            </div>
 
-                            {selectedSlot && (
-                                <form onSubmit={handleBooking} className="space-y-6 animate-fade-in-up">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Payment Plan</label>
-                                        <select
-                                            value={paymentPlan}
-                                            onChange={(e) => setPaymentPlan(e.target.value)}
-                                            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-sm focus:ring-2 focus:ring-indigo-100 outline-none"
-                                        >
-                                            <option value="hourly">Hourly (Rs. {coach.hourlyRate})</option>
-                                            {coach.monthlyFee && <option value="monthly">Monthly (Rs. {coach.monthlyFee})</option>}
-                                        </select>
-                                    </div>
+                                {step === 2 && (
+                                    <motion.div
+                                        key="time"
+                                        initial={{ opacity: 0, x: 8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -8 }}
+                                        className="flex-1 flex flex-col gap-4"
+                                    >
+                                        {selectedDateKey && (
+                                            <p className="text-sm font-black text-indigo-950 text-center">
+                                                {formatDateChip(selectedDateKey).weekday},{' '}
+                                                {formatDateChip(selectedDateKey).day}
+                                            </p>
+                                        )}
+                                        {slotsForSelectedDate.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {slotsForSelectedDate.map((slot) => {
+                                                    const spots =
+                                                        (slot.maxStudents ?? 1) - (slot.enrolledCount ?? 0);
+                                                    const selected = selectedSlot?._id === slot._id;
+                                                    return (
+                                                        <button
+                                                            key={slot._id}
+                                                            type="button"
+                                                            onClick={() => setSelectedSlot(slot)}
+                                                            className={twMerge(
+                                                                'w-full flex items-center justify-between gap-3 p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.99]',
+                                                                selected
+                                                                    ? 'bg-indigo-950 border-indigo-950 text-amber-50'
+                                                                    : 'border-amber-100 hover:border-amber-400 bg-white'
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <ClockIcon
+                                                                    className={twMerge(
+                                                                        'h-5 w-5 shrink-0',
+                                                                        selected ? 'text-amber-200' : 'text-indigo-600'
+                                                                    )}
+                                                                />
+                                                                <span className="font-black text-base">
+                                                                    {formatSlotHourRange(slot.startTime, slot.endTime)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                {slot.court?.name && (
+                                                                    <span
+                                                                        className={twMerge(
+                                                                            'text-[10px] font-bold px-2 py-1 rounded-lg max-w-[7rem] truncate',
+                                                                            selected
+                                                                                ? 'bg-indigo-800 text-amber-100'
+                                                                                : 'bg-slate-100 text-slate-600'
+                                                                        )}
+                                                                    >
+                                                                        {slot.court.name}
+                                                                    </span>
+                                                                )}
+                                                                <span
+                                                                    className={twMerge(
+                                                                        'text-[10px] font-bold px-2 py-1 rounded-lg',
+                                                                        selected
+                                                                            ? 'bg-emerald-700 text-white'
+                                                                            : 'bg-emerald-50 text-emerald-700'
+                                                                    )}
+                                                                >
+                                                                    {spots} left
+                                                                </span>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="py-12 text-center text-sm font-bold text-slate-500">
+                                                No times for this date
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
 
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Message (Optional)</label>
-                                        <textarea
-                                            value={bookingMessage}
-                                            onChange={(e) => setBookingMessage(e.target.value)}
-                                            placeholder="Notes for the coach..."
-                                            className="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-indigo-100 outline-none h-24 resize-none"
-                                        />
-                                    </div>
+                                {step === 3 && (
+                                    <motion.div
+                                        key="confirm"
+                                        initial={{ opacity: 0, x: 8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -8 }}
+                                        className="flex-1 flex flex-col gap-5"
+                                    >
+                                        <div className="rounded-2xl bg-amber-50 border border-amber-100 p-5 space-y-3">
+                                            <div className="flex justify-between text-sm font-bold">
+                                                <span className="text-slate-500">When</span>
+                                                <span className="text-slate-900 text-right">{selectionSummary}</span>
+                                            </div>
+                                            {selectedSlot?.court?.name && (
+                                                <div className="flex justify-between text-sm font-bold">
+                                                    <span className="text-slate-500">Venue</span>
+                                                    <span className="text-slate-900">{selectedSlot.court.name}</span>
+                                                </div>
+                                            )}
+                                        </div>
 
-                                    <div className="pt-6 border-t border-slate-100">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <span className="text-xs font-bold text-slate-500 uppercase">Total</span>
-                                            <span className="text-2xl font-black text-slate-900">
-                                                Rs. {paymentPlan === 'hourly' ? coach.hourlyRate : coach.monthlyFee}
+                                        {hasMonthly && (
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPaymentPlan('hourly')}
+                                                    className={twMerge(
+                                                        'p-4 rounded-2xl border-2 text-left transition-all',
+                                                        paymentPlan === 'hourly'
+                                                            ? 'border-indigo-950 bg-indigo-950/5'
+                                                            : 'border-amber-100'
+                                                    )}
+                                                >
+                                                    <p className="text-[10px] font-bold uppercase text-slate-500">Per session</p>
+                                                    <p className="text-lg font-black text-indigo-950 mt-1">
+                                                        Rs.{coach.hourlyRate?.toLocaleString?.() ?? coach.hourlyRate}
+                                                    </p>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPaymentPlan('monthly')}
+                                                    className={twMerge(
+                                                        'p-4 rounded-2xl border-2 text-left transition-all',
+                                                        paymentPlan === 'monthly'
+                                                            ? 'border-indigo-950 bg-indigo-950/5'
+                                                            : 'border-amber-100'
+                                                    )}
+                                                >
+                                                    <p className="text-[10px] font-bold uppercase text-slate-500">Monthly</p>
+                                                    <p className="text-lg font-black text-emerald-800 mt-1">
+                                                        Rs.{coach.monthlyFee?.toLocaleString?.() ?? coach.monthlyFee}
+                                                    </p>
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">
+                                                Message (optional)
+                                            </label>
+                                            <textarea
+                                                value={bookingMessage}
+                                                onChange={(e) => setBookingMessage(e.target.value)}
+                                                placeholder="Goals, level, or questions for the coach…"
+                                                className="mt-2 w-full p-4 rounded-xl border-2 border-amber-100 text-sm font-medium focus:border-amber-400 focus:ring-4 focus:ring-amber-100 outline-none h-24 resize-none"
+                                            />
+                                        </div>
+
+                                        <div className="flex justify-between items-center pt-2 border-t border-amber-50">
+                                            <span className="text-xs font-bold uppercase text-slate-500">Estimated</span>
+                                            <span className="text-2xl font-black text-indigo-950">
+                                                Rs.{totalPrice?.toLocaleString?.() ?? totalPrice}
                                             </span>
                                         </div>
+
                                         <Button
-                                            type="submit"
+                                            onClick={handleBooking}
                                             isLoading={bookingLoading}
                                             fullWidth
-                                            size="lg"
-                                            className="h-14 font-bold bg-slate-900 text-white hover:bg-indigo-600 rounded-xl shadow-lg"
+                                            className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                                         >
-                                            <CheckBadgeIcon className="h-5 w-5 mr-2" />
-                                            Send Request
+                                            Send booking request
                                         </Button>
-                                    </div>
-                                </form>
+                                        <p className="text-[11px] text-center text-slate-500 font-medium">
+                                            Coach has 30 minutes to confirm before the request expires.
+                                        </p>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {step < 3 && dateKeys.length > 0 && (
+                                <div className="flex gap-3 mt-8 pt-6 border-t border-amber-50">
+                                    {step > 1 && (
+                                        <Button variant="outline" onClick={goBack} className="flex-1 h-12 rounded-xl font-bold">
+                                            Back
+                                        </Button>
+                                    )}
+                                    {step === 1 && (
+                                        <Button
+                                            onClick={continueFromDate}
+                                            disabled={!selectedDateKey}
+                                            className="flex-1 h-12 rounded-xl font-bold bg-indigo-950 text-amber-50"
+                                        >
+                                            Choose time
+                                            <ChevronRightIcon className="h-5 w-5 ml-1 inline" />
+                                        </Button>
+                                    )}
+                                    {step === 2 && (
+                                        <Button
+                                            onClick={continueFromTime}
+                                            disabled={!selectedSlot}
+                                            className="flex-1 h-12 rounded-xl font-bold bg-indigo-950 text-amber-50"
+                                        >
+                                            Review & send
+                                            <ChevronRightIcon className="h-5 w-5 ml-1 inline" />
+                                        </Button>
+                                    )}
+                                </div>
                             )}
+
+                            {step === 3 && !bookingDone && (
+                                <div className="mt-4 pt-4 border-t border-amber-50">
+                                    <Button variant="outline" onClick={goBack} fullWidth className="h-11 rounded-xl font-bold">
+                                        Back
+                                    </Button>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            </section>
+
+            {/* About — collapsed */}
+            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                <button
+                    type="button"
+                    onClick={() => setShowAbout((v) => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 font-bold text-slate-800 hover:bg-slate-50"
+                >
+                    About {displayName}
+                    <ChevronRightIcon className={twMerge('h-5 w-5 transition-transform', showAbout && 'rotate-90')} />
+                </button>
+                {showAbout && (
+                    <div className="px-5 pb-6 border-t border-slate-100 space-y-5 pt-4">
+                        <p className="text-slate-600 text-sm leading-relaxed">{coach.bio || '—'}</p>
+                        {specializations.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {specializations.map((spec, index) => (
+                                    <span
+                                        key={index}
+                                        className="text-xs font-bold bg-indigo-50 text-indigo-900 px-3 py-1.5 rounded-lg"
+                                    >
+                                        {formatSpec(spec)}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-3 text-sm font-bold">
+                            <div className="rounded-xl bg-slate-50 p-3">
+                                <span className="text-slate-400 text-[10px] uppercase block mb-1">Experience</span>
+                                {coach.experience} years
+                            </div>
+                            <div className="rounded-xl bg-slate-50 p-3 flex items-start gap-2">
+                                <CurrencyDollarIcon className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <span className="text-slate-400 text-[10px] uppercase block mb-1">Rates</span>
+                                    Rs.{coach.hourlyRate}/hr
+                                    {hasMonthly && ` · Rs.${coach.monthlyFee}/mo`}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
