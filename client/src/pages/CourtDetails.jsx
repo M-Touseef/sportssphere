@@ -47,7 +47,7 @@ const StepBar = ({ current, steps }) => (
             const done = current > s.id;
             const active = current === s.id;
             return (
-                <div key={s.id} className={twMerge('flex items-center', i < STEPS.length - 1 && 'flex-1')}>
+                <div key={s.id} className={twMerge('flex items-center', i < steps.length - 1 && 'flex-1')}>
                     <div className="flex flex-col items-center gap-1.5 shrink-0">
                         <div
                             className={twMerge(
