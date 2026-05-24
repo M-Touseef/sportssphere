@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button';
 import { Link } from 'react-router-dom';
 import * as paymentService from '../../services/paymentService';
 import { sumCoachingHours, formatCoachingHours } from '../../utils/timeFormat';
+import { expandCoachingSessionsForCoach } from '../../utils/coachingSessionRequests';
 
 const CoachDashboard = () => {
     const { user } = useAuth();
@@ -35,31 +36,7 @@ const CoachDashboard = () => {
             ]);
 
             const coachingSessionsList = sessionsRes?.data || sessionsRes || [];
-
-            // Normalize Coaching Sessions to match Request structure
-            const coachingRequests = coachingSessionsList.map(session => ({
-                _id: session._id,
-                type: 'COACHING_SESSION',
-                requester: session.student,
-                availabilitySlot: {
-                    date: session.date,
-                    startTime: session.startTime,
-                    endTime: session.endTime,
-                    courtName: session.court?.name,
-                    courtFee: session.courtFee,
-                    courtPaymentStatus: session.courtPaymentStatus
-                },
-                students: session.students || [],
-                maxStudents: session.maxStudents || 1,
-                message: session.notes || 'Coaching Session Booking',
-                paymentPlan: session.planType,
-                responseDeadline: session.responseDeadline,
-                status: session.status === 'pending' ? 'PENDING_RESPONSE' :
-                    session.status === 'pending_payment' ? 'ACCEPTED' :
-                        session.status === 'confirmed' ? 'ACCEPTED' :
-                            session.status === 'cancelled' ? 'REJECTED' : session.status,
-                createdAt: session.createdAt
-            }));
+            const coachingRequests = expandCoachingSessionsForCoach(coachingSessionsList);
 
             // Combine Sparring Requests and Coaching Sessions
             const allRequests = [
@@ -192,8 +169,8 @@ const CoachDashboard = () => {
                         <div className="flex-1 p-4 sm:p-6 lg:p-8">
                             {requests.length > 0 ? (
                                 <ul role="list" className="space-y-4 lg:space-y-5">
-                                    {requests.map((request) => (
-                                        <li key={request._id} className="relative p-4 sm:p-5 lg:p-6 bg-slate-50/50 hover:bg-white rounded-2xl lg:rounded-3xl border border-transparent hover:border-slate-100 hover:shadow-xl hover:shadow-slate-100 transition-all duration-300">
+                                    {requests.map((request, index) => (
+                                        <li key={`${request._id}-${request.requester?._id || index}`} className="relative p-4 sm:p-5 lg:p-6 bg-slate-50/50 hover:bg-white rounded-2xl lg:rounded-3xl border border-transparent hover:border-slate-100 hover:shadow-xl hover:shadow-slate-100 transition-all duration-300">
                                             <div className="flex flex-col sm:flex-row justify-between gap-4 lg:gap-6">
                                                 {/* Main Content */}
                                                 <div className="flex-1 min-w-0 space-y-3 lg:space-y-4">
@@ -214,7 +191,7 @@ const CoachDashboard = () => {
                                                     {/* Name */}
                                                     <p className="text-lg lg:text-xl font-extrabold text-slate-900 leading-tight">
                                                         {request.type === 'COACHING_SESSION'
-                                                            ? (request.students?.[0]?.name || 'Student') + (request.students?.length > 1 ? ` + ${request.students.length - 1} more` : '')
+                                                            ? (request.requester?.name || request.students?.[0]?.name || 'Student')
                                                             : (request.requester?.name || 'Requester')}
                                                     </p>
 
@@ -350,7 +327,7 @@ const CoachDashboard = () => {
                                                     </div>
                                                     <p className="text-lg font-extrabold text-slate-900 mb-1 break-words">
                                                         {request.type === 'COACHING_SESSION'
-                                                            ? (request.students?.[0]?.name || 'Student') + (request.students?.length > 1 ? ` + ${request.students.length - 1} more` : '')
+                                                            ? (request.requester?.name || request.students?.[0]?.name || 'Student')
                                                             : (request.requester?.name || 'Requester')}
                                                     </p>
                                                     {request.type === 'COACHING_SESSION' && (

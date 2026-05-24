@@ -3,6 +3,7 @@ import sparringService from '../../services/sparringService';
 import sessionService from '../../services/sessionService';
 import RequestCard from '../../components/professional/RequestCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { expandCoachingSessionsForCoach } from '../../utils/coachingSessionRequests';
 import { InboxIcon } from '@heroicons/react/24/outline';
 
 const CoachBookingRequests = () => {
@@ -21,26 +22,9 @@ const CoachBookingRequests = () => {
                 sessionService.getCoachSessions()
             ]);
 
-            const normalizedSessions = (coachingSessions.data || coachingSessions || []).map(session => ({
-                _id: session._id,
-                type: 'COACHING_SESSION',
-                requester: session.students?.[0],
-                students: session.students,
-                availabilitySlot: {
-                    date: session.date,
-                    startTime: session.startTime,
-                    endTime: session.endTime,
-                    courtName: session.court?.name
-                },
-                message: session.notes || 'Coaching Session',
-                paymentPlan: session.planType,
-                responseDeadline: session.responseDeadline,
-                status: session.status === 'pending' ? 'PENDING_RESPONSE' :
-                    session.status === 'pending_payment' ? 'ACCEPTED' :
-                        session.status === 'confirmed' ? 'PAID & CONFIRMED' :
-                            session.status === 'cancelled' ? 'REJECTED' : session.status,
-                createdAt: session.createdAt
-            }));
+            const normalizedSessions = expandCoachingSessionsForCoach(
+                coachingSessions.data || coachingSessions || []
+            );
 
             const allRequests = [
                 ...(sparringReqs.data || sparringReqs || []),
@@ -103,9 +87,9 @@ const CoachBookingRequests = () => {
 
             <div className="space-y-4">
                 {filteredRequests.length > 0 ? (
-                    filteredRequests.map(request => (
+                    filteredRequests.map((request, index) => (
                         <RequestCard
-                            key={request._id}
+                            key={`${request._id}-${request.requester?._id || index}`}
                             request={request}
                             onStatusChange={handleStatusChange}
                         />

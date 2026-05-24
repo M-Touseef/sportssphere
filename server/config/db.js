@@ -9,6 +9,13 @@ const connectDB = async () => {
             socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
         });
         console.log(`MongoDB Connected: ${conn.connection.host}`);
+
+        try {
+            const Session = require('../models/Session');
+            await Session.syncIndexes();
+        } catch (indexErr) {
+            console.warn('Session index sync warning:', indexErr.message);
+        }
     } catch (error) {
         console.error(`MongoDB Connection Error: ${error.message}`);
         // Log more detail if it's a timeout

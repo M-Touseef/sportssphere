@@ -86,10 +86,12 @@ const sessionSchema = new mongoose.Schema({
     }
 });
 
-// Prevent double booking for coach (allow overlapping cancelled sessions)
+// One confirmed booking per coach slot; multiple pending requests are allowed
 sessionSchema.index({ coach: 1, date: 1, startTime: 1 }, {
     unique: true,
-    partialFilterExpression: { status: { $ne: 'cancelled' } }
+    partialFilterExpression: {
+        status: { $in: ['confirmed', 'pending_payment', 'completed'] }
+    }
 });
 
 sessionSchema.index({ responseDeadline: 1, status: 1 });

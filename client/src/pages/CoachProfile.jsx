@@ -54,6 +54,20 @@ const formatDateChip = (dateKey) => {
     };
 };
 
+/** Strip any student/requester fields — players must not see other bookers' names */
+const sanitizePublicSlots = (slots) =>
+    (Array.isArray(slots) ? slots : []).map(({ students, requester, booker, bookedBy, ...slot }) => slot);
+
+const getSlotAvailabilityLabel = (slot) => {
+    if (slot.slotStatus === 'your_pending') return 'Your request pending';
+    const max = slot.maxStudents ?? 1;
+    if (slot.isGroup && max > 1) {
+        const spots = max - (slot.enrolledCount ?? 0);
+        return spots > 0 ? `${spots} spots left` : 'Full';
+    }
+    return 'Available';
+};
+
 const StepBar = ({ current }) => (
     <div className="flex items-center w-full">
         {BOOKING_STEPS.map((s, i) => {
@@ -121,7 +135,7 @@ const CoachProfile = () => {
                     sessionService.getCoachRealizedAvailability(id)
                 ]);
                 setCoach(profileRes.data);
-                setAvailability(Array.isArray(sessionsRes.data) ? sessionsRes.data : []);
+                setAvailability(sanitizePublicSlots(sessionsRes.data));
             } catch (error) {
                 console.error('Error fetching coach details:', error);
                 toastError('Failed to load coach profile.');
@@ -135,8 +149,10 @@ const CoachProfile = () => {
     const openSlots = useMemo(
         () =>
             availability.filter((slot) => {
-                const spots = (slot.maxStudents ?? 1) - (slot.enrolledCount ?? 0);
-                return spots > 0;
+                if (slot.slotStatus === 'your_pending') return true;
+                const max = slot.maxStudents ?? 1;
+                if (max <= 1 || !slot.isGroup) return true;
+                return max - (slot.enrolledCount ?? 0) > 0;
             }),
         [availability]
     );
@@ -201,6 +217,10 @@ const CoachProfile = () => {
             toastError('Please pick a time slot.');
             return;
         }
+        if (selectedSlot.slotStatus === 'your_pending') {
+            toastError('You already sent a request for this time. Check My Sessions for updates.');
+            return;
+        }
         if (!isAuthenticated) {
             navigate('/login', { state: { from: `/coaches/${id}` } });
             return;
@@ -243,7 +263,14 @@ const CoachProfile = () => {
             });
 
             success('Request sent! The coach has 30 minutes to confirm.');
-            setAvailability((prev) => prev.filter((s) => s._id !== selectedSlot._id));
+            const bookedKey = `${toDateKey(selectedSlot.date)}-${selectedSlot.startTime}`;
+            setAvailability((prev) =>
+                prev.map((s) => {
+                    const key = `${toDateKey(s.date)}-${s.startTime}`;
+                    if (key !== bookedKey) return s;
+                    return { ...s, slotStatus: 'your_pending', enrolledCount: 0 };
+                })
+            );
             setBookingDone(true);
         } catch (error) {
             console.error(error);
@@ -421,16 +448,18 @@ const CoachProfile = () => {
                                         {slotsForSelectedDate.length > 0 ? (
                                             <div className="space-y-2">
                                                 {slotsForSelectedDate.map((slot) => {
-                                                    const spots =
-                                                        (slot.maxStudents ?? 1) - (slot.enrolledCount ?? 0);
+                                                    const isOwnPending = slot.slotStatus === 'your_pending';
                                                     const selected = selectedSlot?._id === slot._id;
+                                                    const statusLabel = getSlotAvailabilityLabel(slot);
                                                     return (
                                                         <button
                                                             key={slot._id}
                                                             type="button"
+                                                            disabled={isOwnPending}
                                                             onClick={() => setSelectedSlot(slot)}
                                                             className={twMerge(
                                                                 'w-full flex items-center justify-between gap-3 p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.99]',
+                                                                isOwnPending && 'opacity-80 cursor-default',
                                                                 selected
                                                                     ? 'bg-indigo-950 border-indigo-950 text-amber-50'
                                                                     : 'border-amber-100 hover:border-amber-400 bg-white'
@@ -463,12 +492,19 @@ const CoachProfile = () => {
                                                                 <span
                                                                     className={twMerge(
                                                                         'text-[10px] font-bold px-2 py-1 rounded-lg',
-                                                                        selected
-                                                                            ? 'bg-emerald-700 text-white'
-                                                                            : 'bg-emerald-50 text-emerald-700'
+                                                                        isOwnPending &&
+                                                                            (selected
+                                                                                ? 'bg-amber-500 text-indigo-950'
+                                                                                : 'bg-amber-100 text-amber-900'),
+                                                                        !isOwnPending &&
+                                                                            selected &&
+                                                                            'bg-emerald-700 text-white',
+                                                                        !isOwnPending &&
+                                                                            !selected &&
+                                                                            'bg-emerald-50 text-emerald-700'
                                                                     )}
                                                                 >
-                                                                    {spots} left
+                                                                    {statusLabel}
                                                                 </span>
                                                             </div>
                                                         </button>

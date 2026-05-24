@@ -40,6 +40,33 @@ const applyPendingStudentRequest = (session) => {
     }
 };
 
+const sameSlotQuery = (coachId, sessionDate, startTime, extra = {}) => ({
+    coach: coachId,
+    date: sessionDate,
+    startTime,
+    ...extra
+});
+
+const cancelCompetingPendingSessions = async (acceptedSession) => {
+    const competitors = await Session.find({
+        ...sameSlotQuery(acceptedSession.coach, acceptedSession.date, acceptedSession.startTime),
+        status: 'pending',
+        _id: { $ne: acceptedSession._id }
+    });
+
+    for (const session of competitors) {
+        session.status = 'cancelled';
+        session.responseDeadline = undefined;
+        await session.save();
+        await notifySessionStudents(session, {
+            title: 'Coaching Request Closed',
+            message:
+                'Another player was accepted for this time slot. Please book a different time or contact the coach.',
+            status: 'REJECTED'
+        });
+    }
+};
+
 const notifyCourtOwnerOfSessionRequest = async (session) => {
     try {
         const court = await Court.findById(session.court).select('name owner');
@@ -127,10 +154,8 @@ exports.publishSession = async (req, res) => {
         const totalPrice = planType === 'monthly' ? coachProfile.monthlyFee : coachProfile.hourlyRate * duration;
 
         const conflict = await Session.findOne({
-            coach: req.user.id,
-            date: sessionDate,
-            startTime,
-            status: { $ne: 'cancelled' }
+            ...sameSlotQuery(req.user.id, sessionDate, startTime),
+            status: { $in: ['confirmed', 'pending_payment', 'completed'] }
         });
 
         if (conflict) {
@@ -187,12 +212,19 @@ exports.getAvailableSessions = async (req, res) => {
             isPublished: true,
             $expr: { $lt: [{ $size: "$students" }, "$maxStudents"] },
             date: { $gte: new Date().setHours(0, 0, 0, 0) }
-        }).populate('court', 'name location');
+        })
+            .populate('court', 'name location')
+            .lean();
+
+        const sanitized = sessions.map(({ students, ...session }) => ({
+            ...session,
+            enrolledCount: Array.isArray(students) ? students.length : 0
+        }));
 
         res.status(200).json({
             success: true,
-            count: sessions.length,
-            data: sessions
+            count: sanitized.length,
+            data: sanitized
         });
     } catch (error) {
         console.error(error);
@@ -353,6 +385,8 @@ exports.confirmSession = async (req, res) => {
         // session.paymentStatus = 'paid'; // In a real app, this might trigger payment capture
         await session.save();
 
+        await cancelCompetingPendingSessions(session);
+
         // Populate details for response
         await session.populate('students', 'name email');
 
@@ -442,6 +476,7 @@ exports.getCoachRealizedAvailability = async (req, res) => {
         const activeBookingIds = new Set(activeBookings.map((b) => b._id.toString()));
 
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const viewerId = req.user?.id?.toString() || null;
         const realizedSlots = [];
         for (let i = 0; i < 30; i++) {
             const date = new Date(today);
@@ -463,28 +498,84 @@ exports.getCoachRealizedAvailability = async (req, res) => {
             });
 
             for (const slot of recurringSlots) {
-                // Check for existing session at this specific slot
-                const existingSession = await Session.findOne({
-                    coach: coachProfile.user,
-                    date: date,
-                    startTime: slot.startTime,
-                    status: { $ne: 'cancelled' }
+                const slotTaken = await Session.findOne({
+                    ...sameSlotQuery(coachProfile.user, date, slot.startTime),
+                    status: { $in: ['confirmed', 'pending_payment'] }
+                });
+                if (slotTaken) continue;
+
+                const publishedGroup = await Session.findOne({
+                    ...sameSlotQuery(coachProfile.user, date, slot.startTime),
+                    isPublished: true,
+                    status: { $nin: ['cancelled'] }
                 });
 
-                // If no session OR session has remaining capacity
-                if (!existingSession || (existingSession.students.length < existingSession.maxStudents)) {
+                if (publishedGroup) {
+                    if (publishedGroup.students.length >= publishedGroup.maxStudents) continue;
                     realizedSlots.push({
-                        _id: existingSession ? existingSession._id : `${dayName}-${date.getTime()}-${slot.startTime}`,
+                        _id: publishedGroup._id,
                         date: date,
                         startTime: slot.startTime,
                         endTime: slot.endTime,
-                        court: slot.court,
-                        maxStudents: existingSession ? existingSession.maxStudents : (slot.maxStudents || 1),
-                        enrolledCount: existingSession ? existingSession.students.length : 0,
+                        court: slot.court
+                            ? { name: slot.court.name, location: slot.court.location }
+                            : undefined,
+                        maxStudents: publishedGroup.maxStudents,
+                        enrolledCount: publishedGroup.students.length,
+                        slotStatus: 'available',
                         isRecurring: true,
-                        isExisting: !!existingSession
+                        isExisting: true,
+                        isGroup: true
                     });
+                    continue;
                 }
+
+                const pendingRequests = await Session.find({
+                    ...sameSlotQuery(coachProfile.user, date, slot.startTime),
+                    status: 'pending',
+                    isPublished: { $ne: true }
+                }).select('_id students');
+
+                const viewerPending = viewerId
+                    ? pendingRequests.find((s) =>
+                          s.students.some((studentId) => studentId.toString() === viewerId)
+                      )
+                    : null;
+
+                if (viewerPending) {
+                    realizedSlots.push({
+                        _id: viewerPending._id,
+                        date: date,
+                        startTime: slot.startTime,
+                        endTime: slot.endTime,
+                        court: slot.court
+                            ? { name: slot.court.name, location: slot.court.location }
+                            : undefined,
+                        maxStudents: 1,
+                        enrolledCount: 0,
+                        slotStatus: 'your_pending',
+                        isRecurring: true,
+                        isExisting: true,
+                        isGroup: false
+                    });
+                    continue;
+                }
+
+                realizedSlots.push({
+                    _id: `${dayName}-${date.getTime()}-${slot.startTime}`,
+                    date: date,
+                    startTime: slot.startTime,
+                    endTime: slot.endTime,
+                    court: slot.court
+                        ? { name: slot.court.name, location: slot.court.location }
+                        : undefined,
+                    maxStudents: slot.maxStudents || 1,
+                    enrolledCount: 0,
+                    slotStatus: 'available',
+                    isRecurring: true,
+                    isExisting: false,
+                    isGroup: (slot.maxStudents || 1) > 1
+                });
             }
         }
 
@@ -548,39 +639,44 @@ exports.requestRecurringSession = async (req, res) => {
             }
         }
 
-        // Double check availability
-        const conflict = await Session.findOne({
-            coach: coachId,
-            date: sessionDate,
-            startTime,
-            status: { $ne: 'cancelled' }
+        const duplicateRequest = await Session.findOne({
+            ...sameSlotQuery(coachId, sessionDate, startTime),
+            students: req.user.id,
+            status: { $in: ['pending', 'pending_payment', 'confirmed'] }
+        });
+        if (duplicateRequest) {
+            return res.status(400).json({ error: 'You already have a request for this time slot' });
+        }
+
+        const slotBooked = await Session.findOne({
+            ...sameSlotQuery(coachId, sessionDate, startTime),
+            status: { $in: ['confirmed', 'pending_payment'] }
+        });
+        if (slotBooked) {
+            return res.status(400).json({ error: 'This time slot is already booked' });
+        }
+
+        // Join only coach-published group sessions (not other players' pending requests)
+        const publishedGroup = await Session.findOne({
+            ...sameSlotQuery(coachId, sessionDate, startTime),
+            isPublished: true,
+            status: { $nin: ['cancelled'] }
         });
 
-        if (conflict) {
-            // Check if conflict is actually just this session being full or available for more students
-            // But requestRecurringSession creates a NEW session. 
-            // If it creates a NEW session every time, then it's not a group session yet.
-            // A group session should probably be 'published' first.
-            // If it's a 'request' for a recurring slot, maybe it should check if a session already exists for that slot.
-
-            if (conflict.students.length >= conflict.maxStudents) {
+        if (publishedGroup) {
+            if (publishedGroup.students.length >= publishedGroup.maxStudents) {
                 return res.status(400).json({ error: 'Slot is already full' });
             }
 
-            // If session exists and has space, join it
-            if (conflict.students.includes(req.user.id)) {
-                return res.status(400).json({ error: 'You are already enrolled' });
-            }
+            publishedGroup.students.push(req.user.id);
+            publishedGroup.status = 'pending';
+            applyPendingStudentRequest(publishedGroup);
+            await publishedGroup.save();
 
-            conflict.students.push(req.user.id);
-            conflict.status = 'pending';
-            applyPendingStudentRequest(conflict);
-            await conflict.save();
+            await notifyCoachOfSessionRequest(publishedGroup, req.user.id);
+            await notifyCourtOwnerOfSessionRequest(publishedGroup);
 
-            await notifyCoachOfSessionRequest(conflict, req.user.id);
-            await notifyCourtOwnerOfSessionRequest(conflict);
-
-            return res.status(200).json({ success: true, data: conflict });
+            return res.status(200).json({ success: true, data: publishedGroup });
         }
 
         const start = parseInt(startTime.split(':')[0], 10);
@@ -604,7 +700,8 @@ exports.requestRecurringSession = async (req, res) => {
             totalPrice,
             courtFee,
             planType: planType || 'hourly',
-            maxStudents: recurringSlot?.maxStudents || 1,
+            maxStudents: 1,
+            sessionType: 'individual',
             notes: message,
             status: 'pending',
             isPublished: false
