@@ -1,87 +1,118 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import coachService from '../../services/coachService';
 import { getAllCourts } from '../../services/courtService';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/ui/Button';
-import FriendlyTimePicker from '../../components/professional/FriendlyTimePicker';
 import HourSlotSelect from '../../components/ui/HourSlotSelect';
 import { formatSlotHourRange } from '../../utils/timeFormat';
 import { twMerge } from 'tailwind-merge';
 import {
     BuildingOffice2Icon,
     CalendarDaysIcon,
-    CalendarIcon,
     MapPinIcon,
     PlusIcon,
     TrashIcon,
     ClockIcon,
     PencilSquareIcon,
-    XMarkIcon,
-    BanknotesIcon,
-    ArrowRightIcon
+    ChevronRightIcon
 } from '@heroicons/react/24/outline';
-
-const TABS = [
-    { id: 'courts', label: 'Court reservations', icon: BuildingOffice2Icon },
-    { id: 'weekly', label: 'Weekly coaching', icon: CalendarIcon }
-];
+import { CheckIcon as CheckSolid } from '@heroicons/react/24/solid';
 
 const DAYS = [
-    { value: 'monday', label: 'Monday' },
-    { value: 'tuesday', label: 'Tuesday' },
-    { value: 'wednesday', label: 'Wednesday' },
-    { value: 'thursday', label: 'Thursday' },
-    { value: 'friday', label: 'Friday' },
-    { value: 'saturday', label: 'Saturday' },
-    { value: 'sunday', label: 'Sunday' }
+    { value: 'monday', label: 'Mon' },
+    { value: 'tuesday', label: 'Tue' },
+    { value: 'wednesday', label: 'Wed' },
+    { value: 'thursday', label: 'Thu' },
+    { value: 'friday', label: 'Fri' },
+    { value: 'saturday', label: 'Sat' },
+    { value: 'sunday', label: 'Sun' }
 ];
 
 const DAY_ORDER = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 7 };
 
-const CoachSchedule = () => {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const activeTab = searchParams.get('tab') === 'weekly' ? 'weekly' : 'courts';
+const COURT_STEPS = [
+    { id: 1, label: 'Court' },
+    { id: 2, label: 'Date' },
+    { id: 3, label: 'Time' },
+    { id: 4, label: 'Confirm' }
+];
 
+const StepBar = ({ steps, current }) => (
+    <div className="flex items-center w-full mb-6">
+        {steps.map((s, i) => {
+            const done = current > s.id;
+            const active = current === s.id;
+            return (
+                <div key={s.id} className={twMerge('flex items-center', i < steps.length - 1 && 'flex-1')}>
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                        <div
+                            className={twMerge(
+                                'h-8 w-8 rounded-full flex items-center justify-center text-xs font-black border-2',
+                                done && 'bg-emerald-600 border-emerald-600 text-white',
+                                active && !done && 'bg-indigo-950 border-indigo-950 text-amber-100',
+                                !done && !active && 'bg-white border-slate-200 text-slate-400'
+                            )}
+                        >
+                            {done ? <CheckSolid className="h-4 w-4" /> : s.id}
+                        </div>
+                        <span
+                            className={twMerge(
+                                'text-[9px] font-bold uppercase hidden sm:block',
+                                active ? 'text-indigo-950' : 'text-slate-400'
+                            )}
+                        >
+                            {s.label}
+                        </span>
+                    </div>
+                    {i < steps.length - 1 && (
+                        <div
+                            className={twMerge(
+                                'h-0.5 flex-1 mx-2 rounded-full',
+                                current > s.id ? 'bg-emerald-500' : 'bg-slate-200'
+                            )}
+                        />
+                    )}
+                </div>
+            );
+        })}
+    </div>
+);
+
+const formatReservationLabel = (b) => {
+    const d = new Date(b.date);
+    const day = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return `${b.court?.name || 'Court'} · ${day} · ${formatSlotHourRange(b.startTime, b.endTime)}`;
+};
+
+const CoachSchedule = () => {
+    const [searchParams] = useSearchParams();
     const [reservations, setReservations] = useState([]);
     const [courts, setCourts] = useState([]);
     const [slots, setSlots] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const [showCourtForm, setShowCourtForm] = useState(true);
-    const [courtSubmitting, setCourtSubmitting] = useState(false);
+    const [showCourtWizard, setShowCourtWizard] = useState(false);
+    const [courtStep, setCourtStep] = useState(1);
     const [courtForm, setCourtForm] = useState({ courtId: '', date: '', startTime: '', endTime: '' });
+    const [courtSubmitting, setCourtSubmitting] = useState(false);
 
     const [showSlotForm, setShowSlotForm] = useState(false);
     const [editingSlotId, setEditingSlotId] = useState(null);
+    const [slotForm, setSlotForm] = useState({
+        day: 'monday',
+        startTime: '09:00',
+        endTime: '10:00',
+        maxStudents: 1,
+        courtBookingId: ''
+    });
 
     const { success, error: toastError } = useToast();
     const toastErrorRef = useRef(toastError);
     toastErrorRef.current = toastError;
     const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
-
-    const {
-        register: registerSlot,
-        handleSubmit: handleSlotSubmit,
-        reset: resetSlot,
-        control,
-        formState: { errors: slotErrors }
-    } = useForm({
-        defaultValues: {
-            day: 'monday',
-            startTime: '09:00',
-            endTime: '10:00',
-            maxStudents: 1,
-            courtBookingId: ''
-        }
-    });
-
-    const setTab = (tabId) => {
-        setSearchParams(tabId === 'courts' ? {} : { tab: tabId }, { replace: true });
-    };
 
     const refreshAll = async () => {
         const [bookingsResult, courtsResult, profileResult] = await Promise.allSettled([
@@ -92,52 +123,42 @@ const CoachSchedule = () => {
 
         if (bookingsResult.status === 'fulfilled') {
             setReservations(bookingsResult.value?.data ?? []);
-        } else {
-            console.error('Court bookings:', bookingsResult.reason);
         }
-
         if (courtsResult.status === 'fulfilled') {
             const courtsPayload = courtsResult.value;
             setCourts(courtsPayload?.data ?? courtsPayload ?? []);
-        } else {
-            console.error('Courts list:', courtsResult.reason);
         }
-
         if (profileResult.status === 'fulfilled') {
             const profile = profileResult.value?.data ?? profileResult.value;
             setSlots(profile?.availability ?? []);
         } else {
-            const status = profileResult.reason?.response?.status;
-            if (status !== 404) {
-                console.error('Coach profile:', profileResult.reason);
-            }
             setSlots([]);
         }
 
-        const criticalFailed =
-            bookingsResult.status === 'rejected' && courtsResult.status === 'rejected';
-        if (criticalFailed) {
-            toastErrorRef.current('Failed to load schedule data.');
+        if (bookingsResult.status === 'rejected' && courtsResult.status === 'rejected') {
+            toastErrorRef.current('Failed to load schedule.');
         }
-
         setLoading(false);
     };
 
     useEffect(() => {
         refreshAll();
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount; avoid toastError dep loop
     }, []);
+
+    useEffect(() => {
+        if (loading) return;
+        const tab = searchParams.get('tab');
+        if (tab === 'courts') setShowCourtWizard(true);
+        if (tab === 'weekly' && reservations.length > 0) setShowSlotForm(true);
+    }, [loading, searchParams, reservations.length]);
 
     const upcomingReservations = useMemo(() => {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
-        return reservations.filter((b) => new Date(b.date) >= now).length;
+        return reservations
+            .filter((b) => new Date(b.date) >= now && b.status !== 'cancelled')
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
     }, [reservations]);
-
-    const sortedReservations = useMemo(
-        () => [...reservations].sort((a, b) => new Date(a.date) - new Date(b.date)),
-        [reservations]
-    );
 
     const sortedSlots = useMemo(
         () =>
@@ -150,23 +171,57 @@ const CoachSchedule = () => {
 
     const selectedCourt = courts.find((c) => c._id === courtForm.courtId);
 
-    const handleCourtSubmit = async (e) => {
-        e.preventDefault();
-        if (courtForm.startTime && courtForm.endTime && courtForm.endTime <= courtForm.startTime) {
-            toastError('End hour must be after start hour.');
+    const courtSummary = useMemo(() => {
+        if (!courtForm.courtId || !courtForm.date || !courtForm.startTime) return null;
+        const dateLabel = new Date(courtForm.date + 'T12:00:00').toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
+        return {
+            court: selectedCourt?.name || 'Court',
+            city: selectedCourt?.location?.city,
+            when: `${dateLabel} · ${formatSlotHourRange(courtForm.startTime, courtForm.endTime)}`
+        };
+    }, [courtForm, selectedCourt]);
+
+    const resetCourtWizard = () => {
+        setCourtStep(1);
+        setCourtForm({ courtId: '', date: '', startTime: '', endTime: '' });
+        setShowCourtWizard(false);
+    };
+
+    const resetSlotForm = () => {
+        setSlotForm({
+            day: 'monday',
+            startTime: '09:00',
+            endTime: '10:00',
+            maxStudents: 1,
+            courtBookingId: upcomingReservations[0]?._id || ''
+        });
+        setEditingSlotId(null);
+        setShowSlotForm(false);
+    };
+
+    const handleCourtSubmit = async () => {
+        if (courtForm.endTime && courtForm.endTime <= courtForm.startTime) {
+            toastError('End time must be after start time.');
             return;
         }
         setCourtSubmitting(true);
         try {
-            await coachService.createCourtBooking(courtForm);
-            success('Court reserved. Add a weekly coaching slot next.');
-            setCourtForm({ courtId: '', date: '', startTime: '', endTime: '' });
-            setShowCourtForm(false);
+            const res = await coachService.createCourtBooking(courtForm);
+            const newBookingId = res?.data?._id;
+            success('Court reserved! Now add when you coach each week.');
+            resetCourtWizard();
             await refreshAll();
-            setTab('weekly');
             setShowSlotForm(true);
+            setSlotForm((f) => ({
+                ...f,
+                courtBookingId: newBookingId || f.courtBookingId
+            }));
         } catch (err) {
-            toastError(err.response?.data?.error || 'Failed to reserve court');
+            toastError(err.response?.data?.error || 'Could not reserve court');
         } finally {
             setCourtSubmitting(false);
         }
@@ -183,24 +238,31 @@ const CoachSchedule = () => {
         }
     };
 
-    const onSlotSubmit = async (data) => {
+    const handleSlotSave = async (e) => {
+        e.preventDefault();
+        if (!slotForm.courtBookingId) {
+            toastError('Link this slot to a court reservation first.');
+            return;
+        }
+        if (slotForm.endTime <= slotForm.startTime) {
+            toastError('End time must be after start time.');
+            return;
+        }
         try {
             const payload = {
-                day: data.day,
-                startTime: data.startTime,
-                endTime: data.endTime,
-                courtBookingId: data.courtBookingId,
-                maxStudents: parseInt(data.maxStudents, 10) || 1
+                day: slotForm.day,
+                startTime: slotForm.startTime,
+                endTime: slotForm.endTime,
+                courtBookingId: slotForm.courtBookingId,
+                maxStudents: parseInt(slotForm.maxStudents, 10) || 1
             };
             const response = editingSlotId
                 ? await coachService.updateAvailabilitySlot(editingSlotId, payload)
                 : await coachService.addAvailabilitySlot(payload);
             if (response.success) {
                 setSlots(response.data);
-                resetSlot({ day: 'monday', maxStudents: 1, startTime: '09:00', endTime: '10:00', courtBookingId: '' });
-                setShowSlotForm(false);
-                setEditingSlotId(null);
-                success(editingSlotId ? 'Slot updated.' : 'Weekly slot added.');
+                success(editingSlotId ? 'Weekly slot updated.' : 'Weekly slot added.');
+                resetSlotForm();
             }
         } catch (error) {
             toastError(error.response?.data?.error || 'Failed to save slot');
@@ -208,19 +270,16 @@ const CoachSchedule = () => {
     };
 
     const handleSlotDelete = async (id) => {
-        if (!window.confirm('Delete this weekly slot?')) return;
+        if (!window.confirm('Remove this weekly slot?')) return;
         try {
             const response = await coachService.removeAvailabilitySlot(id);
             if (response.success) {
                 setSlots(response.data);
-                if (editingSlotId === id) {
-                    setEditingSlotId(null);
-                    setShowSlotForm(false);
-                }
+                if (editingSlotId === id) resetSlotForm();
                 success('Slot removed.');
             }
         } catch {
-            toastError('Failed to delete slot');
+            toastError('Failed to remove slot');
         }
     };
 
@@ -228,8 +287,7 @@ const CoachSchedule = () => {
         const bookingId = slot.courtBooking?._id?.toString?.() || slot.courtBooking?.toString?.() || '';
         setEditingSlotId(slot._id);
         setShowSlotForm(true);
-        setTab('weekly');
-        resetSlot({
+        setSlotForm({
             day: slot.day,
             startTime: slot.startTime,
             endTime: slot.endTime,
@@ -240,501 +298,458 @@ const CoachSchedule = () => {
 
     if (loading) return <LoadingSpinner />;
 
+    const canAddWeekly = upcomingReservations.length > 0;
+
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-32 space-y-6"
-        >
-            {/* Hero */}
-            <div className="relative overflow-hidden rounded-[2rem] shadow-xl shadow-emerald-900/10">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-teal-600 to-indigo-800" />
-                <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
-                <div className="relative px-6 sm:px-10 py-8 sm:py-9">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/70 mb-2">Coach schedule</p>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                        Courts & coaching availability
-                    </h1>
-                    <p className="mt-2 text-sm text-white/75 max-w-2xl font-medium">
-                        Reserve a court, then attach weekly coaching slots to that booking so players can find and request sessions.
-                    </p>
-                    <div className="mt-6 flex flex-wrap gap-3">
-                        <div className="rounded-2xl bg-white/15 px-4 py-2.5 ring-1 ring-white/20 min-w-[100px]">
-                            <p className="text-[10px] font-bold uppercase text-white/60">Reservations</p>
-                            <p className="text-xl font-black text-white">{upcomingReservations}</p>
-                        </div>
-                        <div className="rounded-2xl bg-white/15 px-4 py-2.5 ring-1 ring-white/20 min-w-[100px]">
-                            <p className="text-[10px] font-bold uppercase text-white/60">Weekly slots</p>
-                            <p className="text-xl font-black text-white">{slots.length}</p>
-                        </div>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-20 space-y-8">
+            <div>
+                <h1 className="text-2xl font-black text-slate-900">Schedule & courts</h1>
+                <p className="text-sm text-slate-500 mt-1 font-medium">
+                    Reserve a court for a specific day, then set the weekly hours players can book.
+                </p>
+            </div>
+
+            {/* How it works */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 p-4">
+                    <span className="text-[10px] font-black uppercase text-emerald-800">Step 1</span>
+                    <p className="text-sm font-bold text-slate-900 mt-1">Reserve a court</p>
+                    <p className="text-xs text-slate-600 mt-0.5">Pick venue, date & time</p>
+                </div>
+                <div
+                    className={twMerge(
+                        'rounded-2xl border-2 p-4',
+                        canAddWeekly
+                            ? 'border-indigo-200 bg-indigo-50/40'
+                            : 'border-slate-200 bg-slate-50 opacity-80'
+                    )}
+                >
+                    <span className="text-[10px] font-black uppercase text-indigo-800">Step 2</span>
+                    <p className="text-sm font-bold text-slate-900 mt-1">Weekly coaching</p>
+                    <p className="text-xs text-slate-600 mt-0.5">Repeats every week</p>
+                </div>
+            </div>
+
+            {/* —— Court reservations —— */}
+            <section className="rounded-[1.75rem] border-2 border-amber-200/80 bg-white shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-amber-50 bg-amber-50/40 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <BuildingOffice2Icon className="h-5 w-5 text-indigo-950" />
+                        <h2 className="font-black text-indigo-950">Court reservations</h2>
                     </div>
+                    {!showCourtWizard && (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setShowCourtWizard(true);
+                                setCourtStep(1);
+                            }}
+                            className="h-10 text-sm font-bold bg-indigo-950 text-amber-50 gap-1 shrink-0"
+                        >
+                            <PlusIcon className="h-4 w-4" />
+                            Reserve
+                        </Button>
+                    )}
                 </div>
-            </div>
 
-            {/* Tabs */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200/80 w-full sm:w-auto">
-                    {TABS.map((tab) => {
-                        const Icon = tab.icon;
-                        const active = activeTab === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                onClick={() => setTab(tab.id)}
-                                className={twMerge(
-                                    'flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl text-sm font-bold transition-all',
-                                    active
-                                        ? 'bg-white text-slate-900 shadow-md'
-                                        : 'text-slate-500 hover:text-slate-800'
-                                )}
+                <div className="p-5 sm:p-6">
+                    <AnimatePresence mode="wait">
+                        {showCourtWizard ? (
+                            <motion.div
+                                key="wizard"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
                             >
-                                <Icon className={twMerge('h-5 w-5', active ? 'text-emerald-600' : 'text-slate-400')} />
-                                <span className="hidden sm:inline">{tab.label}</span>
-                                <span className="sm:hidden">{tab.id === 'courts' ? 'Courts' : 'Weekly'}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-                {activeTab === 'courts' ? (
-                    <Button
-                        type="button"
-                        onClick={() => setShowCourtForm(true)}
-                        className="h-11 gap-2 font-bold bg-emerald-600 hover:bg-emerald-700 lg:hidden"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                        Reserve court
-                    </Button>
-                ) : (
-                    <Button
-                        type="button"
-                        onClick={() => {
-                            setEditingSlotId(null);
-                            resetSlot({ day: 'monday', maxStudents: 1, startTime: '09:00', endTime: '10:00', courtBookingId: '' });
-                            setShowSlotForm((v) => !v);
-                        }}
-                        className="h-11 gap-2 font-bold bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                        {showSlotForm && !editingSlotId ? 'Cancel' : 'Add weekly slot'}
-                    </Button>
-                )}
-            </div>
+                                <StepBar steps={COURT_STEPS} current={courtStep} />
 
-            {/* Workflow hint on weekly tab when no courts */}
-            {activeTab === 'weekly' && reservations.length === 0 && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-amber-900">
-                        Step 1: Reserve a court before you can publish weekly coaching slots.
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setTab('courts')}
-                        className="text-sm font-bold text-amber-800 hover:underline shrink-0"
-                    >
-                        Go to court reservations →
-                    </button>
-                </div>
-            )}
-
-            <AnimatePresence mode="wait">
-                {activeTab === 'courts' ? (
-                    <motion.div
-                        key="courts"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start"
-                    >
-                        <div className={twMerge('lg:col-span-5', !showCourtForm && 'max-lg:hidden')}>
-                            <div className="rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm overflow-hidden lg:sticky lg:top-28">
-                                <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-teal-50/50 px-6 py-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
-                                            <PlusIcon className="h-5 w-5" />
-                                        </div>
-                                        <div>
-                                            <h2 className="font-bold text-slate-900">New reservation</h2>
-                                            <p className="text-xs text-slate-500">Hourly blocks</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCourtForm(false)}
-                                        className="lg:hidden p-2 text-slate-400 rounded-xl hover:bg-slate-100"
-                                    >
-                                        <XMarkIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-                                <form onSubmit={handleCourtSubmit} className="p-6 space-y-4">
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                                            Court
-                                        </label>
-                                        <select
-                                            value={courtForm.courtId}
-                                            onChange={(e) => setCourtForm({ ...courtForm, courtId: e.target.value })}
-                                            className="w-full h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
-                                            required
-                                        >
-                                            <option value="">Select court…</option>
+                                {courtStep === 1 && (
+                                    <div className="space-y-3">
+                                        <p className="text-sm font-bold text-slate-700">Which court?</p>
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
                                             {courts.map((c) => (
-                                                <option key={c._id} value={c._id}>
-                                                    {c.name} — {c.location?.city}
-                                                </option>
+                                                <button
+                                                    key={c._id}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setCourtForm((f) => ({ ...f, courtId: c._id }))
+                                                    }
+                                                    className={twMerge(
+                                                        'w-full text-left p-4 rounded-2xl border-2 transition-all',
+                                                        courtForm.courtId === c._id
+                                                            ? 'border-indigo-950 bg-indigo-950/5'
+                                                            : 'border-amber-100 hover:border-amber-300'
+                                                    )}
+                                                >
+                                                    <p className="font-black text-slate-900">{c.name}</p>
+                                                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                                        <MapPinIcon className="h-3.5 w-3.5" />
+                                                        {c.location?.city || '—'}
+                                                    </p>
+                                                </button>
                                             ))}
-                                        </select>
-                                        {selectedCourt && (
-                                            <p className="mt-1.5 text-xs text-slate-500 flex items-center gap-1">
-                                                <MapPinIcon className="h-3.5 w-3.5 text-emerald-600" />
-                                                {selectedCourt.location?.city}
-                                            </p>
-                                        )}
+                                        </div>
                                     </div>
+                                )}
+
+                                {courtStep === 2 && (
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                                            Date
+                                        <label className="text-sm font-bold text-slate-700 block mb-2">
+                                            Which date?
                                         </label>
                                         <input
                                             type="date"
                                             min={todayStr}
                                             value={courtForm.date}
-                                            onChange={(e) => setCourtForm({ ...courtForm, date: e.target.value })}
-                                            className="w-full h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
-                                            required
+                                            onChange={(e) =>
+                                                setCourtForm((f) => ({ ...f, date: e.target.value }))
+                                            }
+                                            className="w-full h-14 px-4 rounded-2xl border-2 border-amber-100 font-bold focus:border-amber-400 outline-none"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                )}
+
+                                {courtStep === 3 && (
+                                    <div className="grid grid-cols-2 gap-4">
                                         <HourSlotSelect
                                             label="Start"
                                             value={courtForm.startTime}
-                                            onChange={(v) => setCourtForm({ ...courtForm, startTime: v })}
+                                            onChange={(v) => setCourtForm((f) => ({ ...f, startTime: v }))}
                                         />
                                         <HourSlotSelect
                                             label="End"
                                             value={courtForm.endTime}
-                                            onChange={(v) => setCourtForm({ ...courtForm, endTime: v })}
+                                            onChange={(v) => setCourtForm((f) => ({ ...f, endTime: v }))}
                                         />
                                     </div>
-                                    <Button
-                                        type="submit"
-                                        disabled={courtSubmitting}
-                                        isLoading={courtSubmitting}
-                                        className="w-full h-11 font-bold bg-emerald-600 hover:bg-emerald-700"
-                                    >
-                                        Confirm reservation
-                                    </Button>
-                                </form>
-                            </div>
-                        </div>
+                                )}
 
-                        <div className="lg:col-span-7 space-y-4">
-                            <h2 className="text-lg font-bold text-slate-900">Your reservations</h2>
-                            {sortedReservations.length === 0 ? (
-                                <EmptyCourts onReserve={() => setShowCourtForm(true)} />
-                            ) : (
-                                <ul className="space-y-3">
-                                    {sortedReservations.map((b) => (
-                                        <ReservationCard
-                                            key={b._id}
-                                            booking={b}
-                                            onCancel={handleCourtCancel}
-                                            onAddSlots={() => {
-                                                setTab('weekly');
-                                                setShowSlotForm(true);
-                                            }}
-                                        />
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="weekly"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="space-y-6"
-                    >
-                        <AnimatePresence>
-                            {showSlotForm && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="rounded-[1.75rem] border border-slate-200 bg-white shadow-sm overflow-hidden"
-                                >
-                                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80">
-                                        <h2 className="font-bold text-slate-900">
-                                            {editingSlotId ? 'Edit weekly slot' : 'Add weekly coaching slot'}
-                                        </h2>
+                                {courtStep === 4 && courtSummary && (
+                                    <div className="rounded-2xl bg-amber-50 border border-amber-100 p-5 space-y-2 text-sm font-bold">
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">Court</span>
+                                            <span className="text-slate-900">{courtSummary.court}</span>
+                                        </div>
+                                        {courtSummary.city && (
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500">City</span>
+                                                <span>{courtSummary.city}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">When</span>
+                                            <span className="text-right">{courtSummary.when}</span>
+                                        </div>
                                     </div>
-                                    <form onSubmit={handleSlotSubmit(onSlotSubmit)} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                                                Day
-                                            </label>
-                                            <select
-                                                {...registerSlot('day', { required: true })}
-                                                className="w-full h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold"
-                                            >
-                                                {DAYS.map((d) => (
-                                                    <option key={d.value} value={d.value}>
-                                                        {d.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                                                Max students
-                                            </label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                {...registerSlot('maxStudents', { required: true, min: 1 })}
-                                                className="w-full h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold"
-                                            />
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                                                Linked court reservation
-                                            </label>
-                                            <select
-                                                {...registerSlot('courtBookingId', { required: 'Reserve a court first' })}
-                                                className="w-full h-11 rounded-xl border border-slate-200 px-4 text-sm font-semibold"
-                                            >
-                                                <option value="">Select reserved court…</option>
-                                                {reservations.map((b) => {
-                                                    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                                                    const day = dayNames[new Date(b.date).getDay()];
-                                                    return (
-                                                        <option key={b._id} value={b._id}>
-                                                            {b.court?.name} — {new Date(b.date).toLocaleDateString()} ({day}){' '}
-                                                            {formatSlotHourRange(b.startTime, b.endTime)}
-                                                        </option>
-                                                    );
-                                                })}
-                                            </select>
-                                            {slotErrors.courtBookingId && (
-                                                <p className="text-xs text-red-500 mt-1">{slotErrors.courtBookingId.message}</p>
-                                            )}
-                                            {reservations.length === 0 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setTab('courts')}
-                                                    className="mt-2 text-xs font-bold text-emerald-600 hover:underline"
-                                                >
-                                                    Reserve a court first →
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                                                Start hour
-                                            </label>
-                                            <Controller
-                                                name="startTime"
-                                                control={control}
-                                                rules={{ required: true }}
-                                                render={({ field }) => (
-                                                    <FriendlyTimePicker value={field.value} onChange={field.onChange} />
-                                                )}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                                                End hour
-                                            </label>
-                                            <Controller
-                                                name="endTime"
-                                                control={control}
-                                                rules={{ required: true }}
-                                                render={({ field }) => (
-                                                    <FriendlyTimePicker value={field.value} onChange={field.onChange} />
-                                                )}
-                                            />
-                                        </div>
-                                        <div className="md:col-span-2 flex justify-end gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setShowSlotForm(false);
-                                                    setEditingSlotId(null);
-                                                }}
-                                                className="px-4 h-11 text-sm font-bold text-slate-500"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <Button type="submit" className="h-11 px-8 font-bold bg-emerald-600 hover:bg-emerald-700">
-                                                {editingSlotId ? 'Save changes' : 'Save slot'}
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                )}
 
-                        <div className="rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                <h2 className="font-bold text-slate-900">Weekly schedule</h2>
-                                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                                    <CalendarIcon className="h-4 w-4" />
-                                    Repeats every week
-                                </span>
-                            </div>
-                            {sortedSlots.length === 0 ? (
-                                <motion.div className="p-12 text-center">
-                                    <CalendarDaysIcon className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                                    <p className="font-bold text-slate-900">No weekly slots yet</p>
-                                    <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-                                        Link recurring coaching hours to a court you have reserved.
-                                    </p>
-                                    {reservations.length > 0 && (
+                                <div className="flex gap-3 mt-8 pt-4 border-t border-amber-50">
+                                    {courtStep > 1 ? (
                                         <Button
+                                            variant="outline"
                                             type="button"
-                                            onClick={() => setShowSlotForm(true)}
-                                            className="mt-5 gap-2 h-11 font-bold bg-emerald-600"
+                                            onClick={() => setCourtStep((s) => s - 1)}
+                                            className="flex-1 h-12 rounded-xl font-bold"
                                         >
-                                            <PlusIcon className="h-5 w-5" />
-                                            Add first slot
+                                            Back
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="outline"
+                                            type="button"
+                                            onClick={resetCourtWizard}
+                                            className="flex-1 h-12 rounded-xl font-bold"
+                                        >
+                                            Cancel
                                         </Button>
                                     )}
-                                </motion.div>
-                            ) : (
-                                <ul className="divide-y divide-slate-100">
-                                    {sortedSlots.map((slot) => (
-                                        <li
-                                            key={slot._id}
-                                            className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/80"
+                                    {courtStep < 4 ? (
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                if (courtStep === 1 && !courtForm.courtId) {
+                                                    toastError('Select a court');
+                                                    return;
+                                                }
+                                                if (courtStep === 2 && !courtForm.date) {
+                                                    toastError('Pick a date');
+                                                    return;
+                                                }
+                                                if (
+                                                    courtStep === 3 &&
+                                                    (!courtForm.startTime || !courtForm.endTime)
+                                                ) {
+                                                    toastError('Pick start and end time');
+                                                    return;
+                                                }
+                                                if (
+                                                    courtStep === 3 &&
+                                                    courtForm.endTime <= courtForm.startTime
+                                                ) {
+                                                    toastError('End must be after start');
+                                                    return;
+                                                }
+                                                setCourtStep((s) => s + 1);
+                                            }}
+                                            className="flex-1 h-12 rounded-xl font-bold bg-indigo-950 text-amber-50"
                                         >
-                                            <div>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold capitalize">
-                                                        {slot.day}
-                                                    </span>
-                                                    <span className="text-sm font-bold text-slate-900">
-                                                        {formatSlotHourRange(slot.startTime, slot.endTime)}
-                                                    </span>
-                                                </div>
-                                                <p className="mt-2 text-sm text-slate-500 flex items-center gap-1.5">
-                                                    <MapPinIcon className="h-4 w-4 shrink-0" />
-                                                    {slot.court?.name || 'Court'}
-                                                    {slot.court?.location?.city && ` · ${slot.court.location.city}`}
-                                                </p>
-                                                <p className="mt-1 text-xs text-slate-400">
-                                                    Max {slot.maxStudents || 1} student{(slot.maxStudents || 1) > 1 ? 's' : ''}
-                                                </p>
-                                            </div>
-                                            <div className="flex gap-2 shrink-0">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEditSlot(slot)}
-                                                    className="p-2.5 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50"
-                                                >
-                                                    <PencilSquareIcon className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleSlotDelete(slot._id)}
-                                                    className="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50"
-                                                >
-                                                    <TrashIcon className="h-5 w-5" />
-                                                </button>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
-    );
-};
-
-function EmptyCourts({ onReserve }) {
-    return (
-        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-10 text-center">
-            <BuildingOffice2Icon className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-            <p className="font-bold text-slate-900">No reservations yet</p>
-            <p className="text-sm text-slate-500 mt-1">Book a court to unlock weekly coaching slots.</p>
-            <Button type="button" onClick={onReserve} className="mt-5 gap-2 h-11 font-bold bg-emerald-600">
-                <PlusIcon className="h-5 w-5" />
-                Reserve court
-            </Button>
-        </div>
-    );
-}
-
-function ReservationCard({ booking, onCancel, onAddSlots }) {
-    const date = new Date(booking.date);
-    const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
-
-    return (
-        <li
-            className={twMerge(
-                'rounded-2xl border bg-white p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4',
-                isPast ? 'border-slate-100 opacity-70' : 'border-slate-200 hover:border-emerald-200'
-            )}
-        >
-            <div className="flex gap-4 min-w-0">
-                <div className="h-14 w-14 shrink-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex flex-col items-center justify-center shadow-md">
-                    <span className="text-[10px] font-bold uppercase opacity-90">
-                        {date.toLocaleDateString(undefined, { month: 'short' })}
-                    </span>
-                    <span className="text-xl font-black leading-none">{date.getDate()}</span>
-                </div>
-                <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-bold text-slate-900 text-sm">
-                            {date.toLocaleDateString(undefined, { weekday: 'long' })}
-                        </p>
-                        {!isPast && (
-                            <span className="text-[10px] font-bold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full ring-1 ring-emerald-100">
-                                Upcoming
-                            </span>
+                                            Continue
+                                            <ChevronRightIcon className="h-5 w-5 ml-1 inline" />
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            onClick={handleCourtSubmit}
+                                            isLoading={courtSubmitting}
+                                            className="flex-1 h-12 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        >
+                                            Confirm reservation
+                                        </Button>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ) : upcomingReservations.length === 0 ? (
+                            <div className="py-10 text-center rounded-2xl border-2 border-dashed border-amber-200">
+                                <BuildingOffice2Icon className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                                <p className="font-bold text-slate-800">No court bookings yet</p>
+                                <p className="text-sm text-slate-500 mt-1">Tap Reserve to book your first court.</p>
+                            </div>
+                        ) : (
+                            <ul className="space-y-3">
+                                {upcomingReservations.map((b) => (
+                                    <li
+                                        key={b._id}
+                                        className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-amber-100 bg-white"
+                                    >
+                                        <div className="min-w-0">
+                                            <p className="font-black text-slate-900 text-sm truncate">
+                                                {b.court?.name}
+                                            </p>
+                                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+                                                <span>
+                                                    {new Date(b.date).toLocaleDateString('en-US', {
+                                                        weekday: 'short',
+                                                        month: 'short',
+                                                        day: 'numeric'
+                                                    })}
+                                                </span>
+                                                <span>·</span>
+                                                <span className="flex items-center gap-1">
+                                                    <ClockIcon className="h-3.5 w-3.5" />
+                                                    {formatSlotHourRange(b.startTime, b.endTime)}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCourtCancel(b._id)}
+                                            className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 shrink-0"
+                                            title="Cancel"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
                         )}
+                    </AnimatePresence>
+                </div>
+            </section>
+
+            {/* —— Weekly coaching —— */}
+            <section
+                className={twMerge(
+                    'rounded-[1.75rem] border-2 bg-white shadow-sm overflow-hidden',
+                    canAddWeekly ? 'border-amber-200/80' : 'border-slate-200 opacity-95'
+                )}
+            >
+                <div className="px-5 py-4 border-b border-amber-50 bg-amber-50/40 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <CalendarDaysIcon className="h-5 w-5 text-indigo-950" />
+                        <h2 className="font-black text-indigo-950">Weekly coaching hours</h2>
                     </div>
-                    <p className="text-sm font-semibold text-emerald-700 mt-1 flex items-center gap-1">
-                        <ClockIcon className="h-4 w-4" />
-                        {formatSlotHourRange(booking.startTime, booking.endTime)}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-1 truncate">
-                        <MapPinIcon className="h-4 w-4 inline text-slate-400 mr-1" />
-                        {booking.court?.name}
-                    </p>
-                    {booking.totalPrice != null && (
-                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                            <BanknotesIcon className="h-3.5 w-3.5" />
-                            Rs. {booking.totalPrice}
-                        </p>
+                    {canAddWeekly && !showSlotForm && (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setEditingSlotId(null);
+                                setSlotForm({
+                                    day: 'monday',
+                                    startTime: '09:00',
+                                    endTime: '10:00',
+                                    maxStudents: 1,
+                                    courtBookingId: upcomingReservations[0]?._id || ''
+                                });
+                                setShowSlotForm(true);
+                            }}
+                            className="h-10 text-sm font-bold bg-indigo-950 text-amber-50 gap-1 shrink-0"
+                        >
+                            <PlusIcon className="h-4 w-4" />
+                            Add hours
+                        </Button>
                     )}
                 </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-                {!isPast && (
-                    <button
-                        type="button"
-                        onClick={onAddSlots}
-                        className="text-xs font-bold text-emerald-600 hover:bg-emerald-50 px-3 py-2 rounded-xl flex items-center gap-1"
-                    >
-                        Add slots
-                        <ArrowRightIcon className="h-3.5 w-3.5" />
-                    </button>
-                )}
-                <button
-                    type="button"
-                    onClick={() => onCancel(booking._id)}
-                    className="p-2.5 text-slate-400 hover:text-red-600 rounded-xl hover:bg-red-50"
-                >
-                    <TrashIcon className="h-5 w-5" />
-                </button>
-            </div>
-        </li>
+
+                <div className="p-5 sm:p-6 space-y-5">
+                    {!canAddWeekly && (
+                        <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 font-medium">
+                            Reserve a court above first — weekly hours must link to a court booking.
+                        </p>
+                    )}
+
+                    <AnimatePresence>
+                        {showSlotForm && canAddWeekly && (
+                            <motion.form
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                onSubmit={handleSlotSave}
+                                className="rounded-2xl border-2 border-indigo-100 bg-indigo-50/30 p-5 space-y-4"
+                            >
+                                <p className="font-black text-slate-900">
+                                    {editingSlotId ? 'Edit weekly hours' : 'New weekly hours'}
+                                </p>
+
+                                <div>
+                                    <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">
+                                        Linked court booking
+                                    </label>
+                                    <select
+                                        value={slotForm.courtBookingId}
+                                        onChange={(e) =>
+                                            setSlotForm((f) => ({ ...f, courtBookingId: e.target.value }))
+                                        }
+                                        className="w-full h-12 rounded-xl border-2 border-amber-100 px-3 text-sm font-bold"
+                                        required
+                                    >
+                                        <option value="">Choose reservation…</option>
+                                        {upcomingReservations.map((b) => (
+                                            <option key={b._id} value={b._id}>
+                                                {formatReservationLabel(b)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">
+                                        Repeats on
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {DAYS.map((d) => (
+                                            <button
+                                                key={d.value}
+                                                type="button"
+                                                onClick={() => setSlotForm((f) => ({ ...f, day: d.value }))}
+                                                className={twMerge(
+                                                    'px-3 py-2 rounded-xl text-xs font-black border-2',
+                                                    slotForm.day === d.value
+                                                        ? 'bg-indigo-950 border-indigo-950 text-amber-50'
+                                                        : 'border-amber-100 text-slate-600 hover:border-amber-300'
+                                                )}
+                                            >
+                                                {d.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <HourSlotSelect
+                                        label="From"
+                                        value={slotForm.startTime}
+                                        onChange={(v) => setSlotForm((f) => ({ ...f, startTime: v }))}
+                                    />
+                                    <HourSlotSelect
+                                        label="To"
+                                        value={slotForm.endTime}
+                                        onChange={(v) => setSlotForm((f) => ({ ...f, endTime: v }))}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">
+                                        Max students per session
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={20}
+                                        value={slotForm.maxStudents}
+                                        onChange={(e) =>
+                                            setSlotForm((f) => ({ ...f, maxStudents: e.target.value }))
+                                        }
+                                        className="w-24 h-11 rounded-xl border-2 border-amber-100 px-3 font-bold"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={resetSlotForm}
+                                        className="flex-1 h-11 rounded-xl font-bold"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        className="flex-1 h-11 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    >
+                                        {editingSlotId ? 'Save' : 'Add to schedule'}
+                                    </Button>
+                                </div>
+                            </motion.form>
+                        )}
+                    </AnimatePresence>
+
+                    {sortedSlots.length === 0 ? (
+                        <div className="py-8 text-center text-sm text-slate-500 font-medium">
+                            {canAddWeekly
+                                ? 'No weekly hours yet. Add hours so players can request sessions.'
+                                : 'Weekly hours appear here after you reserve a court.'}
+                        </div>
+                    ) : (
+                        <ul className="space-y-2">
+                            {sortedSlots.map((slot) => (
+                                <li
+                                    key={slot._id}
+                                    className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-amber-100"
+                                >
+                                    <div>
+                                        <p className="font-black text-slate-900 capitalize text-sm">{slot.day}</p>
+                                        <p className="text-sm text-indigo-950 font-bold mt-0.5">
+                                            {formatSlotHourRange(slot.startTime, slot.endTime)}
+                                        </p>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            {slot.court?.name || 'Court'} · max {slot.maxStudents || 1} student
+                                            {(slot.maxStudents || 1) > 1 ? 's' : ''}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-1 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => openEditSlot(slot)}
+                                            className="p-2 rounded-lg text-slate-500 hover:bg-emerald-50 hover:text-emerald-700"
+                                        >
+                                            <PencilSquareIcon className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSlotDelete(slot._id)}
+                                            className="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </section>
+        </div>
     );
-}
+};
 
 export default CoachSchedule;
