@@ -30,15 +30,20 @@ const SURFACE_LABELS = {
 
 const formatSurface = (type) => SURFACE_LABELS[type] || type || 'Standard';
 
-const STEPS = [
+const STEPS_PLAYER = [
     { id: 1, label: 'Date & time' },
     { id: 2, label: 'Booking type' },
     { id: 3, label: 'Confirm' }
 ];
 
-const StepBar = ({ current }) => (
+const STEPS_PROFESSIONAL = [
+    { id: 1, label: 'Date & time' },
+    { id: 2, label: 'Confirm' }
+];
+
+const StepBar = ({ current, steps }) => (
     <div className="flex items-center w-full">
-        {STEPS.map((s, i) => {
+        {steps.map((s, i) => {
             const done = current > s.id;
             const active = current === s.id;
             return (
@@ -63,7 +68,7 @@ const StepBar = ({ current }) => (
                             {s.label}
                         </span>
                     </div>
-                    {i < STEPS.length - 1 && (
+                    {i < steps.length - 1 && (
                         <div
                             className={twMerge(
                                 'h-0.5 flex-1 mx-2 sm:mx-3 rounded-full',
@@ -112,7 +117,19 @@ const CourtDetails = () => {
             .catch(() => setPaymentMockMode(true));
     }, [step, bookingMode]);
 
+    const isProfessionalPlayer =
+        user?.role === 'player' && user?.skillLevel === 'professional';
+
+    const wizardSteps = isProfessionalPlayer ? STEPS_PROFESSIONAL : STEPS_PLAYER;
+
+    const stepBarIndex = isProfessionalPlayer
+        ? step === 3 && bookingMode === 'court'
+            ? 2
+            : step
+        : step;
+
     useEffect(() => {
+        if (isProfessionalPlayer) return;
         if (!location.state?.preSelectedPro || slots.length === 0) return;
         const { date, time } = location.state;
         if (date && date !== selectedDate) setSelectedDate(date);
@@ -122,7 +139,7 @@ const CourtDetails = () => {
             setBookingMode('pro');
             setStep(3);
         }
-    }, [location.state, slots, selectedDate]);
+    }, [location.state, slots, selectedDate, isProfessionalPlayer]);
 
     const fetchCourtDetails = async () => {
         try {
@@ -231,17 +248,30 @@ const CourtDetails = () => {
     const goBack = () => {
         if (step === 3 && bookingMode === 'court' && selectedBooking) {
             setSelectedBooking(null);
-            setStep(2);
+            setStep(isProfessionalPlayer ? 1 : 2);
             return;
         }
         if (step === 3) {
             setBookingMode(null);
-            setStep(2);
+            setStep(isProfessionalPlayer ? 1 : 2);
             return;
         }
         if (step === 2) {
             setBookingMode(null);
             setStep(1);
+        }
+    };
+
+    const continueFromDateTime = () => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: `/courts/${id}` } });
+            return;
+        }
+        if (!selectedSlot) return;
+        if (isProfessionalPlayer) {
+            handleBooking(null);
+        } else {
+            setStep(2);
         }
     };
 
@@ -329,7 +359,7 @@ const CourtDetails = () => {
             {/* Booking wizard */}
             <section className="rounded-[1.75rem] border-2 border-amber-200/80 bg-white shadow-lg overflow-hidden mb-8">
                 <div className="px-5 sm:px-8 py-5 border-b border-amber-50 bg-amber-50/40">
-                    <StepBar current={step} />
+                    <StepBar current={stepBarIndex} steps={wizardSteps} />
                 </div>
 
                 <div className="p-5 sm:p-8 min-h-[280px] flex flex-col">
@@ -389,7 +419,7 @@ const CourtDetails = () => {
                             </motion.div>
                         )}
 
-                        {step === 2 && (
+                        {step === 2 && !isProfessionalPlayer && (
                             <motion.div
                                 key="s2"
                                 initial={{ opacity: 0, x: 8 }}
@@ -415,7 +445,7 @@ const CourtDetails = () => {
                                     className="flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border-2 border-amber-100 hover:border-indigo-950 hover:bg-indigo-950/5 transition-all active:scale-[0.98]"
                                 >
                                     <UserIcon className="h-10 w-10 text-indigo-950" />
-                                    <span className="font-black text-slate-900">With pro</span>
+                                    <span className="font-black text-slate-900">Book with pro</span>
                                 </button>
                             </motion.div>
                         )}
@@ -475,25 +505,22 @@ const CourtDetails = () => {
                     {/* Step footer — only steps 1 & 2 (step 3 has its own actions) */}
                     {step < 3 && (
                         <div className="flex gap-3 mt-8 pt-6 border-t border-amber-50">
-                            {step > 1 && (
+                            {step > 1 && !isProfessionalPlayer && (
                                 <Button variant="outline" onClick={goBack} className="flex-1 h-12 rounded-xl font-bold">
                                     Back
                                 </Button>
                             )}
                             {step === 1 && (
                                 <Button
-                                    onClick={() => {
-                                        if (!isAuthenticated) {
-                                            navigate('/login', { state: { from: `/courts/${id}` } });
-                                            return;
-                                        }
-                                        setStep(2);
-                                    }}
-                                    disabled={!selectedSlot}
+                                    onClick={continueFromDateTime}
+                                    disabled={!selectedSlot || bookingLoading}
+                                    isLoading={bookingLoading && isProfessionalPlayer}
                                     className="flex-1 h-12 rounded-xl font-bold bg-indigo-950 text-amber-50"
                                 >
-                                    Continue
-                                    <ChevronRightIcon className="h-5 w-5 ml-1 inline" />
+                                    {isProfessionalPlayer ? 'Book court' : 'Continue'}
+                                    {!bookingLoading && (
+                                        <ChevronRightIcon className="h-5 w-5 ml-1 inline" />
+                                    )}
                                 </Button>
                             )}
                         </div>
