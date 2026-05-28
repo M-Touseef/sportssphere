@@ -38,6 +38,7 @@ export default function Navbar() {
                                     </span>
                                 </Link>
 
+                                {user && (
                                 <div className="hidden lg:flex gap-1">
                                     {navigation.map((item) => {
                                         const isActive = location.pathname.startsWith(item.href)
@@ -57,6 +58,7 @@ export default function Navbar() {
                                         )
                                     })}
                                 </div>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-2 sm:gap-3">
@@ -253,7 +255,7 @@ export default function Navbar() {
                     {!isAuthPage && (
                         <Disclosure.Panel className="lg:hidden border-t border-slate-100 bg-white">
                             <div className="p-4 space-y-1">
-                                {navigation.map((item) => (
+                                {user && navigation.map((item) => (
                                     <Disclosure.Button
                                         key={item.name}
                                         as={Link}

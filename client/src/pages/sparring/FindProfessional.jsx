@@ -1,48 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import sparringService from '../../services/sparringService';
-import { getAllCourts } from '../../services/courtService';
 import ProfessionalCard from '../../components/professional/ProfessionalCard';
 import {
     MapPinIcon,
     CalendarIcon,
     ClockIcon,
     UserIcon,
-    SparklesIcon,
     XMarkIcon,
-    BoltIcon
+    BoltIcon,
+    TrophyIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/ui/Button';
-import { twMerge } from 'tailwind-merge';
 import { formatSlotHourRange } from '../../utils/timeFormat';
 
+const SPEC_LABELS = {
+    singles: 'Singles',
+    doubles: 'Doubles',
+    mixed_doubles: 'Mixed doubles',
+    competitive: 'Competitive',
+    recreational: 'Recreational'
+};
+
+const formatSpec = (spec) =>
+    SPEC_LABELS[spec] || spec?.replace(/_/g, ' ') || spec;
+
 const FindProfessional = () => {
-    const navigate = useNavigate();
     const [professionals, setProfessionals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [cityFilter, setCityFilter] = useState('');
-    const [courts, setCourts] = useState([]);
 
-    const [selectedPro, setSelectedPro] = useState(null);
+    const [selectedProfile, setSelectedProfile] = useState(null);
     const [proAvailability, setProAvailability] = useState([]);
     const [loadingAvailability, setLoadingAvailability] = useState(false);
-    const [selectedSlot, setSelectedSlot] = useState(null);
-    const [selectedCourtId, setSelectedCourtId] = useState('');
-    const [requestMessage, setRequestMessage] = useState('');
-    const [submitting, setSubmitting] = useState(false);
 
     const { user } = useAuth();
-    const { success, error: toastError } = useToast();
+    const { error: toastError } = useToast();
 
     useEffect(() => {
         fetchProfessionals();
-        getAllCourts()
-            .then((res) => setCourts(res.data || res || []))
-            .catch(() => setCourts([]));
     }, []);
 
     const fetchProfessionals = async (city = '') => {
@@ -64,19 +63,22 @@ const FindProfessional = () => {
     };
 
     const resetModal = () => {
-        setSelectedPro(null);
-        setSelectedSlot(null);
-        setSelectedCourtId('');
-        setRequestMessage('');
+        setSelectedProfile(null);
         setProAvailability([]);
     };
 
     const handleViewAvailability = async (proWrapper) => {
         const proId = proWrapper.player._id;
-        setSelectedPro(proWrapper.player);
-        setSelectedSlot(null);
-        setSelectedCourtId('');
-        setRequestMessage('');
+        const profileData = proWrapper.profile?.toObject?.() || proWrapper.profile || {};
+
+        setSelectedProfile({
+            user: proWrapper.player,
+            ...profileData,
+            matchFee:
+                proWrapper.availableSlots?.[0]?.matchFee ||
+                profileData.matchFee ||
+                'Variable'
+        });
         setProAvailability([]);
         setLoadingAvailability(true);
 
@@ -91,49 +93,25 @@ const FindProfessional = () => {
         }
     };
 
-    const handleSendRequest = async () => {
-        if (!user) {
-            navigate('/login', { state: { from: '/app/sparring' } });
-            return;
-        }
-        if (!selectedSlot || !selectedCourtId) {
-            toastError('Please select a time slot and a court.');
-            return;
-        }
-
-        try {
-            setSubmitting(true);
-            await sparringService.sendSparringRequest({
-                proId: selectedPro._id,
-                date: selectedSlot.date,
-                startTime: selectedSlot.startTime,
-                endTime: selectedSlot.endTime,
-                courtId: selectedCourtId,
-                availabilitySlotId: selectedSlot._id,
-                message: requestMessage
-            });
-            success('Request sent! The professional has 30 minutes to respond, or it will be auto-cancelled.');
-            resetModal();
-        } catch (err) {
-            toastError(err.response?.data?.error || 'Failed to send request');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
     const formatDate = (date) => new Date(date).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric'
     });
 
-    // Group availability by date
     const groupedAvailability = proAvailability.reduce((acc, slot) => {
         const dateKey = new Date(slot.date).toDateString();
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(slot);
         return acc;
     }, {});
+
+    const selectedUser = selectedProfile?.user;
+    const specs = Array.isArray(selectedProfile?.specializations) ? selectedProfile.specializations : [];
+    const fee =
+        selectedProfile?.matchFee != null && selectedProfile.matchFee !== 'Variable'
+            ? Number(selectedProfile.matchFee).toLocaleString?.() ?? selectedProfile.matchFee
+            : selectedProfile?.matchFee;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-32">
@@ -153,7 +131,6 @@ const FindProfessional = () => {
                 )}
             </div>
 
-            {/* Simple Filter Bar */}
             <div className="bg-white border border-slate-100 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 mb-8 sm:mb-12 shadow-sm">
                 <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <div className="relative flex-1">
@@ -200,9 +177,8 @@ const FindProfessional = () => {
                 </div>
             )}
 
-            {/* Availability & Booking Modal */}
             <AnimatePresence>
-                {selectedPro && (
+                {selectedProfile && selectedUser && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -217,21 +193,29 @@ const FindProfessional = () => {
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className="relative bg-white rounded-t-[2rem] sm:rounded-[3rem] shadow-2xl w-full max-w-3xl overflow-hidden max-h-[100vh] sm:max-h-[90vh] flex flex-col self-end sm:self-center"
                         >
-                            {/* Modal Header */}
                             <div className="p-6 sm:p-8 pb-4 flex items-center justify-between border-b border-slate-50">
                                 <div className="flex items-center gap-3 sm:gap-4">
-                                    <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 text-xl sm:text-2xl font-bold">
-                                        {selectedPro.name[0]}
+                                    <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 text-xl sm:text-2xl font-bold overflow-hidden">
+                                        {selectedUser.profilePicture ? (
+                                            <img
+                                                src={selectedUser.profilePicture}
+                                                alt=""
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            selectedUser.name?.[0]
+                                        )}
                                     </div>
                                     <div>
-                                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{selectedPro.name}</h2>
+                                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{selectedUser.name}</h2>
                                         <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5 sm:mt-1">
                                             <MapPinIcon className="h-3 w-3" />
-                                            {selectedPro.city} Pro
+                                            {selectedUser.city || 'Pakistan'} · Pro player
                                         </div>
                                     </div>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={resetModal}
                                     className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-slate-50 flex items-center justify-center text-slate-400 transition-colors"
                                 >
@@ -239,120 +223,99 @@ const FindProfessional = () => {
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar">
-                                {loadingAvailability ? (
-                                    <div className="flex flex-col items-center justify-center py-20 gap-4">
-                                        <div className="h-12 w-12 border-4 border-slate-50 border-t-indigo-600 rounded-full animate-spin" />
-                                        <p className="text-xs font-bold uppercase text-slate-400 tracking-widest">Scanning Availability Matrix</p>
-                                    </div>
-                                ) : Object.keys(groupedAvailability).length > 0 ? (
-                                    <div className="space-y-10">
-                                        {Object.entries(groupedAvailability).map(([date, slots]) => (
-                                            <section key={date}>
-                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                                                    <CalendarIcon className="h-4 w-4 text-indigo-500" />
-                                                    {formatDate(date)}
-                                                </h3>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    {slots.map(slot => (
-                                                        <button
-                                                            key={slot._id}
-                                                            type="button"
-                                                            onClick={() => setSelectedSlot(slot)}
-                                                            className={twMerge(
-                                                                "p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all text-left flex flex-col gap-3 sm:gap-4",
-                                                                selectedSlot?._id === slot._id
-                                                                    ? "bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200"
-                                                                    : "bg-white border-slate-100 hover:border-indigo-200"
-                                                            )}
-                                                        >
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="space-y-1">
-                                                                    <div className="flex items-center gap-2 text-xs sm:text-sm font-black tracking-tight uppercase">
-                                                                        <ClockIcon className="h-4 w-4 opacity-60" />
-                                                                        {formatSlotHourRange(slot.startTime, slot.endTime)}
-                                                                    </div>
-                                                                    <div className={twMerge(
-                                                                        "text-[9px] sm:text-[10px] font-bold uppercase tracking-widest",
-                                                                        "text-slate-400"
-                                                                    )}>
-                                                                        {(slot.sparringType || 'singles').replace('_', ' ')} Session
-                                                                    </div>
-                                                                </div>
-                                                                <div className={twMerge(
-                                                                    "px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black border",
-                                                                    "bg-emerald-50 border-emerald-100 text-emerald-600"
-                                                                )}>
-                                                                    PKR {slot.matchFee}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-3 mt-1 sm:mt-2">
-                                                                <div className={twMerge(
-                                                                    "h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl flex items-center justify-center",
-                                                                    "bg-slate-50"
-                                                                )}>
-                                                                    <MapPinIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                                                </div>
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-xs font-bold leading-none text-slate-400">Court selected when you request</span>
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </section>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-20 px-8">
-                                        <div className="h-20 w-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                                            <BoltIcon className="h-10 w-10 text-slate-200" />
+                            <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar space-y-10">
+                                <section className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+                                        <div className="rounded-xl bg-gradient-to-br from-indigo-950/5 to-amber-50 border border-amber-100/80 px-3 py-2.5">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/70">Match fee</p>
+                                            <p className="text-lg font-black text-indigo-950 mt-0.5">
+                                                {fee === 'Variable' ? 'Variable' : `Rs.${fee}`}
+                                            </p>
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900 mb-2">No Active Slots</h3>
-                                        <p className="text-slate-500 font-medium">This professional hasn't deployed any sparring slots for this cycle yet.</p>
+                                        {selectedProfile.experienceYears != null && (
+                                            <div className="rounded-xl bg-violet-50 border border-violet-100 px-3 py-2.5">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-violet-800/70">Experience</p>
+                                                <p className="text-lg font-black text-violet-950 mt-0.5">{selectedProfile.experienceYears} yrs</p>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
 
-                            {selectedSlot && (
-                                <div className="border-t border-slate-100 p-6 sm:p-8 bg-slate-50/80 space-y-5">
-                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Choose venue</h3>
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Court / hall</label>
-                                        <select
-                                            value={selectedCourtId}
-                                            onChange={(e) => setSelectedCourtId(e.target.value)}
-                                            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white font-semibold text-sm focus:ring-4 focus:ring-indigo-100 outline-none"
-                                        >
-                                            <option value="">Select a court…</option>
-                                            {courts.map((court) => (
-                                                <option key={court._id} value={court._id}>
-                                                    {court.name} — {court.location?.city}
-                                                </option>
+                                    {specs.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {specs.map((spec) => (
+                                                <span
+                                                    key={spec}
+                                                    className="text-[10px] font-bold uppercase tracking-wide text-indigo-900 bg-slate-50 border border-amber-100/80 px-2.5 py-1 rounded-lg"
+                                                >
+                                                    {formatSpec(spec)}
+                                                </span>
                                             ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Message (optional)</label>
-                                        <textarea
-                                            value={requestMessage}
-                                            onChange={(e) => setRequestMessage(e.target.value)}
-                                            rows={2}
-                                            placeholder="Introduce yourself or add a note…"
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white font-medium text-sm focus:ring-4 focus:ring-indigo-100 outline-none resize-none"
-                                        />
-                                    </div>
-                                    <Button
-                                        onClick={handleSendRequest}
-                                        isLoading={submitting}
-                                        disabled={!selectedCourtId}
-                                        fullWidth
-                                        className="h-14 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-                                    >
-                                        Send Sparring Request
-                                    </Button>
-                                </div>
-                            )}
+                                        </div>
+                                    )}
+
+                                    {selectedProfile.bio && (
+                                        <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                                            {selectedProfile.bio}
+                                        </p>
+                                    )}
+                                </section>
+
+                                <section>
+                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                        <TrophyIcon className="h-4 w-4 text-indigo-500" />
+                                        Availability
+                                    </h3>
+
+                                    {loadingAvailability ? (
+                                        <div className="flex flex-col items-center justify-center py-16 gap-4">
+                                            <div className="h-12 w-12 border-4 border-slate-50 border-t-indigo-600 rounded-full animate-spin" />
+                                            <p className="text-xs font-bold uppercase text-slate-400 tracking-widest">Loading availability</p>
+                                        </div>
+                                    ) : Object.keys(groupedAvailability).length > 0 ? (
+                                        <div className="space-y-10">
+                                            {Object.entries(groupedAvailability).map(([date, slots]) => (
+                                                <div key={date}>
+                                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                                                        <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                                                        {formatDate(date)}
+                                                    </h4>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        {slots.map(slot => (
+                                                            <div
+                                                                key={slot._id}
+                                                                className="p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border bg-white border-slate-100"
+                                                            >
+                                                                <div className="flex justify-between items-start gap-3">
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center gap-2 text-xs sm:text-sm font-black tracking-tight uppercase">
+                                                                            <ClockIcon className="h-4 w-4 opacity-60" />
+                                                                            {formatSlotHourRange(slot.startTime, slot.endTime)}
+                                                                        </div>
+                                                                        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                                                            {(slot.sparringType || 'singles').replace('_', ' ')} session
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black border bg-emerald-50 border-emerald-100 text-emerald-600 shrink-0">
+                                                                        PKR {slot.matchFee}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-16 px-8 rounded-[2rem] bg-slate-50 border border-dashed border-slate-200">
+                                            <div className="h-16 w-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                                <BoltIcon className="h-8 w-8 text-slate-200" />
+                                            </div>
+                                            <h4 className="text-lg font-bold text-slate-900 mb-2">No active slots</h4>
+                                            <p className="text-slate-500 font-medium text-sm">This professional has not published availability yet.</p>
+                                        </div>
+                                    )}
+                                </section>
+                            </div>
                         </motion.div>
                     </div>
                 )}
