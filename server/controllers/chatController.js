@@ -84,12 +84,12 @@ exports.createConversation = async (req, res) => {
             conversation.addMessage('user', initialMessage);
 
             // Generate AI response
-            const aiResponse = await aiService.generateResponse(
+            const aiResult = await aiService.generateResponse(
                 initialMessage,
-                conversation.context
+                { ...conversation.context, userId: req.user.id }
             );
 
-            conversation.addMessage('assistant', aiResponse);
+            conversation.addMessage('assistant', aiResult.response, { source: aiResult.source });
             await conversation.save();
         }
 
@@ -170,15 +170,12 @@ exports.sendMessage = async (req, res) => {
             };
 
             // Generate AI response
-            const aiResponseText = await aiService.generateResponse(
-                message,
-                aiContext
-            );
+            const aiResult = await aiService.generateResponse(message, aiContext);
 
             // Add AI response to DB
             // Re-fetch conversation to avoid version errors if multiple requests happened
             const updatedConversation = await Conversation.findById(conversation._id);
-            updatedConversation.addMessage('assistant', aiResponseText);
+            updatedConversation.addMessage('assistant', aiResult.response, { source: aiResult.source });
             await updatedConversation.save();
 
             const aiMessageObj = updatedConversation.messages[updatedConversation.messages.length - 1];

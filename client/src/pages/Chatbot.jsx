@@ -136,14 +136,16 @@ const Chatbot = () => {
         try {
             const data = await chatService.createConversation({
                 title: 'New Session',
-                initialMessage: 'Uplink established. How can I assist with your athletic intelligence today?'
+                initialMessage: 'Hello! Ask me about badminton rules and technique, or your SportSphere bookings and tournaments.'
             });
 
             setActiveConversation(data.data);
             setMessages(data.data.messages || []);
             await fetchConversations();
+            return data.data;
         } catch (error) {
             console.error('Error creating conversation:', error);
+            return null;
         }
     };
 
@@ -204,6 +206,27 @@ const Chatbot = () => {
     const formatShortTime = (timestamp) => {
         const date = new Date(timestamp);
         return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    };
+
+    const sourceLabel = (source) => {
+        if (source === 'database') return 'Live data';
+        if (source === 'rag') return 'Knowledge base';
+        if (source === 'rules') return 'Assistant';
+        return null;
+    };
+
+    const suggestedPrompts = [
+        { label: 'My court bookings', text: 'What are my upcoming court bookings?' },
+        { label: 'Badminton rules', text: 'Explain badminton scoring rules' },
+        { label: 'Courts near me', text: 'List available courts on SportSphere' },
+        { label: 'Improve smash', text: 'How can I improve my smash technique?' },
+        { label: 'My tournaments', text: 'Which tournaments am I registered for?' },
+        { label: 'Find coaches', text: 'Show coaches on SportSphere' }
+    ];
+
+    const sendSuggested = (text) => {
+        if (!activeConversation || sending) return;
+        setInputMessage(text);
     };
 
     return (
@@ -310,11 +333,13 @@ const Chatbot = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Tooltip content="Options">
-                            <button className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all">
-                                <EllipsisHorizontalIcon className="h-5 w-5" />
-                            </button>
-                        </Tooltip>
+                        <button
+                            type="button"
+                            title="Options"
+                            className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+                        >
+                            <EllipsisHorizontalIcon className="h-5 w-5" />
+                        </button>
                     </div>
                 </header>
 
@@ -325,10 +350,26 @@ const Chatbot = () => {
                             <div className="h-24 w-24 bg-white shadow-2xl rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-100 transform -rotate-3">
                                 <SparklesIcon className="h-12 w-12 text-indigo-600" />
                             </div>
-                            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Athletic Intelligence</h2>
-                            <p className="text-slate-500 font-medium mb-10 leading-relaxed text-lg">
-                                Deep analysis of tournament logistics, tactical court awareness, and professional biomechanical insights.
+                            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Hybrid AI Assistant</h2>
+                            <p className="text-slate-500 font-medium mb-6 leading-relaxed text-lg">
+                                Ask badminton questions (rules, technique, equipment) — answered from our knowledge base.
+                                Ask about SportSphere — bookings, courts, coaches, and tournaments — answered from live data.
                             </p>
+                            <div className="flex flex-wrap justify-center gap-2 mb-10 max-w-lg">
+                                {suggestedPrompts.map((item) => (
+                                    <button
+                                        key={item.label}
+                                        type="button"
+                                        onClick={async () => {
+                                            const conv = await handleNewConversation();
+                                            if (conv) setInputMessage(item.text);
+                                        }}
+                                        className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700 transition-colors"
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
                             <Button size="lg" onClick={handleNewConversation} className="px-10 h-14 font-bold shadow-xl shadow-indigo-100 rounded-2xl bg-indigo-600 hover:bg-indigo-700">
                                 Start Session
                             </Button>
@@ -366,7 +407,19 @@ const Chatbot = () => {
                                         )}>
                                             {msg.content}
                                         </div>
-                                        <div className="px-1">
+                                        <div className="px-1 flex items-center gap-2">
+                                            {msg.role === 'assistant' && sourceLabel(msg.source) && (
+                                                <span className={twMerge(
+                                                    'text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full',
+                                                    msg.source === 'database'
+                                                        ? 'bg-emerald-50 text-emerald-700'
+                                                        : msg.source === 'rag'
+                                                            ? 'bg-violet-50 text-violet-700'
+                                                            : 'bg-slate-100 text-slate-500'
+                                                )}>
+                                                    {sourceLabel(msg.source)}
+                                                </span>
+                                            )}
                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                                                 {formatShortTime(msg.timestamp || new Date())}
                                             </span>
@@ -414,6 +467,19 @@ const Chatbot = () => {
                 {activeConversation && (
                     <div className="p-8 md:px-12 bg-white">
                         <div className="max-w-4xl mx-auto">
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {suggestedPrompts.map((item) => (
+                                    <button
+                                        key={item.label}
+                                        type="button"
+                                        disabled={sending}
+                                        onClick={() => sendSuggested(item.text)}
+                                        className="text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 hover:text-indigo-700 disabled:opacity-50 transition-colors"
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
                             <form
                                 onSubmit={handleSendMessage}
                                 className="relative bg-white border border-slate-200 rounded-2xl p-2 flex items-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all duration-300"
@@ -422,7 +488,7 @@ const Chatbot = () => {
                                     type="text"
                                     value={inputMessage}
                                     onChange={(e) => setInputMessage(e.target.value)}
-                                    placeholder="Ask for tactical advice, tournament status, or venue info..."
+                                    placeholder="Badminton tips, rules, your bookings, courts, coaches..."
                                     className="flex-1 bg-transparent px-4 py-3 border-none ring-0 focus:ring-0 font-medium text-slate-800 placeholder:text-slate-400 text-sm h-12"
                                     disabled={sending}
                                 />

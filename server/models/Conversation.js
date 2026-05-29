@@ -13,6 +13,11 @@ const messageSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now
+    },
+    source: {
+        type: String,
+        enum: ['rules', 'database', 'rag'],
+        default: undefined
     }
 });
 
@@ -82,12 +87,16 @@ conversationSchema.virtual('lastMessage').get(function () {
 });
 
 // Method to add a message
-conversationSchema.methods.addMessage = function (role, content) {
-    this.messages.push({
+conversationSchema.methods.addMessage = function (role, content, meta = {}) {
+    const message = {
         role,
         content,
         timestamp: new Date()
-    });
+    };
+    if (meta.source) {
+        message.source = meta.source;
+    }
+    this.messages.push(message);
     this.updatedAt = new Date();
 };
 

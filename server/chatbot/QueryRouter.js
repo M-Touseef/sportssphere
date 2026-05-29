@@ -1,7 +1,11 @@
 /**
- * QueryRouter - Classifies user messages into high-level intent categories
- * 
- * Determines whether a query is likely "Personal", "Public Data", "Denied", or "Knowledge".
+ * QueryRouter - Classifies user messages for the hybrid chatbot
+ *
+ * Routes to:
+ * - PERSONAL: logged-in user's bookings, matches, tournaments, sessions
+ * - PUBLIC_DATA: platform data from MongoDB (courts, coaches, tournaments, results)
+ * - KNOWLEDGE: badminton Q&A via RAG (Hugging Face Space)
+ * - DENIED: other users' private data (TR-02)
  */
 class QueryRouter {
     constructor() {
@@ -10,57 +14,66 @@ class QueryRouter {
         this.INTENT_TYPE_KNOWLEDGE = 'KNOWLEDGE';
         this.INTENT_TYPE_DENIED = 'DENIED';
 
-        // Patterns that strongly suggest a personal query
         this.personalPatterns = [
-            /my\s+(\w+\s+)?(schedule|match|game|booking|reservation|tournament|result|stat|profile)/i, // Matches "my match", "my next match", "my upcoming match"
-            /when\s+is\s+my/i,
-            /upcoming\s+(match|game|session)/i,
-            /next\s+(match|game|session)/i, // Explicit "next match"
-            /booked\s+court/i,
-            /am\s+i\s+registered/i,
-            /did\s+i\s+win/i,
-            /who\s+am\s+i\s+playing/i
+            /\bmy\b.*\b(match|matches|game|games|schedule)\b/i,
+            /\bmy\b.*\b(booking|bookings|reservation|reservations)\b/i,
+            /\bmy\b.*\b(tournament|tournaments|registration|registrations)\b/i,
+            /\bmy\b.*\b(session|sessions)\b/i,
+            /\bwhen\s+is\s+my\b/i,
+            /\bam\s+i\s+registered\b/i,
+            /\bdid\s+i\s+win\b/i,
+            /\bwho\s+am\s+i\s+playing\b/i,
+            /\bwhat('s| is)\s+my\s+next\b/i
         ];
 
-        // Patterns that suggest an attempt to access other user's data (TR-02)
         this.deniedPatterns = [
-            /show\s+(details|schedule|profile|bookings)\s+of\s+(another|other)\s+(player|user)/i,
-            /what\s+is\s+the\s+schedule\s+of\s+player\s+\w+/i,
-            /which\s+tournaments\s+is\s+player\s+\w+\s+registered/i,
-            /other\s+player/i,
-            /user\s+\w+/i, // "User X"
-            /player\s+\w+/i // "Player Y"
+            /\b(show|get|view|list)\s+(details|schedule|profile|bookings?)\s+of\s+(another|other|\w+)\b/i,
+            /\b(show|get|view|list)\b.*\b(another|other)\s+(user|player)\b/i,
+            /\b(another|other)\s+(user|player)\b.*\b(booking|bookings|schedule|matches|profile)\b/i,
+            /\bwhat\s+is\s+the\s+schedule\s+of\s+player\s+\w+/i,
+            /\bwhich\s+tournaments\s+is\s+player\s+\w+\s+registered/i,
+            /\b(user|player)\s+['"]?\w+['"]?\s+(bookings?|schedule|matches|profile)\b/i,
+            /\b(show|what are)\s+.+\s+bookings?\s+(for|of)\s+/i,
+            /\b(someone else|another person)('s)?\s+(booking|data|info)\b/i
         ];
 
-        // Patterns for public data
         this.publicPatterns = [
-            /tournament\s+(score|standing|result)/i,
-            /who\s+won/i,
-            /match\s+result/i, // General match result
-            /current\s+tournament/i,
-            /ongoing\s+tournament/i
+            /\b(list|show|find|available|upcoming)\s+.*\b(court|courts|venue|venues)\b/i,
+            /\b(court|courts)\s+(in|near|at)\b/i,
+            /\bbook\s+a\s+court\b/i,
+            /\b(list|show|find)\s+.*\b(coach|coaches|trainer|trainers)\b/i,
+            /\b(coach|coaches)\s+(in|near|available)\b/i,
+            /\b(tournament|tournaments)\s+(list|schedule|standing|result|results)\b/i,
+            /\bwho\s+won\b/i,
+            /\b(match|tournament)\s+result/i,
+            /\b(current|ongoing|upcoming)\s+tournament/i,
+            /\bplatform\s+(court|coach|tournament)/i
+        ];
+
+        this.knowledgePatterns = [
+            /\b(explain|describe)\b.*\b(rule|rules|scoring)\b/i,
+            /\b(rule|rules|scoring|fault|serve|let)\b/i,
+            /\b(technique|smash|drop|clear|footwork|grip)\b/i,
+            /\b(equipment|racket|shuttle|string|shoes)\b/i,
+            /\b(training|drill|practice|warm[- ]?up)\b/i,
+            /\b(strategy|tactic|singles|doubles)\b/i,
+            /\b(fitness|injury|stamina|conditioning)\b/i,
+            /\bhow\s+(to|do|can)\s+(i|you)\b/i,
+            /\bwhat\s+is\s+(a|an|the)\s+(badminton|smash|clear)\b/i
         ];
     }
 
-    /**
-     * Route user message to an intent type
-     * @param {string} message - User's message
-     * @returns {string} - INTENT_TYPE
-     */
     route(message) {
-        if (!message) return this.INTENT_TYPE_KNOWLEDGE;
+        if (!message || !message.trim()) {
+            return this.INTENT_TYPE_KNOWLEDGE;
+        }
 
-        const normalized = message.toLowerCase();
+        const normalized = message.toLowerCase().trim();
 
-        // 1. Check for Denied Patterns FIRST (Security TR-02)
-        const isPersonal = this.personalPatterns.some(p => p.test(normalized));
-        const isDenied = this.deniedPatterns.some(p => p.test(normalized));
-        const isPublic = this.publicPatterns.some(p => p.test(normalized));
-
-        // If it looks like "My match against Player X", it is PERSONAL (valid).
-        // If it looks like "Show Player X's stats", it is DENIED.
-        // The denied patterns are quite aggressive.
-        // We prioritize Personal if "my" is present.
+        const isPersonal = this.personalPatterns.some((p) => p.test(normalized));
+        const isDenied = this.deniedPatterns.some((p) => p.test(normalized));
+        const isPublic = this.publicPatterns.some((p) => p.test(normalized));
+        const isKnowledge = this.knowledgePatterns.some((p) => p.test(normalized));
 
         if (isPersonal) {
             return this.INTENT_TYPE_PERSONAL;
@@ -70,11 +83,15 @@ class QueryRouter {
             return this.INTENT_TYPE_DENIED;
         }
 
-        if (isPublic) {
+        // Public listings must not steal "my ..." personal queries
+        if (isPublic && !/\bmy\b/i.test(normalized)) {
             return this.INTENT_TYPE_PUBLIC_DATA;
         }
 
-        // Default to Knowledge/General
+        if (isKnowledge) {
+            return this.INTENT_TYPE_KNOWLEDGE;
+        }
+
         return this.INTENT_TYPE_KNOWLEDGE;
     }
 }

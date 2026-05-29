@@ -20,6 +20,11 @@ class RAGEngine extends IIntentResolver {
         super();
         this.client = null;
         this.ready = false;
+        // Hugging Face Space: https://huggingface.co/spaces/Sportssphere/chatbot
+        this.spaceId =
+            process.env.RAG_SPACE_ID ||
+            process.env.HF_CHATBOT_SPACE ||
+            'Sportssphere/chatbot';
         this.initClient();
     }
 
@@ -29,9 +34,9 @@ class RAGEngine extends IIntentResolver {
     async initClient() {
         try {
             const { Client } = await loadGradioClient();
-            this.client = await Client.connect('Sportssphere/chatbot');
+            this.client = await Client.connect(this.spaceId);
             this.ready = true;
-            console.log('[RAGEngine] Initialized with Gradio client');
+            console.log(`[RAGEngine] Connected to Hugging Face Space: ${this.spaceId}`);
         } catch (error) {
             console.error('[RAGEngine] Failed to initialize Gradio client:', error.message);
             this.ready = false;
@@ -68,6 +73,7 @@ class RAGEngine extends IIntentResolver {
                 confidence: 0.9,
                 actionType: 'STATIC_RESPONSE',
                 response: response,
+                source: 'rag',
                 retrievedContext: 'Hugging Face RAG Service',
                 processingTimeMs: 0
             };
