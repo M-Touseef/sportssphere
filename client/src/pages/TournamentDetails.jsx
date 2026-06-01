@@ -833,7 +833,7 @@ const TournamentDetails = () => {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                     >
-                                        {['in_progress', 'completed'].includes(tournament.status) ? (
+                                        {['registration_closed', 'in_progress', 'completed'].includes(tournament.status) ? (
                                             <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 overflow-x-auto min-h-[400px]">
                                                 <TournamentBracketWrapper tournamentId={id} />
                                             </div>
