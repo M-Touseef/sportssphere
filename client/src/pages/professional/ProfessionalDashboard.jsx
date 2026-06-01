@@ -186,11 +186,8 @@ const ProfessionalDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Registered Tournaments Section */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="mb-6">
                         <h2 className="text-lg font-bold text-slate-900">Your Tournaments</h2>
-                        <Link to="/my-tournaments" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
-                            See all <ChevronRightIcon className="h-4 w-4" />
-                        </Link>
                     </div>
                     {registrations.length > 0 ? (
                         <div className="space-y-4">
