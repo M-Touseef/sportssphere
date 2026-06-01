@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef } from 'react';
 import {
+    // Used as the JSX namespace for motion.div elements below.
+    // eslint-disable-next-line no-unused-vars
     motion,
     useScroll,
     useTransform,
     useInView,
-    useSpring,
     AnimatePresence,
 } from 'framer-motion';
 import {
@@ -29,29 +30,9 @@ import Button from '../components/ui/Button';
 /* UTILITY HOOKS                                                 */
 /* ============================================================ */
 
-/** Animated counter that ticks up when in view */
-const useAnimatedCounter = (end, duration = 2000, inView = false) => {
-    const [count, setCount] = useState(0);
-    const started = useRef(false);
-
-    useEffect(() => {
-        if (!inView || started.current) return;
-        started.current = true;
-        let startTime = null;
-        const step = (timestamp) => {
-            if (!startTime) startTime = timestamp;
-            const progress = Math.min((timestamp - startTime) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-            setCount(Math.floor(eased * end));
-            if (progress < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-    }, [inView, end, duration]);
-
-    return count;
-};
-
 /** Staggered word reveal component */
+// Tag is rendered as a dynamic JSX element.
+// eslint-disable-next-line no-unused-vars
 const RevealText = ({ text, className = '', delay = 0, as: Tag = 'span' }) => {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: '-10%' });
@@ -240,7 +221,7 @@ const HeroChapter = ({ user }) => {
                                 <Link to="/login">
                                     <Button
                                         variant="outline"
-                                        className="h-14 px-10 rounded-2xl font-bold text-base border-white/20 text-white hover:bg-white/10 hover:border-white/40 backdrop-blur-sm transition-all hover:scale-105"
+                                        className="h-14 px-10 rounded-2xl border-amber-200 bg-white font-bold text-base text-indigo-950 shadow-lg shadow-indigo-950/20 transition-all hover:scale-105 hover:border-amber-300 hover:bg-amber-50 hover:text-indigo-950"
                                     >
                                         Sign In
                                     </Button>
@@ -751,7 +732,7 @@ const CTAChapter = ({ user }) => {
                                 <Link to="/login">
                                     <Button
                                         variant="outline"
-                                        className="h-14 px-10 rounded-2xl font-bold text-base border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all hover:scale-105"
+                                        className="h-14 px-10 rounded-2xl border-amber-200 bg-white font-bold text-base text-indigo-950 shadow-lg shadow-indigo-950/20 transition-all hover:scale-105 hover:border-amber-300 hover:bg-amber-50 hover:text-indigo-950"
                                     >
                                         Sign In
                                     </Button>
