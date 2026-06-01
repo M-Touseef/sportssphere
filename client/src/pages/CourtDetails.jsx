@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import courtService from '../services/courtService';
 import { formatSlotHour } from '../utils/timeFormat';
-import { payForBooking, getPaymentConfig, getPayButtonLabel, getPayButtonHint } from '../services/paymentService';
+import { payForBooking, getPaymentConfig, getPayButtonLabel } from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Button from '../components/ui/Button';
@@ -101,21 +101,43 @@ const CourtDetails = () => {
     const [paymentLoading, setPaymentLoading] = useState(false);
     const [paymentMockMode, setPaymentMockMode] = useState(true);
     const [showVenueInfo, setShowVenueInfo] = useState(false);
+    const isOrganizerAccount = user?.role === 'organizer';
+
+    const fetchCourtDetails = useCallback(async () => {
+        try {
+            const data = await courtService.getCourt(id);
+            setCourt(data.data);
+        } catch (err) {
+            console.error('Error fetching court details:', err);
+            toastError('Could not load this court.');
+        } finally {
+            setLoading(false);
+        }
+    }, [id, toastError]);
+
+    const fetchAvailability = useCallback(async () => {
+        try {
+            const data = await courtService.getAvailability(id, selectedDate);
+            setSlots(Array.isArray(data?.data) ? data.data : []);
+        } catch (err) {
+            console.error('Error fetching availability:', err);
+        }
+    }, [id, selectedDate]);
 
     useEffect(() => {
         fetchCourtDetails();
-    }, [id]);
+    }, [fetchCourtDetails]);
 
     useEffect(() => {
-        if (court) fetchAvailability();
-    }, [selectedDate, court]);
+        if (court && !isOrganizerAccount) fetchAvailability();
+    }, [court, fetchAvailability, isOrganizerAccount]);
 
     useEffect(() => {
-        if (step !== 3 || bookingMode !== 'court') return;
+        if (isOrganizerAccount || step !== 3 || bookingMode !== 'court') return;
         getPaymentConfig()
             .then((cfg) => setPaymentMockMode(Boolean(cfg?.mockMode)))
             .catch(() => setPaymentMockMode(true));
-    }, [step, bookingMode]);
+    }, [step, bookingMode, isOrganizerAccount]);
 
     const isProfessionalPlayer =
         user?.role === 'player' && user?.skillLevel === 'professional';
@@ -141,27 +163,6 @@ const CourtDetails = () => {
         }
     }, [location.state, slots, selectedDate, isProfessionalPlayer]);
 
-    const fetchCourtDetails = async () => {
-        try {
-            const data = await courtService.getCourt(id);
-            setCourt(data.data);
-        } catch (err) {
-            console.error('Error fetching court details:', err);
-            toastError('Could not load this court.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchAvailability = async () => {
-        try {
-            const data = await courtService.getAvailability(id, selectedDate);
-            setSlots(Array.isArray(data?.data) ? data.data : []);
-        } catch (err) {
-            console.error('Error fetching availability:', err);
-        }
-    };
-
     const resetFlow = () => {
         setStep(1);
         setBookingMode(null);
@@ -180,6 +181,11 @@ const CourtDetails = () => {
     }, [selectedDate, selectedSlot]);
 
     const handleBooking = async (proData = null) => {
+        if (isOrganizerAccount) {
+            toastError('Court owners do not need to reserve courts. Manage your venues from My Courts.');
+            return;
+        }
+
         if (!isAuthenticated) {
             navigate('/login', { state: { from: `/courts/${id}` } });
             return;
@@ -231,6 +237,11 @@ const CourtDetails = () => {
     };
 
     const handlePayNow = async () => {
+        if (isOrganizerAccount) {
+            toastError('Court owners do not need to pay for court reservations.');
+            return;
+        }
+
         try {
             setPaymentLoading(true);
             
@@ -285,6 +296,11 @@ const CourtDetails = () => {
     };
 
     const continueFromDateTime = () => {
+        if (isOrganizerAccount) {
+            toastError('Court owners do not need to reserve courts. Manage your venues from My Courts.');
+            return;
+        }
+
         if (!isAuthenticated) {
             navigate('/login', { state: { from: `/courts/${id}` } });
             return;
@@ -379,6 +395,35 @@ const CourtDetails = () => {
             </div>
 
             {/* Booking wizard */}
+            {isOrganizerAccount ? (
+                <section className="mb-8 overflow-hidden rounded-[1.75rem] border-2 border-indigo-100 bg-gradient-to-br from-indigo-50 to-amber-50 shadow-lg">
+                    <div className="p-6 sm:p-8">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-950 text-amber-200 shadow-lg">
+                            <BuildingOffice2Icon className="h-7 w-7" />
+                        </div>
+                        <h2 className="mt-5 text-2xl font-black text-indigo-950">Court owner workspace</h2>
+                        <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-slate-600">
+                            You already manage your own courts, so you do not need to reserve or pay for a court booking. Use My Courts to update listings, or create a tournament at one of your venues.
+                        </p>
+                        <div className="mt-6 flex flex-wrap gap-3">
+                            <Link
+                                to="/org/courts"
+                                className="inline-flex items-center justify-center rounded-xl bg-indigo-950 px-5 py-3 text-sm font-bold text-amber-50 transition-colors hover:bg-indigo-900"
+                            >
+                                Manage My Courts
+                            </Link>
+                            {isCourtOwner && (
+                                <Link
+                                    to="/app/tournaments/create"
+                                    className="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-white px-5 py-3 text-sm font-bold text-indigo-950 transition-colors hover:bg-amber-50"
+                                >
+                                    Create Tournament
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            ) : (
             <section className="rounded-[1.75rem] border-2 border-amber-200/80 bg-white shadow-lg overflow-hidden mb-8">
                 <div className="px-5 sm:px-8 py-5 border-b border-amber-50 bg-amber-50/40">
                     <StepBar current={stepBarIndex} steps={wizardSteps} />
@@ -387,7 +432,7 @@ const CourtDetails = () => {
                 <div className="p-5 sm:p-8 min-h-[280px] flex flex-col">
                     <AnimatePresence mode="wait">
                         {step === 1 && (
-                            <motion.div
+                            <Motion.div
                                 key="s1"
                                 initial={{ opacity: 0, x: 8 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -438,11 +483,11 @@ const CourtDetails = () => {
                                 {selectedSlot && (
                                     <p className="text-sm font-black text-indigo-950 text-center">{selectionSummary}</p>
                                 )}
-                            </motion.div>
+                            </Motion.div>
                         )}
 
                         {step === 2 && !isProfessionalPlayer && (
-                            <motion.div
+                            <Motion.div
                                 key="s2"
                                 initial={{ opacity: 0, x: 8 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -469,11 +514,11 @@ const CourtDetails = () => {
                                     <UserIcon className="h-10 w-10 text-indigo-950" />
                                     <span className="font-black text-slate-900">Book with pro</span>
                                 </button>
-                            </motion.div>
+                            </Motion.div>
                         )}
 
                         {step === 3 && bookingMode === 'pro' && (
-                            <motion.div
+                            <Motion.div
                                 key="s3pro"
                                 initial={{ opacity: 0, x: 8 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -488,11 +533,11 @@ const CourtDetails = () => {
                                     onCancel={goBack}
                                     preSelectedPro={location.state?.preSelectedPro}
                                 />
-                            </motion.div>
+                            </Motion.div>
                         )}
 
                         {step === 3 && bookingMode === 'court' && (
-                            <motion.div
+                            <Motion.div
                                 key="s3pay"
                                 initial={{ opacity: 0, x: 8 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -520,7 +565,7 @@ const CourtDetails = () => {
                                 >
                                     {getPayButtonLabel(paymentMockMode)}
                                 </Button>
-                            </motion.div>
+                            </Motion.div>
                         )}
                     </AnimatePresence>
 
@@ -557,6 +602,7 @@ const CourtDetails = () => {
                     )}
                 </div>
             </section>
+            )}
 
             {/* Venue info — after wizard, collapsed by default */}
             <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">

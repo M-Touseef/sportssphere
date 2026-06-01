@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { createElement, useCallback, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import tournamentService from '../services/tournamentService';
@@ -30,7 +30,7 @@ import {
     UsersIcon
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { formatTournamentGrade, TOURNAMENT_FORMAT_LABEL } from '../shared/constants';
 
 const STATUS_STYLES = {
@@ -168,12 +168,10 @@ const TournamentDetails = () => {
         (typeof tournament.organizer === 'string' && tournament.organizer === user._id) ||
         (typeof tournament.organizer === 'object' && tournament.organizer._id === user._id)
     );
+    const isPlayerAccount = user?.role === 'player';
+    const canRegister = !isAuthenticated || isPlayerAccount;
 
-    useEffect(() => {
-        fetchTournament();
-    }, [id]);
-
-    const fetchTournament = async () => {
+    const fetchTournament = useCallback(async () => {
         try {
             setLoading(true);
             const data = await tournamentService.getTournament(id);
@@ -183,9 +181,13 @@ const TournamentDetails = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
-    const fetchRegistrations = async () => {
+    useEffect(() => {
+        fetchTournament();
+    }, [fetchTournament]);
+
+    const fetchRegistrations = useCallback(async () => {
         if (!tournament) return;
         try {
             const data = await tournamentService.getTournamentRegistrations(id);
@@ -193,13 +195,13 @@ const TournamentDetails = () => {
         } catch (error) {
             console.error('Error fetching registrations:', error);
         }
-    };
+    }, [id, tournament]);
 
     useEffect(() => {
         if (activeTab === 'registrations' && isOrganizer) {
             fetchRegistrations();
         }
-    }, [activeTab, isOrganizer, tournament]);
+    }, [activeTab, fetchRegistrations, isOrganizer, tournament]);
 
     const [currentRegistration, setCurrentRegistration] = useState(null);
     const [paymentLoading, setPaymentLoading] = useState(false);
@@ -241,6 +243,14 @@ const TournamentDetails = () => {
 
         if (!isAuthenticated) {
             navigate('/login', { state: { from: `/tournaments/${id}` } });
+            return;
+        }
+
+        if (!isPlayerAccount) {
+            setMessage({
+                type: 'error',
+                text: 'Only player accounts can register for tournaments. Organizers manage events from their dashboard.'
+            });
             return;
         }
 
@@ -331,9 +341,12 @@ const TournamentDetails = () => {
     const tabs = [
         { id: 'details', label: 'Overview', icon: InformationCircleIcon },
         { id: 'categories', label: 'Categories', icon: ListBulletIcon },
-        { id: 'register', label: 'Register', icon: PencilSquareIcon },
         { id: 'brackets', label: 'Brackets', icon: ChartBarIcon },
     ];
+
+    if (canRegister) {
+        tabs.splice(2, 0, { id: 'register', label: 'Register', icon: PencilSquareIcon });
+    }
 
     if (isOrganizer) {
         tabs.push({ id: 'registrations', label: 'Registrations', icon: UsersIcon });
@@ -349,7 +362,7 @@ const TournamentDetails = () => {
         return (
             <div className="flex items-start gap-4 rounded-2xl bg-gradient-to-br from-slate-50 to-amber-50/40 border border-amber-100/80 p-4">
                 <div className={twMerge('h-11 w-11 shrink-0 flex items-center justify-center rounded-xl border shadow-sm', accents[accent] || accents.indigo)}>
-                    <Icon className="h-5 w-5" />
+                    {createElement(Icon, { className: 'h-5 w-5' })}
                 </div>
                 <div>
                     <p className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest leading-none mb-1.5">{label}</p>
@@ -453,7 +466,7 @@ const TournamentDetails = () => {
                         <div className="p-6 sm:p-10 md:p-12 bg-gradient-to-b from-white to-amber-50/30">
                             <AnimatePresence mode="wait">
                                 {activeTab === 'details' && (
-                                    <motion.div
+                                    <Motion.div
                                         key="details"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -503,11 +516,11 @@ const TournamentDetails = () => {
                                                 </div>
                                             </section>
                                         )}
-                                    </motion.div>
+                                    </Motion.div>
                                 )}
 
                                 {activeTab === 'categories' && (
-                                    <motion.div
+                                    <Motion.div
                                         key="categories"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -593,17 +606,27 @@ const TournamentDetails = () => {
                                                 )}
                                             </div>
                                         ))}
-                                    </motion.div>
+                                    </Motion.div>
                                 )}
 
                                 {activeTab === 'register' && (
-                                    <motion.div
+                                    <Motion.div
                                         key="register"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="max-w-2xl mx-auto py-8"
                                     >
-                                        {!isRegistrationOpen ? (
+                                        {!canRegister ? (
+                                            <div className="bg-indigo-50 border border-indigo-100 rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-16 text-center">
+                                                <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white border border-indigo-100 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-sm">
+                                                    <ShieldCheckIcon className="h-8 w-8 sm:h-10 sm:w-10 text-indigo-600" />
+                                                </div>
+                                                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-3 tracking-tight">Organizer workspace</h3>
+                                                <p className="text-slate-600 font-medium leading-relaxed">
+                                                    Organizer accounts manage tournaments and cannot register as players.
+                                                </p>
+                                            </div>
+                                        ) : !isRegistrationOpen ? (
                                             <div className="bg-slate-50 border border-slate-100 rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-16 text-center">
                                                 <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white border border-slate-100 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-sm">
                                                     <ClockIcon className="h-8 w-8 sm:h-10 sm:w-10 text-slate-200" />
@@ -706,7 +729,7 @@ const TournamentDetails = () => {
                                                     </div>
 
                                                     {registrationData.category && isDoubles(registrationData.category) && (
-                                                        <motion.div
+                                                        <Motion.div
                                                             initial={{ opacity: 0, height: 0 }}
                                                             animate={{ opacity: 1, height: 'auto' }}
                                                             className="space-y-8 p-8 bg-indigo-50/50 border border-indigo-100 rounded-3xl"
@@ -728,7 +751,7 @@ const TournamentDetails = () => {
                                                                 onChange={(e) => setRegistrationData({ ...registrationData, teamName: e.target.value })}
                                                                 placeholder="e.g. Smash Squad"
                                                             />
-                                                        </motion.div>
+                                                        </Motion.div>
                                                     )}
 
                                                     <Button
@@ -744,11 +767,11 @@ const TournamentDetails = () => {
                                                 </form>
                                             </div>
                                         )}
-                                    </motion.div>
+                                    </Motion.div>
                                 )}
 
                                 {activeTab === 'registrations' && isOrganizer && (
-                                    <motion.div
+                                    <Motion.div
                                         key="registrations"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -801,11 +824,11 @@ const TournamentDetails = () => {
                                                 <p className="text-slate-400 font-medium">No registrations yet.</p>
                                             </div>
                                         )}
-                                    </motion.div>
+                                    </Motion.div>
                                 )}
 
                                 {activeTab === 'brackets' && (
-                                    <motion.div
+                                    <Motion.div
                                         key="brackets"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -830,7 +853,7 @@ const TournamentDetails = () => {
                                                 )}
                                             </div>
                                         )}
-                                    </motion.div>
+                                    </Motion.div>
                                 )}
                             </AnimatePresence>
                         </div>
@@ -876,7 +899,16 @@ const TournamentDetails = () => {
                                             Registered for {getCategoryLabel(tournament.userRegistration.category)}
                                         </p>
                                     </div>
-                                ) : isRegistrationOpen ? (
+                                ) : isOrganizer ? (
+                                    <Button
+                                        fullWidth
+                                        size="lg"
+                                        onClick={() => setActiveTab('registrations')}
+                                        className="h-14 font-bold bg-indigo-950 hover:bg-indigo-900 text-amber-50 shadow-lg shadow-indigo-900/20 rounded-2xl"
+                                    >
+                                        Manage registrations
+                                    </Button>
+                                ) : isRegistrationOpen && canRegister ? (
                                     <Button
                                         fullWidth
                                         size="lg"
@@ -885,6 +917,10 @@ const TournamentDetails = () => {
                                     >
                                         Register now
                                     </Button>
+                                ) : !canRegister ? (
+                                    <div className="p-4 bg-indigo-50 rounded-2xl text-center border border-indigo-100">
+                                        <p className="text-[10px] font-bold text-indigo-700 uppercase tracking-[0.15em]">Organizer accounts cannot register</p>
+                                    </div>
                                 ) : (
                                     <div className="p-4 bg-slate-100 rounded-2xl text-center border border-slate-200">
                                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em]">Registration closed</p>

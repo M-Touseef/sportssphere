@@ -80,6 +80,11 @@ exports.initiatePayment = async (req, res, next) => {
         let description;
 
         if (orderType === 'Booking') {
+            if (req.user.role === 'organizer') {
+                return res.status(403).json({
+                    error: 'Court owners do not need to pay for court reservations.'
+                });
+            }
             order = await Booking.findById(orderId);
             if (!order) return res.status(404).json({ error: 'Booking not found' });
             if (order.user.toString() !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
@@ -89,6 +94,11 @@ exports.initiatePayment = async (req, res, next) => {
             amount = order.totalPrice;
             description = `Booking-${order._id}`;
         } else if (orderType === 'TournamentRegistration') {
+            if (req.user.role !== 'player') {
+                return res.status(403).json({
+                    error: 'Only player accounts can pay tournament entry fees. Organizers do not register for tournaments.'
+                });
+            }
             order = await TournamentRegistration.findById(orderId);
             if (!order) return res.status(404).json({ error: 'Registration not found' });
             // Check player, player1, or player2
@@ -325,6 +335,18 @@ exports.mockCompletePayment = async (req, res, next) => {
 
         if (transaction.userId.toString() !== req.user.id && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        if (transaction.orderType === 'TournamentRegistration' && req.user.role !== 'player') {
+            return res.status(403).json({
+                error: 'Only player accounts can pay tournament entry fees. Organizers do not register for tournaments.'
+            });
+        }
+
+        if (transaction.orderType === 'Booking' && req.user.role === 'organizer') {
+            return res.status(403).json({
+                error: 'Court owners do not need to pay for court reservations.'
+            });
         }
 
         const { order, alreadyPaid } = await fulfillPaidTransaction(transaction, {

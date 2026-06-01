@@ -1,5 +1,7 @@
 const Tournament = require('../models/Tournament');
 const TournamentRegistration = require('../models/TournamentRegistration');
+const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // @desc    Register for a tournament
 // @route   POST /api/tournaments/:id/register
@@ -7,6 +9,13 @@ const TournamentRegistration = require('../models/TournamentRegistration');
 exports.registerForTournament = async (req, res) => {
     try {
         const { category, player2Id, teamName } = req.body;
+
+        if (req.user.role !== 'player') {
+            return res.status(403).json({
+                error: 'Only player accounts can register for tournaments. Organizers manage events from their dashboard.'
+            });
+        }
+
         const tournament = await Tournament.findById(req.params.id);
 
         if (!tournament) {
@@ -71,6 +80,25 @@ exports.registerForTournament = async (req, res) => {
             if (!player2Id) {
                 return res.status(400).json({ error: 'Partner required for doubles category' });
             }
+
+            if (player2Id === req.user.id) {
+                return res.status(400).json({ error: 'You cannot select yourself as your doubles partner' });
+            }
+
+            if (!mongoose.isValidObjectId(player2Id)) {
+                return res.status(400).json({ error: 'Invalid doubles partner ID' });
+            }
+
+            const partner = await User.findById(player2Id).select('role');
+            if (!partner) {
+                return res.status(404).json({ error: 'Doubles partner not found' });
+            }
+            if (partner.role !== 'player') {
+                return res.status(400).json({
+                    error: 'Doubles partner must be a player account. Organizers cannot register for tournaments.'
+                });
+            }
+
             registrationData.player1 = req.user.id;
             registrationData.player2 = player2Id;
             registrationData.teamName = teamName || `${req.user.name} & Partner`;

@@ -14,6 +14,12 @@ const { normalizeToHour } = require('../utils/timeUtils');
 // @access  Private
 exports.createBooking = async (req, res, next) => {
     try {
+        if (req.user.role === 'organizer') {
+            return res.status(403).json({
+                error: 'Court owners do not need to reserve courts. Manage your venues from My Courts.'
+            });
+        }
+
         const { courtId, date, startTime: rawStart, endTime: rawEnd, proPlayerId, slotId } = req.body;
         const startTime = normalizeToHour(rawStart);
         const endTime = normalizeToHour(rawEnd);
@@ -255,6 +261,12 @@ exports.cancelBooking = async (req, res) => {
 // @access  Private
 exports.confirmPayment = async (req, res) => {
     try {
+        if (req.user.role === 'organizer') {
+            return res.status(403).json({
+                error: 'Court owners do not need to pay for court reservations.'
+            });
+        }
+
         const booking = await Booking.findById(req.params.id);
 
         if (!booking) {

@@ -188,12 +188,12 @@ const CreateTournament = () => {
                                 </p>
                             )}
                             {selectedCourt && (
-                                <p className="text-xs text-muted-foreground mt-2 font-medium">
-                                    Public venue and city will be set from this court:{' '}
-                                    <span className="text-foreground">{selectedCourt.location?.address}</span>
-                                    {', '}
-                                    <span className="text-foreground">{selectedCourt.location?.city}</span>.
-                                </p>
+                                <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs font-medium text-emerald-800">
+                                    <p>
+                                        Venue: <span className="font-bold">{selectedCourt.location?.address}, {selectedCourt.location?.city}</span>
+                                    </p>
+                                    <p className="mt-1">This is your court. No court booking or venue payment is required to host the tournament.</p>
+                                </div>
                             )}
                         </div>
 
@@ -320,7 +320,7 @@ const CreateTournament = () => {
                                         </div>
 
                                         <Input
-                                            label="Entry Fee (Rs.)"
+                                            label="Player Entry Fee (Rs.)"
                                             type="number"
                                             {...register(`categories.${index}.entryFee`, { valueAsNumber: true })}
                                         />

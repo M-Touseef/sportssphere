@@ -25,20 +25,20 @@ const { auth, optionalAuth, authorize } = require('../middleware/auth');
 
 // Tournament routes
 router.get('/', optionalAuth, getTournaments);
-router.get('/my/organized', auth, authorize('professional', 'admin', 'organizer'), getMyTournaments);
+router.get('/my/organized', auth, authorize('admin', 'organizer'), getMyTournaments);
 router.get('/my/registrations', auth, getMyRegistrations);
 router.get('/:id', optionalAuth, getTournament);
-router.post('/', auth, authorize('professional', 'admin', 'organizer'), createTournament);
-router.put('/:id', auth, authorize('professional', 'admin', 'organizer'), updateTournament);
-router.delete('/:id', auth, authorize('professional', 'admin', 'organizer'), deleteTournament);
-router.put('/:id/publish', auth, authorize('professional', 'admin', 'organizer'), publishTournament);
+router.post('/', auth, authorize('admin', 'organizer'), createTournament);
+router.put('/:id', auth, authorize('admin', 'organizer'), updateTournament);
+router.delete('/:id', auth, authorize('admin', 'organizer'), deleteTournament);
+router.put('/:id/publish', auth, authorize('admin', 'organizer'), publishTournament);
 
 // Registration routes
 router.post('/:id/register', auth, registerForTournament);
 router.get('/:id/registrations', getTournamentRegistrations);
 
 // Match and bracket routes
-router.post('/:id/generate-brackets', auth, authorize('professional', 'admin', 'organizer'), generateBrackets);
+router.post('/:id/generate-brackets', auth, authorize('admin', 'organizer'), generateBrackets);
 router.get('/:id/matches', getTournamentMatches);
 router.get('/:id/leaderboard', getLeaderboard);
 
