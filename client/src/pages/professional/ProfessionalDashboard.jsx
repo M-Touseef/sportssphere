@@ -98,22 +98,6 @@ const ProfessionalDashboard = () => {
     <h1 className="text-3xl font-extrabold">Professional Dashboard</h1>
     <p className="mt-1 text-sm opacity-90">Manage your competitive career and training schedule.</p>
   </header>
-  
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Professional Dashboard</h1>
-                    <p className="mt-2 text-slate-500 font-medium">Manage your competitive career and training schedule.</p>
-                </div>
-                <div className="flex gap-3">
-                    <Link to="/tournaments" className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-                        Browse Tournaments
-                    </Link>
-                    <Link to="/coaches" className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm">
-                        Book a Coach
-                    </Link>
-                </div>
-            </div>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
