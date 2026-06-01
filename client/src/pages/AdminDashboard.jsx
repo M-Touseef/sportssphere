@@ -260,32 +260,35 @@ const AdminDashboard = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 pb-12">
             {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+            <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] sticky top-0 z-40">
+                <div className="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                        <div>
+                            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Admin Dashboard</h1>
+                            <p className="text-sm text-slate-500 font-medium mt-1">System Management & Operations</p>
+                        </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={fetchData}
-                                className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-2"
+                                className="text-sm bg-gradient-to-r from-slate-100 to-slate-50 hover:from-slate-200 hover:to-slate-100 text-slate-700 font-semibold px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm transition-all duration-200 flex items-center gap-2"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
                                 <span className="hidden sm:inline">Sync Now</span>
                             </button>
-                            <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-1 rounded">Super Admin</span>
+                            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-indigo-200">Super Admin</span>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 {/* Stats Grid */}
                 {stats && (
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
                         <StatCard title="Total Users" value={stats.users.total} subtext={`${stats.users.players} Players`} color="blue" />
                         <StatCard
                             title="Pending"
@@ -301,20 +304,20 @@ const AdminDashboard = () => {
                 )}
 
                 {/* Tabs Navigation */}
-                <div className="border-b border-gray-200 mb-6 overflow-x-auto">
-                    <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max px-1">
+                <div className="bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] border border-slate-200/60 mb-8 overflow-hidden">
+                    <nav className="flex space-x-1 px-2 py-2">
                         {['overview', 'verification', 'users', 'bookings', 'tournaments', 'courts'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`${activeTab === tab
-                                    ? 'border-indigo-500 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    } whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize flex items-center gap-2`}
+                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-200'
+                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                    } whitespace-nowrap px-4 py-2.5 rounded-xl font-semibold text-sm capitalize flex items-center gap-2 transition-all duration-200`}
                             >
                                 {tab}
                                 {tab === 'verification' && stats?.users?.pendingVerification > 0 && (
-                                    <span className="bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                    <span className={`${activeTab === tab ? 'bg-white/20' : 'bg-amber-500'} text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center`}>
                                         {stats.users.pendingVerification}
                                     </span>
                                 )}
@@ -324,60 +327,93 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-white shadow rounded-lg">
+                <div className="bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden">
                     {activeTab === 'overview' && (
-                        <div className="p-4 sm:p-6">
-                            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">System Overview</h3>
-                            <p className="text-gray-500">Welcome to the SportSphere Admin Panel. Use the tabs above to manage resources.</p>
+                        <div className="p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="h-12 w-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">System Overview</h3>
+                                    <p className="text-slate-500 font-medium">Welcome to the SportSphere Admin Panel</p>
+                                </div>
+                            </div>
+                            <p className="text-slate-600 leading-relaxed mb-6">Use the navigation tabs above to manage users, bookings, tournaments, and court resources efficiently.</p>
                             {stats?.users?.pendingVerification > 0 && (
-                                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                                    <p className="text-amber-800 font-medium">
-                                        ⚠️ You have {stats.users.pendingVerification} user(s) awaiting verification.
-                                    </p>
-                                    <button
-                                        onClick={() => setActiveTab('verification')}
-                                        className="mt-2 text-amber-600 hover:text-amber-800 font-semibold text-sm"
-                                    >
-                                        Review now →
-                                    </button>
+                                <div className="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl">
+                                    <div className="flex items-start gap-3">
+                                        <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <svg className="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-amber-900 font-bold text-lg">
+                                                {stats.users.pendingVerification} user(s) awaiting verification
+                                            </p>
+                                            <button
+                                                onClick={() => setActiveTab('verification')}
+                                                className="mt-2 text-amber-700 hover:text-amber-900 font-semibold text-sm flex items-center gap-1"
+                                            >
+                                                Review now
+                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
                     )}
 
                     {activeTab === 'verification' && (
-                        <div className="p-4 sm:p-6">
-                            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Verification Requests</h3>
+                        <div className="p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="h-12 w-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200">
+                                    <ShieldCheckIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">Verification Requests</h3>
+                                    <p className="text-slate-500 font-medium">Review and approve user applications</p>
+                                </div>
+                            </div>
                             {pendingUsers.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
-                                    <CheckCircleIcon className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                                    <p>No pending verification requests</p>
+                                <div className="text-center py-16">
+                                    <div className="h-20 w-20 bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <CheckCircleIcon className="h-10 w-10 text-emerald-600" />
+                                    </div>
+                                    <p className="text-slate-600 font-semibold text-lg">No pending verification requests</p>
+                                    <p className="text-slate-400 text-sm mt-1">All caught up!</p>
                                 </div>
                             ) : (
                                 <>
                                     {/* Mobile Card View */}
                                     <div className="sm:hidden space-y-4">
                                         {pendingUsers.map((u) => (
-                                            <div key={u._id} className="bg-gray-50 rounded-xl p-4">
-                                                <div className="flex items-start gap-3 mb-3">
-                                                    <div className="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                                            <div key={u._id} className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-5 border border-slate-200/60 shadow-sm">
+                                                <div className="flex items-start gap-4 mb-4">
+                                                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 flex-shrink-0 shadow-sm">
                                                         {getRoleIcon(u.role, u.skillLevel)}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-semibold text-gray-900 truncate">{u.name}</p>
-                                                        <p className="text-sm text-gray-500 truncate">{u.email}</p>
-                                                        <span className="inline-block mt-1 px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded-full">
+                                                        <p className="font-bold text-slate-900 truncate text-lg">{u.name}</p>
+                                                        <p className="text-sm text-slate-500 truncate">{u.email}</p>
+                                                        <span className="inline-block mt-2 px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 text-xs font-bold rounded-lg">
                                                             {getRoleLabel(u.role, u.skillLevel)}
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                                                    <span>{u.city || 'No city'}</span>
-                                                    <span>{new Date(u.createdAt).toLocaleDateString()}</span>
+                                                <div className="flex items-center justify-between text-sm text-slate-500 mb-4 px-2">
+                                                    <span className="font-medium">{u.city || 'No city'}</span>
+                                                    <span className="text-slate-400">{new Date(u.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                                 <button
                                                     onClick={() => handleViewUser(u._id)}
-                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors"
+                                                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-md shadow-indigo-200 transition-all duration-200"
                                                 >
                                                     Review Application
                                                 </button>
@@ -387,45 +423,45 @@ const AdminDashboard = () => {
 
                                     {/* Desktop Table View */}
                                     <div className="hidden sm:block overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50">
+                                        <table className="min-w-full divide-y divide-slate-200">
+                                            <thead className="bg-gradient-to-r from-slate-50 to-gray-50">
                                                 <tr>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">User</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">City</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Registered</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
+                                            <tbody className="bg-white divide-y divide-slate-100">
                                                 {pendingUsers.map((u) => (
-                                                    <tr key={u._id} className="hover:bg-gray-50">
+                                                    <tr key={u._id} className="hover:bg-gradient-to-r hover:from-slate-50 hover:to-gray-50 transition-colors">
                                                         <td className="px-6 py-4 whitespace-nowrap">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                                <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 shadow-sm">
                                                                     {getRoleIcon(u.role, u.skillLevel)}
                                                                 </div>
                                                                 <div>
-                                                                    <div className="text-sm font-medium text-gray-900">{u.name}</div>
-                                                                    <div className="text-sm text-gray-500">{u.email}</div>
+                                                                    <div className="text-sm font-bold text-slate-900">{u.name}</div>
+                                                                    <div className="text-sm text-slate-500">{u.email}</div>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap">
-                                                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 capitalize">
+                                                            <span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 capitalize">
                                                                 {getRoleLabel(u.role, u.skillLevel)}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-600">
                                                             {u.city || '-'}
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                                             {new Date(u.createdAt).toLocaleDateString()}
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap">
                                                             <button
                                                                 onClick={() => handleViewUser(u._id)}
-                                                                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                                                                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md shadow-indigo-200 transition-all duration-200"
                                                             >
                                                                 Review
                                                             </button>
@@ -441,17 +477,26 @@ const AdminDashboard = () => {
                     )}
 
                     {activeTab === 'users' && (
-                        <div className="p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-4">
+                        <div className="p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                                    <UserIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">User Management</h3>
+                                    <p className="text-slate-500 font-medium">View and manage all registered users</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
                                 <input
                                     type="text"
                                     placeholder="Search users..."
-                                    className="flex-1 sm:flex-none sm:w-48 border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="flex-1 sm:flex-none sm:w-64 border border-slate-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
                                     value={userFilters.search}
                                     onChange={(e) => setUserFilters({ ...userFilters, search: e.target.value })}
                                 />
                                 <select
-                                    className="border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500"
+                                    className="border border-slate-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
                                     value={userFilters.role}
                                     onChange={(e) => setUserFilters({ ...userFilters, role: e.target.value })}
                                 >
@@ -462,7 +507,7 @@ const AdminDashboard = () => {
                                     <option value="admin">Admin</option>
                                 </select>
                                 <select
-                                    className="border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500"
+                                    className="border border-slate-200/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
                                     value={userFilters.verified}
                                     onChange={(e) => setUserFilters({ ...userFilters, verified: e.target.value })}
                                 >
@@ -475,59 +520,61 @@ const AdminDashboard = () => {
                             {/* Mobile Card View */}
                             <div className="sm:hidden space-y-3">
                                 {users.map((u) => (
-                                    <div key={u._id} className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-gray-900 truncate">{u.name}</p>
-                                            <p className="text-sm text-gray-500 truncate">{u.email}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-xs text-gray-500 capitalize">{u.role}</span>
-                                                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${u.verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                    {u.verified ? 'Verified' : 'Unverified'}
-                                                </span>
+                                    <div key={u._id} className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-5 border border-slate-200/60 shadow-sm">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-slate-900 truncate text-lg">{u.name}</p>
+                                                <p className="text-sm text-slate-500 truncate">{u.email}</p>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-xs font-semibold text-slate-500 capitalize">{u.role}</span>
+                                                    <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ${u.verified ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700' : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-700'}`}>
+                                                        {u.verified ? 'Verified' : 'Unverified'}
+                                                    </span>
+                                                </div>
                                             </div>
+                                            {!u.verified ? (
+                                                <button
+                                                    onClick={() => handleUserUpdate(u._id, { verified: true, status: 'approved' })}
+                                                    className="ml-3 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold rounded-xl shadow-md shadow-emerald-200 text-sm"
+                                                >
+                                                    Verify
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleUserUpdate(u._id, { verified: false })}
+                                                    className="ml-3 px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-xl shadow-md shadow-red-200 text-sm"
+                                                >
+                                                    Revoke
+                                                </button>
+                                            )}
                                         </div>
-                                        {!u.verified ? (
-                                            <button
-                                                onClick={() => handleUserUpdate(u._id, { verified: true, status: 'approved' })}
-                                                className="text-indigo-600 text-sm font-medium ml-3"
-                                            >
-                                                Verify
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleUserUpdate(u._id, { verified: false })}
-                                                className="text-red-600 text-sm font-medium ml-3"
-                                            >
-                                                Revoke
-                                            </button>
-                                        )}
                                     </div>
                                 ))}
                             </div>
 
                             {/* Desktop Table View */}
                             <div className="hidden sm:block overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
+                                <table className="min-w-full divide-y divide-slate-200">
+                                    <thead className="bg-gradient-to-r from-slate-50 to-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">User</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    <tbody className="bg-white divide-y divide-slate-100">
                                         {users.map((u) => (
-                                            <tr key={u._id}>
+                                            <tr key={u._id} className="hover:bg-gradient-to-r hover:from-slate-50 hover:to-gray-50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm font-medium text-gray-900">{u.name}</div>
-                                                    <div className="text-sm text-gray-500">{u.email}</div>
+                                                    <div className="text-sm font-bold text-slate-900">{u.name}</div>
+                                                    <div className="text-sm text-slate-500">{u.email}</div>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-600 capitalize">
                                                     {u.role}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                    <span className={`px-3 py-1.5 text-xs font-bold rounded-lg ${u.verified ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700' : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-700'}`}>
                                                         {u.verified ? 'Verified' : 'Unverified'}
                                                     </span>
                                                 </td>
@@ -535,14 +582,14 @@ const AdminDashboard = () => {
                                                     {!u.verified ? (
                                                         <button
                                                             onClick={() => handleUserUpdate(u._id, { verified: true, status: 'approved' })}
-                                                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                                            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold rounded-xl shadow-md shadow-emerald-200 text-sm mr-3 hover:from-emerald-600 hover:to-green-700 transition-all"
                                                         >
                                                             Verify
                                                         </button>
                                                     ) : (
                                                         <button
                                                             onClick={() => handleUserUpdate(u._id, { verified: false })}
-                                                            className="text-red-600 hover:text-red-900 mr-4"
+                                                            className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-xl shadow-md shadow-red-200 text-sm mr-3 hover:from-red-600 hover:to-rose-700 transition-all"
                                                         >
                                                             Unverify
                                                         </button>
@@ -557,115 +604,148 @@ const AdminDashboard = () => {
                     )}
 
                     {activeTab === 'bookings' && (
-                        <div className="p-4 sm:p-6 overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Court</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {bookings.map((booking) => (
-                                        <tr key={booking._id}>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {booking.court?.name}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {booking.user?.name}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {new Date(booking.date).toLocaleDateString()} {booking.startTime}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                    {booking.status}
-                                                </span>
-                                            </td>
+                        <div className="p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="h-12 w-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                                    <ClockIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">Bookings</h3>
+                                    <p className="text-slate-500 font-medium">View all court bookings</p>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200">
+                                    <thead className="bg-gradient-to-r from-slate-50 to-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Court</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">User</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Time</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-slate-100">
+                                        {bookings.map((booking) => (
+                                            <tr key={booking._id} className="hover:bg-gradient-to-r hover:from-slate-50 hover:to-gray-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                                                    {booking.court?.name}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                                    {booking.user?.name}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    {new Date(booking.date).toLocaleDateString()} {booking.startTime}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-3 py-1.5 text-xs font-bold rounded-lg ${booking.status === 'confirmed' ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700' : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-700'}`}>
+                                                        {booking.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 
                     {activeTab === 'tournaments' && (
-                        <div className="p-4 sm:p-6 overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tournament</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organizer</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {tournaments.map((t) => (
-                                        <tr key={t._id}>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {t.name}
-                                                <div className="text-xs text-gray-500">{t.city}</div>
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {t.organizer?.name}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {new Date(t.startDate).toLocaleDateString()}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.status === 'registration_open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                    {t.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                                                <button onClick={() => handleDeleteTournament(t._id)} className="hover:text-red-900">Delete</button>
-                                            </td>
+                        <div className="p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-200">
+                                    <TrophyIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">Tournaments</h3>
+                                    <p className="text-slate-500 font-medium">Manage tournament events</p>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200">
+                                    <thead className="bg-gradient-to-r from-slate-50 to-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tournament</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Organizer</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-slate-100">
+                                        {tournaments.map((t) => (
+                                            <tr key={t._id} className="hover:bg-gradient-to-r hover:from-slate-50 hover:to-gray-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                                                    {t.name}
+                                                    <div className="text-xs text-slate-500">{t.city}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                                    {t.organizer?.name}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    {new Date(t.startDate).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-3 py-1.5 text-xs font-bold rounded-lg ${t.status === 'registration_open' ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700' : 'bg-gradient-to-r from-slate-100 to-gray-100 text-slate-700'}`}>
+                                                        {t.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <button onClick={() => handleDeleteTournament(t._id)} className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-xl shadow-md shadow-red-200 text-sm hover:from-red-600 hover:to-rose-700 transition-all">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 
                     {activeTab === 'courts' && (
-                        <div className="p-4 sm:p-6 overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Court</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {courts.map((court) => (
-                                        <tr key={court._id}>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {court.name}
-                                                <div className="text-xs text-gray-500">{court.surfaceType}</div>
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {court.owner?.name || 'Unknown'}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {court.location?.city}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                ₨{court.pricePerHour}/hr
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                                                <button onClick={() => handleDeleteCourt(court._id)} className="hover:text-red-900">Delete</button>
-                                            </td>
+                        <div className="p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200">
+                                    <MapPinIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">Courts</h3>
+                                    <p className="text-slate-500 font-medium">Manage sports courts</p>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200">
+                                    <thead className="bg-gradient-to-r from-slate-50 to-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Court</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Owner</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Location</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Price</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-slate-100">
+                                        {courts.map((court) => (
+                                            <tr key={court._id} className="hover:bg-gradient-to-r hover:from-slate-50 hover:to-gray-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                                                    {court.name}
+                                                    <div className="text-xs text-slate-500">{court.surfaceType}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                                    {court.owner?.name || 'Unknown'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    {court.location?.city}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    ₨{court.pricePerHour}/hr
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <button onClick={() => handleDeleteCourt(court._id)} className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-xl shadow-md shadow-red-200 text-sm hover:from-red-600 hover:to-rose-700 transition-all">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -676,72 +756,87 @@ const AdminDashboard = () => {
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                     <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                         {/* Backdrop */}
-                        <div className="fixed inset-0 transition-opacity bg-gray-900/60" onClick={() => setShowUserModal(false)} />
+                        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity" onClick={() => setShowUserModal(false)} />
 
-                        {/* Modal - with relative z-index to appear above backdrop */}
-                        <div className="relative z-10 inline-block w-full max-w-2xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white rounded-2xl shadow-2xl">
+                        {/* Modal */}
+                        <div className="relative z-10 inline-block w-full max-w-2xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white rounded-3xl shadow-2xl">
                             {/* Header */}
-                            <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 flex items-center justify-between">
-                                <h3 className="text-lg sm:text-xl font-bold text-white">User Verification Review</h3>
-                                <button onClick={() => setShowUserModal(false)} className="text-white/80 hover:text-white p-1">
+                            <div className="px-6 sm:px-8 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <ShieldCheckIcon className="h-6 w-6 text-white" />
+                                    </div>
+                                    <h3 className="text-xl sm:text-2xl font-bold text-white">User Verification Review</h3>
+                                </div>
+                                <button onClick={() => setShowUserModal(false)} className="text-white/80 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors">
                                     <XMarkIcon className="h-6 w-6" />
                                 </button>
                             </div>
 
                             {/* Content */}
-                            <div className="px-4 sm:px-6 py-6 space-y-5 max-h-[70vh] overflow-y-auto">
+                            <div className="px-6 sm:px-8 py-6 space-y-6 max-h-[70vh] overflow-y-auto">
                                 {/* User Info */}
-                                <div className="flex flex-col sm:flex-row items-start gap-4">
-                                    <div className="h-16 w-16 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                                <div className="flex flex-col sm:flex-row items-start gap-5 p-5 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">
+                                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 flex-shrink-0 shadow-sm">
                                         {getRoleIcon(selectedUser.role, selectedUser.skillLevel)}
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="text-xl font-bold text-gray-900">{selectedUser.name}</h4>
-                                        <p className="text-gray-500">{selectedUser.email}</p>
-                                        <span className="mt-1 inline-block px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-semibold rounded-full">
+                                        <h4 className="text-2xl font-bold text-slate-900">{selectedUser.name}</h4>
+                                        <p className="text-slate-600 font-medium">{selectedUser.email}</p>
+                                        <span className="mt-2 inline-block px-4 py-1.5 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 text-sm font-bold rounded-lg">
                                             {getRoleLabel(selectedUser.role, selectedUser.skillLevel)}
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Details Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                        <MapPinIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">
+                                        <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                            <MapPinIcon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+                                        </div>
                                         <div className="min-w-0">
-                                            <p className="text-xs text-gray-500 uppercase">City</p>
-                                            <p className="font-medium text-gray-900 truncate">{selectedUser.city || 'Not specified'}</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">City</p>
+                                            <p className="font-bold text-slate-900 truncate">{selectedUser.city || 'Not specified'}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                        <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                    <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">
+                                        <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                            <PhoneIcon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+                                        </div>
                                         <div className="min-w-0">
-                                            <p className="text-xs text-gray-500 uppercase">Phone</p>
-                                            <p className="font-medium text-gray-900 truncate">{selectedUser.phone || 'Not specified'}</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone</p>
+                                            <p className="font-bold text-slate-900 truncate">{selectedUser.phone || 'Not specified'}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                        <ClockIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                    <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">
+                                        <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                            <ClockIcon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+                                        </div>
                                         <div className="min-w-0">
-                                            <p className="text-xs text-gray-500 uppercase">Registered</p>
-                                            <p className="font-medium text-gray-900">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered</p>
+                                            <p className="font-bold text-slate-900">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                     {selectedUser.rank && (
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                            <TrophyIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                        <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">
+                                            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                                <TrophyIcon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+                                            </div>
                                             <div className="min-w-0">
-                                                <p className="text-xs text-gray-500 uppercase">Rank</p>
-                                                <p className="font-medium text-gray-900 truncate">{selectedUser.rank}</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rank</p>
+                                                <p className="font-bold text-slate-900 truncate">{selectedUser.rank}</p>
                                             </div>
                                         </div>
                                     )}
                                     {selectedUser.coachLevel && (
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                            <AcademicCapIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                        <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">
+                                            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                                <AcademicCapIcon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+                                            </div>
                                             <div className="min-w-0">
-                                                <p className="text-xs text-gray-500 uppercase">Certification</p>
-                                                <p className="font-medium text-gray-900 truncate">{selectedUser.coachLevel}</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Certification</p>
+                                                <p className="font-bold text-slate-900 truncate">{selectedUser.coachLevel}</p>
                                             </div>
                                         </div>
                                     )}
@@ -749,11 +844,14 @@ const AdminDashboard = () => {
 
                                 {/* Achievements */}
                                 {selectedUser.achievements && selectedUser.achievements.length > 0 && (
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <p className="text-xs text-gray-500 uppercase mb-2">Achievements</p>
-                                        <ul className="text-sm text-gray-700 space-y-1">
+                                    <div className="p-5 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Achievements</p>
+                                        <ul className="text-sm text-slate-700 space-y-2">
                                             {selectedUser.achievements.map((a, i) => (
-                                                <li key={i}>• {a}</li>
+                                                <li key={i} className="flex items-start gap-2">
+                                                    <span className="text-indigo-500 mt-0.5">•</span>
+                                                    <span>{a}</span>
+                                                </li>
                                             ))}
                                         </ul>
                                     </div>
@@ -761,18 +859,20 @@ const AdminDashboard = () => {
 
                                 {/* Verification Document */}
                                 {selectedUser.verificationDocument && (
-                                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                            <DocumentTextIcon className="h-10 w-10 text-blue-600 flex-shrink-0" />
+                                    <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200/60">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                            <div className="h-12 w-12 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+                                                <DocumentTextIcon className="h-6 w-6 text-blue-600" />
+                                            </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-blue-900">Verification Document</p>
+                                                <p className="font-bold text-blue-900">Verification Document</p>
                                                 <p className="text-sm text-blue-600 truncate">{selectedUser.verificationDocument.split('/').pop()}</p>
                                             </div>
                                             <div className="flex gap-2 mt-3 sm:mt-0">
                                                 {isImageFile(selectedUser.verificationDocument) ? (
                                                     <button
                                                         onClick={() => setShowDocumentModal(true)}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                                        className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-blue-200 hover:from-blue-700 hover:to-indigo-700 transition-all"
                                                     >
                                                         <EyeIcon className="h-4 w-4" />
                                                         View
@@ -782,7 +882,7 @@ const AdminDashboard = () => {
                                                     href={getDocumentUrl(selectedUser.verificationDocument)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 border border-blue-300 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                                                    className="flex items-center gap-2 px-4 py-2.5 bg-white text-blue-600 border border-blue-300 rounded-xl text-sm font-bold hover:bg-blue-50 transition-colors"
                                                 >
                                                     <ArrowDownTrayIcon className="h-4 w-4" />
                                                     Open
@@ -791,9 +891,9 @@ const AdminDashboard = () => {
 
                                             {/* Image Preview */}
                                             {isImageFile(selectedUser.verificationDocument) && (
-                                                <div className="mt-4 border rounded-lg overflow-hidden bg-white">
-                                                    <p className="text-xs text-gray-500 p-2 bg-gray-50 border-b">Document Preview:</p>
-                                                    <div className="p-2">
+                                                <div className="mt-5 border border-slate-200/60 rounded-2xl overflow-hidden bg-white shadow-sm">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider p-3 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-slate-200/60">Document Preview:</p>
+                                                    <div className="p-3">
                                                         {(() => {
                                                             const publicId = getPublicIdFromUrl(selectedUser.verificationDocument);
                                                             if (publicId) {
@@ -829,7 +929,7 @@ const AdminDashboard = () => {
 
                                             {/* PDF Preview note */}
                                             {selectedUser.verificationDocument && !isImageFile(selectedUser.verificationDocument) && (
-                                                <div className="mt-4 p-3 bg-gray-50 rounded-lg border text-center text-sm text-gray-600">
+                                                <div className="mt-5 p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60 text-center text-sm text-slate-600">
                                                     📄 This is a PDF document. Click "Open" above to view it.
                                                 </div>
                                             )}
@@ -838,38 +938,45 @@ const AdminDashboard = () => {
                                 )}
 
                                 {!selectedUser.verificationDocument && (
-                                    <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                                        <p className="text-yellow-800 font-medium">⚠️ No verification document uploaded</p>
+                                    <div className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200/60">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <svg className="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
+                                            <p className="text-amber-900 font-bold">No verification document uploaded</p>
+                                        </div>
                                     </div>
                                 )}
 
                                 {/* Rejection Reason Input */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-bold text-slate-700 mb-3">
                                         Rejection Reason (required if rejecting)
                                     </label>
                                     <textarea
                                         value={rejectionReason}
                                         onChange={(e) => setRejectionReason(e.target.value)}
                                         placeholder="Enter reason for rejection..."
-                                        className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                                        className="w-full p-4 border border-slate-200/60 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none bg-white shadow-sm"
                                         rows="3"
                                     />
                                 </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="px-4 sm:px-6 py-4 bg-gray-50 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                            <div className="px-6 sm:px-8 py-5 bg-gradient-to-r from-slate-50 to-gray-50 border-t border-slate-200/60 flex flex-col-reverse sm:flex-row justify-end gap-3">
                                 <button
                                     onClick={() => setShowUserModal(false)}
-                                    className="w-full sm:w-auto px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-xl font-medium hover:bg-gray-50"
+                                    className="w-full sm:w-auto px-5 py-3 text-slate-700 bg-white border border-slate-200/60 rounded-xl font-bold hover:bg-slate-50 transition-colors shadow-sm"
                                     disabled={actionLoading}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleRejectUser}
-                                    className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-bold shadow-md shadow-red-200 hover:from-red-600 hover:to-rose-700 transition-all flex items-center justify-center gap-2"
                                     disabled={actionLoading}
                                 >
                                     <XCircleIcon className="h-5 w-5" />
@@ -877,7 +984,7 @@ const AdminDashboard = () => {
                                 </button>
                                 <button
                                     onClick={handleApproveUser}
-                                    className="w-full sm:w-auto px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold shadow-md shadow-emerald-200 hover:from-emerald-600 hover:to-green-700 transition-all flex items-center justify-center gap-2"
                                     disabled={actionLoading}
                                 >
                                     <CheckCircleIcon className="h-5 w-5" />
@@ -891,31 +998,31 @@ const AdminDashboard = () => {
 
             {/* Document Full View Modal */}
             {showDocumentModal && selectedUser?.verificationDocument && (
-                <div className="fixed inset-0 z-[60] flex flex-col bg-black/95">
+                <div className="fixed inset-0 z-[60] flex flex-col bg-slate-900/95 backdrop-blur-xl">
                     {/* Header with back button */}
-                    <div className="flex items-center justify-between p-4 bg-black/50">
+                    <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-800 to-slate-900 border-b border-slate-700/50">
                         <button
                             onClick={() => setShowDocumentModal(false)}
-                            className="flex items-center gap-2 text-white/90 hover:text-white font-medium"
+                            className="flex items-center gap-2 text-white/90 hover:text-white font-semibold transition-colors"
                         >
                             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                             Back to Review
                         </button>
-                        <span className="text-white/60 text-sm truncate max-w-[50%]">
+                        <span className="text-white/60 text-sm font-medium truncate max-w-[50%]">
                             {selectedUser.verificationDocument.split('/').pop()}
                         </span>
                         <button
                             onClick={() => setShowDocumentModal(false)}
-                            className="text-white/80 hover:text-white p-2"
+                            className="text-white/80 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors"
                         >
                             <XMarkIcon className="h-6 w-6" />
                         </button>
                     </div>
 
                     {/* Image container */}
-                    <div className="flex-1 flex items-center justify-center p-4 overflow-auto" onClick={() => setShowDocumentModal(false)}>
+                    <div className="flex-1 flex items-center justify-center p-6 overflow-auto" onClick={() => setShowDocumentModal(false)}>
                         {(() => {
                             const publicId = getPublicIdFromUrl(selectedUser.verificationDocument);
                             if (publicId) {
@@ -925,7 +1032,7 @@ const AdminDashboard = () => {
                                 return (
                                     <AdvancedImage
                                         cldImg={img}
-                                        className="max-w-full max-h-full object-contain"
+                                        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
                                         onClick={(e) => e.stopPropagation()}
                                     />
                                 );
@@ -934,7 +1041,7 @@ const AdminDashboard = () => {
                                 <img
                                     src={getDocumentUrl(selectedUser.verificationDocument)}
                                     alt="Verification document"
-                                    className="max-w-full max-h-full object-contain"
+                                    className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             );
@@ -946,14 +1053,33 @@ const AdminDashboard = () => {
     );
 };
 
-const StatCard = ({ title, value, subtext, color, highlight, className = '' }) => (
-    <div className={`bg-white overflow-hidden shadow rounded-lg border-l-4 border-${color}-500 ${highlight ? 'ring-2 ring-amber-400 ring-offset-2' : ''} ${className}`}>
-        <div className="px-3 sm:px-4 py-4 sm:py-5">
-            <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">{title}</dt>
-            <dd className="mt-1 text-xl sm:text-3xl font-semibold text-gray-900">{value}</dd>
-            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-500 truncate">{subtext}</p>
+const StatCard = ({ title, value, subtext, color, highlight, className = '' }) => {
+    const colorGradients = {
+        blue: 'from-blue-500 to-indigo-600',
+        amber: 'from-amber-500 to-orange-600',
+        green: 'from-emerald-500 to-green-600',
+        orange: 'from-orange-500 to-red-500',
+        indigo: 'from-indigo-500 to-purple-600'
+    };
+    
+    const colorShadows = {
+        blue: 'shadow-blue-200',
+        amber: 'shadow-amber-200',
+        green: 'shadow-emerald-200',
+        orange: 'shadow-orange-200',
+        indigo: 'shadow-indigo-200'
+    };
+
+    return (
+        <div className={`bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden ${highlight ? 'ring-2 ring-amber-400 ring-offset-2' : ''} ${className} hover:shadow-lg transition-shadow duration-300`}>
+            <div className={`h-1.5 bg-gradient-to-r ${colorGradients[color] || colorGradients.blue}`}></div>
+            <div className="px-4 sm:px-5 py-5 sm:py-6">
+                <dt className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">{title}</dt>
+                <dd className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">{value}</dd>
+                <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">{subtext}</p>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 export default AdminDashboard;
