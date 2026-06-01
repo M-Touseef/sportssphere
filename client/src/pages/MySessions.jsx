@@ -1,14 +1,56 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { twMerge } from 'tailwind-merge';
 import sessionService from '../services/sessionService';
 import * as paymentService from '../services/paymentService';
 import { useToast } from '../context/ToastContext';
+import Button from '../components/ui/Button';
+import { CardSkeleton } from '../components/ui/Skeleton';
+import {
+    CalendarIcon,
+    MapPinIcon,
+    ClockIcon,
+    ExclamationTriangleIcon,
+    ShieldCheckIcon,
+    UserIcon,
+    ArrowRightIcon
+} from '@heroicons/react/24/outline';
+
+const STATUS_CONFIG = {
+    confirmed: {
+        label: 'Confirmed',
+        badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        stripe: 'from-emerald-500 to-teal-600'
+    },
+    pending: {
+        label: 'Pending',
+        badge: 'bg-amber-100 text-amber-900 border-amber-200',
+        stripe: 'from-amber-400 to-amber-600'
+    },
+    pending_payment: {
+        label: 'Awaiting payment',
+        badge: 'bg-amber-100 text-amber-900 border-amber-200',
+        stripe: 'from-amber-500 to-orange-500'
+    },
+    cancelled: {
+        label: 'Cancelled',
+        badge: 'bg-rose-100 text-rose-800 border-rose-200',
+        stripe: 'from-rose-500 to-red-600'
+    },
+    completed: {
+        label: 'Completed',
+        badge: 'bg-indigo-100 text-indigo-900 border-indigo-200',
+        stripe: 'from-indigo-600 to-violet-700'
+    }
+};
 
 const MySessions = () => {
     const { success, error: toastError } = useToast();
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all'); // all, upcoming, past
+    const [fetchError, setFetchError] = useState(false);
+    const [filter, setFilter] = useState('all');
     const [payingSessionId, setPayingSessionId] = useState(null);
 
     useEffect(() => {
@@ -18,10 +60,13 @@ const MySessions = () => {
     const fetchSessions = async () => {
         try {
             setLoading(true);
+            setFetchError(false);
             const data = await sessionService.getMySessions();
-            setSessions(data.data);
+            setSessions(data.data || []);
         } catch (error) {
             console.error('Error fetching sessions:', error);
+            setFetchError(true);
+            toastError('Could not load your sessions.');
         } finally {
             setLoading(false);
         }
@@ -34,10 +79,10 @@ const MySessions = () => {
 
         try {
             await sessionService.cancelSession(sessionId);
-            fetchSessions(); // Refresh the list
+            fetchSessions();
         } catch (error) {
             console.error('Error cancelling session:', error);
-            alert('Failed to cancel session');
+            toastError('Failed to cancel session');
         }
     };
 
@@ -57,173 +102,224 @@ const MySessions = () => {
         }
     };
 
-    const getStatusColor = (status) => {
-        const colors = {
-            pending: 'bg-yellow-100 text-yellow-800',
-            pending_payment: 'bg-amber-100 text-amber-800 border border-amber-200',
-            confirmed: 'bg-green-100 text-green-800',
-            completed: 'bg-blue-100 text-blue-800',
-            cancelled: 'bg-red-100 text-red-800'
-        };
-        return colors[status] || 'bg-gray-100 text-gray-800';
-    };
+    const filteredSessions = useMemo(() => {
+        return sessions.filter(session => {
+            const sessionDate = new Date(session.date);
+            const now = new Date();
+            if (filter === 'upcoming') {
+                return sessionDate >= now && session.status !== 'cancelled' && session.status !== 'completed';
+            } else if (filter === 'past') {
+                return sessionDate < now || session.status === 'completed';
+            }
+            return true;
+        });
+    }, [sessions, filter]);
 
-    const filteredSessions = sessions.filter(session => {
-        const sessionDate = new Date(session.date);
-        const now = new Date();
-
-        if (filter === 'upcoming') {
-            return sessionDate >= now && session.status !== 'cancelled' && session.status !== 'completed';
-        } else if (filter === 'past') {
-            return sessionDate < now || session.status === 'completed';
-        }
-        return true;
-    });
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-        );
-    }
+    const stats = useMemo(() => {
+        const upcoming = sessions.filter(s => {
+            const sessionDate = new Date(s.date);
+            return sessionDate >= new Date() && s.status !== 'cancelled' && s.status !== 'completed';
+        }).length;
+        const due = sessions.filter(s => s.status === 'pending_payment').length;
+        return { total: sessions.length, upcoming, due };
+    }, [sessions]);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
-                <p className="text-gray-600 mt-2">View and manage your coaching sessions</p>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="mb-6 border-b border-gray-200">
-                <nav className="flex -mb-px space-x-8">
-                    <button
-                        onClick={() => setFilter('all')}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${filter === 'all'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                    >
-                        All Sessions ({sessions.length})
-                    </button>
-                    <button
-                        onClick={() => setFilter('upcoming')}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${filter === 'upcoming'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                    >
-                        Upcoming
-                    </button>
-                    <button
-                        onClick={() => setFilter('past')}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${filter === 'past'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                    >
-                        Past
-                    </button>
-                </nav>
-            </div>
-
-            {/* Sessions List */}
-            {filteredSessions.length > 0 ? (
-                <div className="space-y-4">
-                    {filteredSessions.map((session) => (
-                        <div key={session._id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                            <div className="p-6">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="text-xl font-semibold text-gray-900">
-                                                Coach: {session.coach.name}
-                                            </h3>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(session.status)}`}>
-                                                {session.status}
-                                            </span>
+        <div className="pb-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-amber-200/60 shadow-[0_24px_70px_-28px_rgba(30,27,75,0.4)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-indigo-900 to-teal-900" />
+                <div className="absolute -top-16 -right-8 h-56 w-56 rounded-full bg-amber-400/20 blur-3xl" />
+                <div className="relative px-6 sm:px-10 lg:px-12 py-10 sm:py-14">
+                    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                        <div className="max-w-2xl">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/15 border border-amber-300/30 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-100 mb-5">
+                                <CalendarIcon className="h-4 w-4 text-amber-300" />
+                                Your schedule
+                            </div>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.1]">
+                                Coaching
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-teal-200">
+                                    sessions
+                                </span>
+                            </h1>
+                            <p className="mt-4 text-base sm:text-lg text-indigo-100/85 font-medium max-w-xl">
+                                View and manage your coaching sessions in one place.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-3 lg:justify-end items-center">
+                            {!loading && !fetchError && (
+                                <>
+                                    <div className="rounded-2xl bg-white/10 backdrop-blur border border-white/15 px-5 py-4 min-w-[5.5rem]">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100/70">Total</p>
+                                        <p className="text-2xl font-black text-white mt-1">{stats.total}</p>
+                                    </div>
+                                    <div className="rounded-2xl bg-emerald-500/20 backdrop-blur border border-emerald-300/25 px-5 py-4 min-w-[5.5rem]">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-100/80">Upcoming</p>
+                                        <p className="text-2xl font-black text-white mt-1">{stats.upcoming}</p>
+                                    </div>
+                                    {stats.due > 0 && (
+                                        <div className="rounded-2xl bg-amber-500/25 backdrop-blur border border-amber-300/30 px-5 py-4 min-w-[5.5rem]">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100">Due</p>
+                                            <p className="text-2xl font-black text-white mt-1">{stats.due}</p>
                                         </div>
-                                        <p className="text-gray-600 text-sm">{session.coach.email}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-2xl font-bold text-blue-600">Rs. {session.totalPrice}</p>
-                                        <p className="text-sm text-gray-500">{session.duration} hour(s)</p>
-                                    </div>
-                                </div>
+                                    )}
+                                </>
+                            )}
+                            <Link to="/coaches">
+                                <Button className="h-12 px-6 rounded-2xl font-bold bg-amber-400 hover:bg-amber-300 text-indigo-950 shadow-lg">
+                                    Find a coach
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                    <div className="flex items-center text-gray-600">
-                                        <span className="mr-2">📅</span>
-                                        <span>{new Date(session.date).toLocaleDateString('en-US', {
-                                            weekday: 'long',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric'
-                                        })}</span>
-                                    </div>
-                                    <div className="flex items-center text-gray-600">
-                                        <span className="mr-2">🕐</span>
-                                        <span>{session.startTime} - {session.endTime}</span>
-                                    </div>
-                                    <div className="flex items-center text-gray-600">
-                                        <span className="mr-2">📍</span>
-                                        <span>{session.location}</span>
-                                    </div>
-                                </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-8">
+                {['all', 'upcoming', 'past'].map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setFilter(tab)}
+                        className={`px-5 py-2.5 rounded-xl font-bold text-sm capitalize transition-all ${filter === tab ? 'bg-indigo-950 text-amber-50 shadow-md' : 'bg-white border border-amber-100 text-slate-500 hover:border-amber-300 hover:text-indigo-900'}`}
+                    >
+                        {tab === 'all' ? `All Sessions (${sessions.length})` : tab}
+                    </button>
+                ))}
+            </div>
 
-                                {session.notes && (
-                                    <div className="mb-4 p-3 bg-gray-50 rounded-md">
-                                        <p className="text-sm text-gray-600">
-                                            <span className="font-medium">Notes:</span> {session.notes}
-                                        </p>
-                                    </div>
-                                )}
+            {loading ? (
+                <CardSkeleton count={4} />
+            ) : fetchError ? (
+                <div className="flex flex-col items-center p-12 rounded-[2rem] border-2 border-dashed border-amber-200 bg-amber-50/30 text-center gap-6">
+                    <ExclamationTriangleIcon className="h-12 w-12 text-amber-700" />
+                    <p className="text-lg font-bold text-slate-800">Could not load sessions</p>
+                    <Button onClick={fetchSessions} className="bg-indigo-950 text-amber-50 rounded-2xl px-8 font-bold">
+                        Retry
+                    </Button>
+                </div>
+            ) : filteredSessions.length > 0 ? (
+                <div className="grid gap-6 sm:gap-8">
+                    <AnimatePresence mode="popLayout">
+                        {filteredSessions.map((session, index) => {
+                            const statusCfg = STATUS_CONFIG[session.status] || STATUS_CONFIG.pending;
+                            const isPaid = session.paymentStatus === 'paid' || session.status === 'confirmed';
+                            const needsPay = session.status === 'pending_payment';
 
-                                {session.status === 'pending_payment' && (
-                                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
-                                        <div className="flex items-center gap-3 text-amber-800 text-sm">
-                                            <span className="text-xl">💳</span>
-                                            <div>
-                                                <p className="font-bold">Payment Required</p>
-                                                <p>Coach has accepted! Pay Rs. {session.totalPrice} to confirm your slot.</p>
+                            return (
+                                <motion.article
+                                    key={session._id}
+                                    layout
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.04 }}
+                                    className="group relative bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-amber-100/90 shadow-[0_16px_48px_-20px_rgba(30,27,75,0.12)] overflow-hidden hover:shadow-[0_24px_56px_-20px_rgba(30,27,75,0.18)] transition-all"
+                                >
+                                    <div
+                                        className={twMerge(
+                                            'absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b',
+                                            statusCfg.stripe
+                                        )}
+                                    />
+
+                                    <div className="flex flex-col lg:flex-row lg:items-center gap-6 p-6 sm:p-8 pl-8">
+                                        <div className="flex gap-4 flex-1 min-w-0">
+                                            <div className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-2xl bg-indigo-950 flex items-center justify-center text-amber-200 shadow-md">
+                                                <UserIcon className="h-7 w-7 sm:h-8 sm:w-8" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                    <h3 className="text-xl font-extrabold text-slate-900 tracking-tight truncate">
+                                                        {session.coach.name}
+                                                    </h3>
+                                                    <span
+                                                        className={twMerge(
+                                                            'px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border',
+                                                            statusCfg.badge
+                                                        )}
+                                                    >
+                                                        {statusCfg.label}
+                                                    </span>
+                                                    {isPaid && (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase bg-emerald-600 text-white">
+                                                            <ShieldCheckIcon className="h-3.5 w-3.5" />
+                                                            Paid
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm font-bold text-slate-600 flex items-center gap-1.5 mb-4 truncate">
+                                                    <MapPinIcon className="h-4 w-4 text-amber-700 shrink-0" />
+                                                    {session.location || 'Location TBA'}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-950 bg-gradient-to-r from-slate-50 to-amber-50/60 border border-amber-100 px-3 py-2 rounded-xl">
+                                                        <CalendarIcon className="h-4 w-4 text-indigo-800" />
+                                                        {new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-950 bg-gradient-to-r from-slate-50 to-amber-50/60 border border-amber-100 px-3 py-2 rounded-xl">
+                                                        <ClockIcon className="h-4 w-4 text-indigo-800" />
+                                                        {session.startTime} - {session.endTime} ({session.duration}h)
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1 text-xs font-black text-indigo-950 bg-indigo-950/5 border border-indigo-100 px-3 py-2 rounded-xl">
+                                                        Rs.{session.totalPrice}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handlePayment(session._id)}
-                                            disabled={payingSessionId === session._id}
-                                            className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-bold shadow-md shadow-amber-200 transition-all text-sm disabled:opacity-60"
-                                        >
-                                            {payingSessionId === session._id ? 'Processing…' : 'Confirm payment'}
-                                        </button>
-                                    </div>
-                                )}
 
-                                <div className="flex gap-3 pt-4 border-t border-gray-200">
-                                    {(session.status === 'confirmed' || session.status === 'pending') && new Date(session.date) > new Date() && (
-                                        <button
-                                            onClick={() => handleCancelSession(session._id)}
-                                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
-                                        >
-                                            Cancel Session
-                                        </button>
+                                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0 lg:w-44">
+                                            {needsPay && (
+                                                <Button
+                                                    onClick={() => handlePayment(session._id)}
+                                                    disabled={payingSessionId === session._id}
+                                                    isLoading={payingSessionId === session._id}
+                                                    className="h-11 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
+                                                >
+                                                    Pay Now
+                                                </Button>
+                                            )}
+                                            {(session.status === 'confirmed' || session.status === 'pending') && new Date(session.date) > new Date() && (
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => handleCancelSession(session._id)}
+                                                    className="w-full h-11 rounded-xl font-bold border-rose-200 text-rose-600 hover:bg-rose-50"
+                                                >
+                                                    Cancel Session
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {session.notes && (
+                                        <div className="px-6 sm:px-8 py-3 bg-amber-50/50 border-t border-amber-100/50">
+                                            <p className="text-sm font-medium text-amber-900/70">
+                                                <span className="font-bold">Notes:</span> {session.notes}
+                                            </p>
+                                        </div>
                                     )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                                </motion.article>
+                            );
+                        })}
+                    </AnimatePresence>
                 </div>
             ) : (
-                <div className="text-center py-12 bg-white rounded-lg shadow">
-                    <p className="text-gray-500 mb-4 text-lg">No sessions scheduled yet.</p>
-                    <p className="text-gray-400 mb-8">Book a coach to improve your skills!</p>
-                    <Link
-                        to="/coaches"
-                        className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-bold shadow-lg shadow-blue-200 transition-all"
-                    >
-                        Find a Coach
+                <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-16 rounded-[2rem] border border-amber-100 bg-gradient-to-br from-amber-50/80 to-indigo-50/30"
+                >
+                    <div className="mx-auto h-20 w-20 rounded-2xl bg-indigo-950 flex items-center justify-center text-amber-300 mb-6">
+                        <CalendarIcon className="h-10 w-10" />
+                    </div>
+                    <h3 className="text-2xl font-extrabold text-slate-900">No sessions yet</h3>
+                    <p className="text-slate-600 font-medium mt-2 max-w-md mx-auto">
+                        Book a coach to see your sessions here.
+                    </p>
+                    <Link to="/coaches" className="inline-block mt-8">
+                        <Button className="px-10 h-14 rounded-2xl font-bold bg-indigo-950 text-amber-50 gap-2">
+                            Find a coach
+                            <ArrowRightIcon className="h-5 w-5" />
+                        </Button>
                     </Link>
-                </div>
+                </motion.div>
             )}
         </div>
     );

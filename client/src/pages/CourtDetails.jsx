@@ -186,6 +186,12 @@ const CourtDetails = () => {
         }
         if (!selectedSlot) return;
 
+        if (!proData) {
+            setBookingMode('court');
+            setStep(3);
+            return;
+        }
+
         try {
             setBookingLoading(true);
             const hours = parseInt(selectedSlot.time.split(':')[0], 10);
@@ -210,10 +216,6 @@ const CourtDetails = () => {
                 success(`Request sent to ${proData.player.name}.`);
                 resetFlow();
                 fetchAvailability();
-            } else {
-                success('Slot reserved.');
-                setBookingMode('court');
-                setStep(3);
             }
         } catch (err) {
             const errorMessage = err.response?.data?.error || 'Booking failed.';
@@ -229,17 +231,37 @@ const CourtDetails = () => {
     };
 
     const handlePayNow = async () => {
-        if (!selectedBooking?._id) return;
         try {
             setPaymentLoading(true);
-            const result = await payForBooking(selectedBooking._id);
+            
+            const hours = parseInt(selectedSlot.time.split(':')[0], 10);
+            const endTime = `${(hours + 1).toString().padStart(2, '0')}:00`;
+
+            const bookingPayload = {
+                courtId: id,
+                date: selectedDate,
+                startTime: selectedSlot.time,
+                endTime
+            };
+
+            const response = await courtService.createBooking(bookingPayload);
+            const bookingId = response.data._id;
+            setSelectedBooking(response.data);
+
+            const result = await payForBooking(bookingId);
             if (result?.completed) {
                 success('Booking confirmed!');
                 resetFlow();
                 fetchAvailability();
             }
-        } catch (payErr) {
-            toastError(payErr?.response?.data?.error || 'Payment could not be completed.');
+        } catch (err) {
+            const errorMessage = err.response?.data?.error || err.message || 'Payment could not be completed.';
+            toastError(errorMessage);
+            if (errorMessage.includes('booked') || errorMessage.includes('reserved')) {
+                fetchAvailability();
+                setSelectedSlot(null);
+                setStep(1);
+            }
         } finally {
             setPaymentLoading(false);
         }
@@ -491,7 +513,7 @@ const CourtDetails = () => {
                                 </div>
                                 <Button
                                     onClick={handlePayNow}
-                                    disabled={!selectedBooking?._id || paymentLoading}
+                                    disabled={paymentLoading}
                                     isLoading={paymentLoading}
                                     fullWidth
                                     className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base max-w-sm"

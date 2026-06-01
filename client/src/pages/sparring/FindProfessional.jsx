@@ -193,9 +193,10 @@ const FindProfessional = () => {
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className="relative bg-white rounded-t-[2rem] sm:rounded-[3rem] shadow-2xl w-full max-w-3xl overflow-hidden max-h-[100vh] sm:max-h-[90vh] flex flex-col self-end sm:self-center"
                         >
-                            <div className="p-6 sm:p-8 pb-4 flex items-center justify-between border-b border-slate-50">
-                                <div className="flex items-center gap-3 sm:gap-4">
-                                    <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 text-xl sm:text-2xl font-bold overflow-hidden">
+                            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 p-6 sm:p-8 sm:pb-10 flex items-start justify-between">
+                                <div className="absolute -top-16 -right-8 h-48 w-48 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
+                                <div className="relative flex items-center gap-4 sm:gap-5">
+                                    <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl sm:rounded-3xl bg-indigo-50 flex items-center justify-center text-indigo-600 text-2xl sm:text-3xl font-black overflow-hidden border-4 border-white/10 shadow-xl">
                                         {selectedUser.profilePicture ? (
                                             <img
                                                 src={selectedUser.profilePicture}
@@ -207,17 +208,17 @@ const FindProfessional = () => {
                                         )}
                                     </div>
                                     <div>
-                                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{selectedUser.name}</h2>
-                                        <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5 sm:mt-1">
-                                            <MapPinIcon className="h-3 w-3" />
-                                            {selectedUser.city || 'Pakistan'} · Pro player
+                                        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">{selectedUser.name}</h2>
+                                        <div className="flex items-center gap-2 text-indigo-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-1.5">
+                                            <MapPinIcon className="h-4 w-4 text-amber-400" />
+                                            {selectedUser.city || 'Pakistan'} <span className="text-indigo-400/50">•</span> Pro player
                                         </div>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={resetModal}
-                                    className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-slate-50 flex items-center justify-center text-slate-400 transition-colors"
+                                    className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white transition-all shadow-lg"
                                 >
                                     <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </button>
@@ -283,20 +284,23 @@ const FindProfessional = () => {
                                                         {slots.map(slot => (
                                                             <div
                                                                 key={slot._id}
-                                                                className="p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border bg-white border-slate-100"
+                                                                className="group relative p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-amber-100/90 bg-white hover:border-amber-300/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                                                             >
-                                                                <div className="flex justify-between items-start gap-3">
-                                                                    <div className="space-y-1">
-                                                                        <div className="flex items-center gap-2 text-xs sm:text-sm font-black tracking-tight uppercase">
-                                                                            <ClockIcon className="h-4 w-4 opacity-60" />
+                                                                <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl sm:rounded-[2rem]" />
+                                                                <div className="relative flex justify-between items-start gap-3">
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="flex items-center gap-2 text-sm font-black text-slate-900 tracking-tight uppercase">
+                                                                            <ClockIcon className="h-4 w-4 text-amber-500" />
                                                                             {formatSlotHourRange(slot.startTime, slot.endTime)}
                                                                         </div>
-                                                                        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                                                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                                                                             {(slot.sparringType || 'singles').replace('_', ' ')} session
                                                                         </div>
                                                                     </div>
-                                                                    <div className="px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-black border bg-emerald-50 border-emerald-100 text-emerald-600 shrink-0">
-                                                                        PKR {slot.matchFee}
+                                                                    <div className="flex flex-col items-end gap-2">
+                                                                        <div className="px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black border bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm">
+                                                                            PKR {slot.matchFee}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>

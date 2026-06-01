@@ -75,7 +75,7 @@ const Home = () => {
                                             <Link to="/login">
                                                 <Button
                                                     variant="outline"
-                                                    className="h-12 px-8 rounded-xl font-bold border-amber-300/40 text-amber-100 hover:bg-white/10"
+                                                    className="h-12 px-8 rounded-xl font-bold border-amber-300/40 text-black hover:bg-amber-400 hover:text-black hover:border-amber-400 transition-colors"
                                                 >
                                                     Log in
                                                 </Button>

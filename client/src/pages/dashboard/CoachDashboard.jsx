@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CalendarDaysIcon, ClockIcon, UserIcon, CheckCircleIcon, XCircleIcon, SparklesIcon, MapPinIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
-import StatCard from '../../components/ui/StatCard';
+import StatTile from '../../components/ui/StatTile';
 import { useAuth } from '../../context/AuthContext';
 import sparringService from '../../services/sparringService';
 import sessionService from '../../services/sessionService';
@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import * as paymentService from '../../services/paymentService';
 import { sumCoachingHours, formatCoachingHours } from '../../utils/timeFormat';
 import { expandCoachingSessionsForCoach } from '../../utils/coachingSessionRequests';
+import { twMerge } from 'tailwind-merge';
 
 const CoachDashboard = () => {
     const { user } = useAuth();
@@ -111,50 +112,50 @@ const CoachDashboard = () => {
     return (
         <div className="space-y-12 animate-enter max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                <div>
-                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-none">
-                        Coach Dashboard
-                    </h1>
-                    <p className="mt-3 sm:mt-4 text-base sm:text-xl text-slate-500 font-medium max-w-2xl leading-relaxed">
-                        Manage your sessions and track your performance.
-                    </p>
-                </div>
-                <div className="flex gap-4">
-                    <Link to="/coach/schedule">
-                        <Button variant="primary" className="h-14 px-8 rounded-2xl shadow-xl shadow-indigo-100 font-bold">
-                            Manage Availability
-                        </Button>
-                    </Link>
-                </div>
-            </div>
+            <header className="rounded-2xl border border-amber-200/80 bg-gradient-to-r from-indigo-950 to-indigo-900 px-5 sm:px-8 py-6 sm:py-8 text-white shadow-md">
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+    <div>
+      <p className="text-sm text-indigo-200/90 font-medium">Welcome back</p>
+      <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">Coach Dashboard</h1>
+      <p className="text-sm text-indigo-100/80 mt-2">
+        Manage your sessions and track your performance.
+      </p>
+    </div>
+    <Link to="/coach/schedule">
+      <Button className="h-12 px-6 rounded-xl font-bold bg-amber-400 hover:bg-amber-300 text-indigo-950 gap-2">
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+        Manage Availability
+      </Button>
+    </Link>
+  </div>
+</header>
 
             {/* Stats */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <StatCard
-                    title="Total Sessions"
-                    value={stats.totalSessions}
-                    icon={CheckBadgeIcon}
-                    color="blue"
-                />
-                <StatCard
-                    title="Total Students"
-                    value={stats.totalStudents}
-                    icon={UserIcon}
-                    color="blue"
-                />
-                <StatCard
-                    title="Hours Coached"
-                    value={formatCoachingHours(stats.hoursCoached)}
-                    icon={ClockIcon}
-                    color="green"
-                />
+                
+<StatTile
+    icon={CheckBadgeIcon}
+    label="Total Sessions"
+    value={stats.totalSessions}
+/>
+<StatTile
+    icon={UserIcon}
+    label="Total Students"
+    value={stats.totalStudents}
+    href="/app/sparring"
+    dark
+/>
+<StatTile
+    icon={ClockIcon}
+    label="Hours Coached"
+    value={formatCoachingHours(stats.hoursCoached)}
+/>
             </div>
 
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 items-start">
                 {/* Incoming Requests */}
                 <div className="flex flex-col space-y-4">
-                    <div className="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden flex flex-col min-h-[400px]">
+                    <div className="bg-white/90 backdrop-blur-lg border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden flex flex-col min-h-[400px] shadow-lg">
                         <div className="px-6 sm:px-10 py-6 sm:py-8 flex items-center justify-between border-b border-slate-50">
                             <div className="flex items-center gap-3">
                                 <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
@@ -298,7 +299,7 @@ const CoachDashboard = () => {
 
                 {/* Confirmed Schedule */}
                 <div className="flex flex-col space-y-4">
-                    <div className="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden flex flex-col min-h-[400px]">
+                    <div className="bg-white/90 backdrop-blur-lg border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden flex flex-col min-h-[400px] shadow-lg">
                         <div className="px-6 sm:px-10 py-6 sm:py-8 flex items-center justify-between border-b border-slate-50">
                             <div className="flex items-center gap-3">
                                 <div className="h-8 w-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
