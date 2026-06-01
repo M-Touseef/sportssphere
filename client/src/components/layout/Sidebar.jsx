@@ -4,7 +4,6 @@ import {
     CalendarIcon,
     UsersIcon,
     TrophyIcon,
-    Cog6ToothIcon,
     ChartBarIcon,
     XMarkIcon,
     MapPinIcon,
@@ -23,7 +22,7 @@ import {
     UserCircleIcon,
     ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion as Motion } from 'framer-motion'
 import { twMerge } from 'tailwind-merge'
 
 export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
@@ -70,8 +69,9 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
     }
 
     const secondaryNav = [
-        { name: 'Profile', href: '/app/profile', icon: UserCircleIcon },
-        { name: 'Settings', href: '/app/settings', icon: Cog6ToothIcon },
+        ...(user?.role === 'admin'
+            ? []
+            : [{ name: 'Profile', href: '/app/profile', icon: UserCircleIcon }]),
         { name: 'Logout', href: '/logout', icon: ArrowRightOnRectangleIcon }
     ];
 
@@ -79,12 +79,12 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
         <div className="flex h-full grow flex-col gap-y-10 overflow-y-auto border-r border-slate-200/60 bg-gradient-to-b from-slate-50 via-white to-slate-50 px-6 sm:px-8 pb-10 shadow-[10px_0_60px_-20px_rgba(0,0,0,0.12)]">
             <div className="flex h-24 shrink-0 items-center justify-between">
                 <Link to="/" className="flex items-center gap-3.5 group">
-                    <motion.div
+                    <Motion.div
                         whileHover={{ rotate: 10, scale: 1.06 }}
                         className="h-12 w-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-300 transition-transform duration-500"
                     >
                         <TrophyIcon className="h-7 w-7" />
-                    </motion.div>
+                    </Motion.div>
                     <span className="text-2xl font-black tracking-tight leading-none text-slate-900 group-hover:text-slate-800 transition-all duration-500">
                         SportsSphere
                     </span>
@@ -111,7 +111,7 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
                                     (item.href === '/tournaments' && location.pathname.startsWith('/tournaments'));
                                 return (
                                     <li key={item.name}>
-                                        <motion.div whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>
+                                        <Motion.div whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>
                                             <Link
                                                 to={item.href}
                                                 onClick={onCloseMobile}
@@ -129,11 +129,11 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
                                                 {item.name}
                                                 {isActive && (
                                                     <>
-                                                        <motion.div
+                                                        <Motion.div
                                                             layoutId="sidebar-active"
                                                             className="absolute -left-8 top-1/2 -translate-y-1/2 h-8 w-1.5 bg-slate-800 rounded-r-full"
                                                         />
-                                                        <motion.div
+                                                        <Motion.div
                                                             initial={{ opacity: 0.3 }}
                                                             animate={{ opacity: 0.85 }}
                                                             transition={{ repeat: Infinity, repeatType: 'reverse', duration: 1.1 }}
@@ -142,7 +142,7 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
                                                     </>
                                                 )}
                                             </Link>
-                                        </motion.div>
+                                        </Motion.div>
                                     </li>
                                 );
                             })}

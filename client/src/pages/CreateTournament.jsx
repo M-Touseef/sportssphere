@@ -18,7 +18,7 @@ import {
     TrashIcon,
     InformationCircleIcon
 } from '@heroicons/react/24/outline';
-import { AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import {
     TOURNAMENT_GRADES,
     TOURNAMENT_FORMAT,
@@ -260,7 +260,7 @@ const CreateTournament = () => {
                     <div className="space-y-6">
                         <AnimatePresence mode="popLayout">
                             {fields.map((field, index) => (
-                                <motion.div
+                                <Motion.div
                                     key={field.id}
                                     layout
                                     initial={{ opacity: 0, scale: 0.95 }}
@@ -346,7 +346,7 @@ const CreateTournament = () => {
                                             {...register(`categories.${index}.prizePool.third`, { valueAsNumber: true })}
                                         />
                                     </div>
-                                </motion.div>
+                                </Motion.div>
                             ))}
                         </AnimatePresence>
                     </div>
