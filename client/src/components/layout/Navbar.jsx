@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon, BellIcon, TrophyIcon, SparklesIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import { Link, useLocation } from 'react-router-dom'
@@ -22,8 +22,27 @@ export default function Navbar() {
     const isAuthPage = AUTH_PATHS.includes(location.pathname)
     const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications()
 
+    // --- Transparent navbar on home page ---
+    const isHomePage = location.pathname === '/'
+    const [scrolled, setScrolled] = useState(false)
+
+    useEffect(() => {
+        if (!isHomePage) { setScrolled(false); return }
+        const onScroll = () => setScrolled(window.scrollY > 80)
+        onScroll() // initial check
+        window.addEventListener('scroll', onScroll, { passive: true })
+        return () => window.removeEventListener('scroll', onScroll)
+    }, [isHomePage])
+
+    const isTransparent = isHomePage && !scrolled
+
     return (
-        <Disclosure as="nav" className="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-amber-100/80 shadow-sm">
+        <Disclosure as="nav" className={twMerge(
+            'sticky top-0 z-[100] border-b shadow-sm navbar-transitioning',
+            isHomePage
+                ? (scrolled ? 'bg-[#0a0a1a]/95 backdrop-blur-md border-white/10' : 'navbar-transparent border-transparent')
+                : 'bg-white/95 backdrop-blur-md border-amber-100/80'
+        )}>
             {({ open }) => (
                 <>
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -33,12 +52,14 @@ export default function Navbar() {
                                     <div className="h-8 w-8 bg-indigo-950 rounded-lg flex items-center justify-center text-amber-200">
                                         <TrophyIcon className="h-5 w-5" />
                                     </div>
-                                    <span className="text-base sm:text-lg font-black tracking-tight text-indigo-950 group-hover:text-indigo-800">
+                                    <span className={twMerge(
+                                        'text-base sm:text-lg font-black tracking-tight navbar-logo-text',
+                                        isHomePage ? 'text-white' : 'text-indigo-950 group-hover:text-indigo-800'
+                                    )}>
                                         SportsSphere
                                     </span>
                                 </Link>
 
-                                {user && (
                                 <div className="hidden lg:flex gap-1">
                                     {navigation.map((item) => {
                                         const isActive = location.pathname.startsWith(item.href)
@@ -47,10 +68,10 @@ export default function Navbar() {
                                                 key={item.name}
                                                 to={item.href}
                                                 className={twMerge(
-                                                    'text-sm font-bold px-3 py-2 rounded-lg transition-colors',
-                                                    isActive
-                                                        ? 'text-indigo-950 bg-amber-50'
-                                                        : 'text-slate-600 hover:text-indigo-950 hover:bg-slate-50'
+                                                    'text-sm font-bold px-3 py-2 rounded-lg transition-colors navbar-link',
+                                                    isHomePage
+                                                        ? (isActive ? 'text-white bg-white/10' : 'text-white/80 hover:text-white hover:bg-white/10')
+                                                        : (isActive ? 'text-indigo-950 bg-amber-50' : 'text-slate-600 hover:text-indigo-950 hover:bg-slate-50')
                                                 )}
                                             >
                                                 {item.name}
@@ -58,7 +79,6 @@ export default function Navbar() {
                                         )
                                     })}
                                 </div>
-                                )}
                             </div>
 
                             <div className="flex items-center gap-2 sm:gap-3">
@@ -222,14 +242,24 @@ export default function Navbar() {
                                         <div className="hidden sm:flex items-center gap-2">
                                             <Link
                                                 to="/login"
-                                                className="text-sm font-bold text-slate-700 hover:text-indigo-950 px-3 py-2"
+                                                className={twMerge(
+                                                    'text-sm font-bold px-3 py-2 navbar-link',
+                                                    isHomePage
+                                                        ? 'text-white/85 hover:text-white'
+                                                        : 'text-slate-700 hover:text-indigo-950'
+                                                )}
                                             >
                                                 Log in
                                             </Link>
                                             <Link to="/register">
                                                 <Button
                                                     size="sm"
-                                                    className="px-5 rounded-lg font-bold bg-indigo-950 text-amber-50 hover:bg-indigo-900"
+                                                    className={twMerge(
+                                                        'px-5 rounded-lg font-bold',
+                                                        isHomePage
+                                                            ? 'bg-amber-400 text-indigo-950 hover:bg-amber-300 shadow-lg shadow-amber-400/20'
+                                                            : 'bg-indigo-950 text-amber-50 hover:bg-indigo-900'
+                                                    )}
                                                 >
                                                     Sign up
                                                 </Button>
@@ -239,7 +269,12 @@ export default function Navbar() {
                                 )}
 
                                 {!isAuthPage && (
-                                    <Disclosure.Button className="lg:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg border border-slate-200">
+                                    <Disclosure.Button className={twMerge(
+                                        'lg:hidden p-2 rounded-lg border navbar-menu-btn',
+                                        isHomePage
+                                            ? 'text-white border-white/25 hover:bg-white/10'
+                                            : 'text-slate-600 hover:bg-slate-50 border-slate-200'
+                                    )}>
                                         <span className="sr-only">Menu</span>
                                         {open ? (
                                             <XMarkIcon className="h-5 w-5" />
@@ -255,7 +290,7 @@ export default function Navbar() {
                     {!isAuthPage && (
                         <Disclosure.Panel className="lg:hidden border-t border-slate-100 bg-white">
                             <div className="p-4 space-y-1">
-                                {user && navigation.map((item) => (
+                                {navigation.map((item) => (
                                     <Disclosure.Button
                                         key={item.name}
                                         as={Link}

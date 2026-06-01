@@ -38,7 +38,6 @@ import PendingVerification from './pages/PendingVerification';
 import ProfileSetup from './pages/ProfileSetup';
 import RoleSelection from './pages/RoleSelection';
 import PaymentReturn from './pages/PaymentReturn';
-import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import TermsOfService from './pages/legal/TermsOfService';
 import SupportCenter from './pages/legal/SupportCenter';
 
@@ -137,7 +136,6 @@ const AnimatedRoutes = () => {
           <Route path="/pending-verification" element={<PageTransition><PendingVerification /></PageTransition>} />
           {/* JazzCash return URL — no auth required, browser redirect from JazzCash */}
           <Route path="/payment/return" element={<PaymentReturn />} />
-          <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
           <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
           <Route path="/support" element={<PageTransition><SupportCenter /></PageTransition>} />
         </Route>
