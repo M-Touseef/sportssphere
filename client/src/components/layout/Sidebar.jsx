@@ -25,7 +25,7 @@ import {
 import { motion as Motion } from 'framer-motion'
 import { twMerge } from 'tailwind-merge'
 
-export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
+export default function Sidebar({ user, logout, onCloseMobile, isMobile = false }) {
     const location = useLocation()
     const userRoleLabel = user?.role === 'player'
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
@@ -72,7 +72,7 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
         ...(user?.role === 'admin'
             ? []
             : [{ name: 'Profile', href: '/app/profile', icon: UserCircleIcon }]),
-        { name: 'Logout', href: '/logout', icon: ArrowRightOnRectangleIcon }
+        { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon }
     ];
 
     return (
@@ -159,22 +159,36 @@ export default function Sidebar({ user, onCloseMobile, isMobile = false }) {
                                 const isActive = location.pathname === item.href;
                                 return (
                                     <li key={item.name}>
-                                        <Link
-                                            to={item.href}
-                                            onClick={onCloseMobile}
-                                            className={twMerge(
-                                                "group flex gap-x-4 rounded-2xl p-4 text-[13px] font-bold leading-none transition-all duration-300",
-                                                isActive
-                                                    ? "bg-slate-800 text-white shadow-xl shadow-slate-300"
-                                                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:shadow-md"
-                                            )}
-                                        >
-                                            <item.icon className={twMerge(
-                                                "h-5 w-5 shrink-0 transition-colors",
-                                                isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
-                                            )} />
-                                            {item.name}
-                                        </Link>
+                                        {item.onClick ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    onCloseMobile?.();
+                                                    item.onClick();
+                                                }}
+                                                className="group flex w-full gap-x-4 rounded-2xl p-4 text-[13px] font-bold leading-none text-slate-500 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900 hover:shadow-md"
+                                            >
+                                                <item.icon className="h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-700" />
+                                                {item.name}
+                                            </button>
+                                        ) : (
+                                            <Link
+                                                to={item.href}
+                                                onClick={onCloseMobile}
+                                                className={twMerge(
+                                                    "group flex gap-x-4 rounded-2xl p-4 text-[13px] font-bold leading-none transition-all duration-300",
+                                                    isActive
+                                                        ? "bg-slate-800 text-white shadow-xl shadow-slate-300"
+                                                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:shadow-md"
+                                                )}
+                                            >
+                                                <item.icon className={twMerge(
+                                                    "h-5 w-5 shrink-0 transition-colors",
+                                                    isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
+                                                )} />
+                                                {item.name}
+                                            </Link>
+                                        )}
                                     </li>
                                 );
                             })}

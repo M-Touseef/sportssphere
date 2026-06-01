@@ -15,8 +15,8 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
     return (
         <div
             className={clsx(
-                "relative flex flex-col justify-center my-6 w-72 transition-all duration-300",
-                isActionable ? "cursor-pointer transform hover:scale-105" : ""
+                "relative flex w-[min(17rem,calc(100vw-4.5rem))] flex-col justify-center my-3 sm:my-6 sm:w-72 transition-all duration-300",
+                isActionable ? "cursor-pointer sm:hover:scale-[1.03]" : ""
             )}
             onClick={() => isActionable && onMatchClick && onMatchClick(match.rawMatch)}
         >
@@ -84,7 +84,7 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
 
             {/* Connectors */}
             {roundIndex < totalRounds - 1 && (
-                <div className="absolute top-1/2 -right-8 w-8 h-px bg-slate-300"></div>
+                <div className="absolute top-1/2 -right-5 w-5 sm:-right-8 sm:w-8 h-px bg-slate-300"></div>
             )}
         </div>
     );
@@ -98,10 +98,10 @@ export default function TournamentBracket({ rounds, onMatchClick, isEditable }) 
     );
 
     return (
-        <div className="overflow-x-auto py-12 px-4 hide-scrollbar">
-            <div className="flex space-x-16 min-w-max">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory px-1 pb-4 pt-6 sm:px-4 sm:py-12 [scrollbar-width:thin] [scrollbar-color:rgb(251_191_36)_rgb(241_245_249)]">
+            <div className="flex min-w-max gap-x-10 sm:gap-x-16">
                 {rounds.map((round, rIndex) => (
-                    <div key={rIndex} className="flex flex-col relative">
+                    <section key={round.title || rIndex} className="relative flex flex-col snap-start">
                         {/* Round Title */}
                         <div className="mb-6 text-center py-2 px-3 rounded-lg bg-indigo-950/5 border border-amber-100">
                             <h3 className="font-bold text-[11px] uppercase tracking-wider text-indigo-950">
@@ -110,7 +110,7 @@ export default function TournamentBracket({ rounds, onMatchClick, isEditable }) 
                         </div>
 
                         {/* Matches */}
-                        <div className="flex flex-col justify-around flex-grow gap-y-8 px-2">
+                        <div className="flex flex-grow flex-col justify-around gap-y-3 px-1 sm:gap-y-8 sm:px-2">
                             {round.matches.map((match, mIndex) => (
                                 <div key={match.id} className="relative flex items-center">
                                     <MatchCard
@@ -124,7 +124,7 @@ export default function TournamentBracket({ rounds, onMatchClick, isEditable }) 
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 ))}
             </div>
         </div>

@@ -37,7 +37,7 @@ export default function DashboardLayout() {
                             leaveTo="-translate-x-full"
                         >
                             <Dialog.Panel className="relative flex w-full max-w-xs flex-1">
-                                <Sidebar user={user} onCloseMobile={() => setSidebarOpen(false)} isMobile={true} />
+                                <Sidebar user={user} logout={logout} onCloseMobile={() => setSidebarOpen(false)} isMobile={true} />
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>
@@ -46,7 +46,7 @@ export default function DashboardLayout() {
 
             {/* Static Desktop Sidebar */}
             <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-                <Sidebar user={user} />
+                <Sidebar user={user} logout={logout} />
             </aside>
 
             {/* Main Content Area */}
