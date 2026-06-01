@@ -81,49 +81,49 @@ const ProfessionalProfile = () => {
     if (loading) return <LoadingSpinner />;
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Professional Profile</h1>
-                    <p className="mt-1 text-sm text-slate-500">Manage your public profile, fees, and specializations.</p>
-                </div>
-                {profileExists && !isEditing && (
-                    <button
-                        onClick={() => setIsEditing(true)}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
-                    >
-                        Edit Profile
-                    </button>
-                )}
-            </div>
+        <div className="max-w-4xl mx-auto space-y-8">
+            {/* ── Gradient Header ─────────────────────────────── */}
+            <header className="relative bg-gradient-to-r from-indigo-600 to-amber-500 p-8 rounded-2xl shadow-lg text-white overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
 
-            {submitStatus === 'success' && (
-                <div className="mb-6 rounded-xl bg-green-50 p-4 border border-green-200">
-                    <div className="flex">
-                        <CheckCircleIcon className="h-5 w-5 text-green-400" aria-hidden="true" />
-                        <div className="ml-3">
-                            <h3 className="text-sm font-medium text-green-800">Profile saved successfully</h3>
-                        </div>
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-extrabold tracking-tight">Professional Profile</h1>
+                        <p className="mt-1 text-sm opacity-90">Manage your public profile, fees, and specializations.</p>
                     </div>
+                    {profileExists && !isEditing && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="inline-flex items-center px-5 py-2.5 bg-white text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-all shadow-lg shadow-indigo-200"
+                        >
+                            Edit Profile
+                        </button>
+                    )}
+                </div>
+            </header>
+
+            {/* ── Status Alerts ────────────────────────────────── */}
+            {submitStatus === 'success' && (
+                <div className="rounded-2xl bg-emerald-50 p-4 border border-emerald-200 flex items-center gap-3">
+                    <CheckCircleIcon className="h-5 w-5 text-emerald-500 shrink-0" />
+                    <h3 className="text-sm font-medium text-emerald-800">Profile saved successfully</h3>
                 </div>
             )}
 
             {submitStatus === 'error' && (
-                <div className="mb-6 rounded-xl bg-red-50 p-4 border border-red-200">
-                    <div className="flex">
-                        <ExclamationCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
-                        <div className="ml-3">
-                            <h3 className="text-sm font-medium text-red-800">Error saving profile. Please try again.</h3>
-                        </div>
-                    </div>
+                <div className="rounded-2xl bg-red-50 p-4 border border-red-200 flex items-center gap-3">
+                    <ExclamationCircleIcon className="h-5 w-5 text-red-500 shrink-0" />
+                    <h3 className="text-sm font-medium text-red-800">Error saving profile. Please try again.</h3>
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sm:p-8">
+            {/* ── Profile Form Card ──────────────────────────── */}
+            <div className="bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-100 shadow-md p-6 sm:p-8">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                     {/* Basic Info */}
                     <div>
-                        <h3 className="text-lg font-medium text-slate-900 mb-4">Basic Information</h3>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">Basic Information</h3>
                         <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                             <div className="sm:col-span-3">
                                 <label htmlFor="matchFee" className="block text-sm font-medium text-slate-700">
@@ -198,7 +198,7 @@ const ProfessionalProfile = () => {
 
                     {/* Specializations */}
                     <div>
-                        <h3 className="text-lg font-medium text-slate-900 mb-4">Specializations</h3>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4">Specializations</h3>
                         <fieldset disabled={!isEditing && profileExists}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <SpecializationOption label="Singles" value="singles" register={register} />
@@ -210,12 +210,12 @@ const ProfessionalProfile = () => {
                         </fieldset>
                     </div>
 
-                    {/* Visibility Toggle (only when editing existing profile) */}
-                    {profileExists && (isEditing || !isEditing) && (
+                    {/* Visibility Toggle */}
+                    {profileExists && (
                         <div className="pt-6 border-t border-slate-200">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-lg font-medium text-slate-900">Profile Visibility</h3>
+                                    <h3 className="text-lg font-bold text-slate-900">Profile Visibility</h3>
                                     <p className="text-sm text-slate-500">
                                         When active, your profile is visible to non-professional players in search results.
                                     </p>
@@ -246,9 +246,9 @@ const ProfessionalProfile = () => {
                                     type="button"
                                     onClick={() => {
                                         setIsEditing(false);
-                                        reset(); // Reset form to initial values
+                                        reset();
                                     }}
-                                    className="px-4 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                    className="px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -256,7 +256,7 @@ const ProfessionalProfile = () => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-6 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-2.5 border border-transparent rounded-xl shadow-md shadow-indigo-200 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             >
                                 {isSubmitting ? 'Saving...' : 'Save Profile'}
                             </button>

@@ -20,7 +20,7 @@ import * as professionalService from '../../services/professionalService';
 import { motion } from 'framer-motion';
 import Button from '../../components/ui/Button';
 
-import StatCard from '../../components/ui/StatCard';
+import StatTile from '../../components/ui/StatTile';
 import RequestCard from '../../components/professional/RequestCard';
 
 const ProfessionalDashboard = () => {
@@ -93,6 +93,12 @@ const ProfessionalDashboard = () => {
 
     return (
         <div className="space-y-8 max-w-7xl mx-auto">
+  {/* Header */}
+  <header className="bg-gradient-to-r from-indigo-600 to-amber-500 p-6 rounded-2xl shadow-md text-white">
+    <h1 className="text-3xl font-extrabold">Professional Dashboard</h1>
+    <p className="mt-1 text-sm opacity-90">Manage your competitive career and training schedule.</p>
+  </header>
+  
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
@@ -143,29 +149,25 @@ const ProfessionalDashboard = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title="Active Tournaments"
-                    value={upcomingTournaments.length}
-                    icon={TrophyIcon}
-                    color="yellow"
+                <StatTile
+                  label="Active Tournaments"
+                  value={upcomingTournaments.length}
+                  icon={TrophyIcon}
                 />
-                <StatCard
-                    title="Upcoming Bookings"
-                    value={upcomingBookings.length}
-                    icon={CalendarIcon}
-                    color="green"
+                <StatTile
+                  label="Upcoming Bookings"
+                  value={upcomingBookings.length}
+                  icon={CalendarIcon}
                 />
-                <StatCard
-                    title="Action Items"
-                    value={pendingRequests.length}
-                    icon={InboxIcon}
-                    color="red"
+                <StatTile
+                  label="Action Items"
+                  value={pendingRequests.length}
+                  icon={InboxIcon}
                 />
-                <StatCard
-                    title="Skill Level"
-                    value="PRO"
-                    icon={AcademicCapIcon}
-                    color="indigo"
+                <StatTile
+                  label="Skill Level"
+                  value="PRO"
+                  icon={AcademicCapIcon}
                 />
             </div>
 
