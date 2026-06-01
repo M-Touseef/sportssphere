@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeftIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PhotoIcon, XMarkIcon, MapPinIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
 import courtService from '../../services/courtService';
 import uploadService from '../../services/uploadService';
 import { useToast } from '../../context/ToastContext';
@@ -60,7 +60,7 @@ export default function CreateCourt() {
         return () => {
             cancelled = true;
         };
-    }, [courtId, reset]);
+    }, [courtId, reset, error]);
 
     const onSubmit = async (data) => {
         try {
@@ -140,23 +140,36 @@ export default function CreateCourt() {
     }
 
     return (
-        <div className="max-w-3xl mx-auto py-10 animate-enter">
-            <div className="mb-8 px-4 sm:px-0">
-                <Link to="/org/courts" className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 mb-4 transition-colors">
+        <div className="max-w-5xl mx-auto animate-enter space-y-8">
+            <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-amber-500 p-6 sm:p-8 text-white shadow-lg">
+                <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+                <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+                <div className="relative z-10">
+                <Link to="/org/courts" className="mb-5 inline-flex items-center text-sm font-semibold text-white/85 transition-colors hover:text-white">
                     <ArrowLeftIcon className="h-4 w-4 mr-1" />
                     Back to My Courts
                 </Link>
-                <h1 className="text-3xl font-bold text-slate-900">{isEdit ? 'Edit court' : 'Add new court'}</h1>
-                <p className="text-slate-500 mt-2">
-                    {isEdit ? 'Update your listing, photos, and pricing.' : 'Create a new listing for your facility.'}
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-100">Venue listing</p>
+                <h1 className="mt-2 text-3xl font-extrabold">{isEdit ? 'Edit Court' : 'Add New Court'}</h1>
+                <p className="mt-2 max-w-2xl text-sm text-white/90">
+                    {isEdit ? 'Keep your venue details, pricing, and photos current for players.' : 'Create a polished listing for your facility and make it easier for players to book.'}
                 </p>
+                </div>
+            </header>
+
+            <div className="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-amber-50 p-4 text-sm text-indigo-950">
+                <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
+                <p className="font-medium leading-relaxed">Use clear venue details and bright, recent photos. Players will see this information before they book a court.</p>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden mx-4 sm:mx-0">
+            <div className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)]">
                 <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-8">
 
-                    <div className="space-y-6">
-                        <h2 className="text-lg font-bold text-slate-900 border-l-4 border-indigo-500 pl-3">General information</h2>
+                    <div className="space-y-6 rounded-2xl bg-slate-50/70 p-5 sm:p-6">
+                        <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                            <BuildingOffice2Icon className="h-5 w-5 text-indigo-600" />
+                            General Information
+                        </h2>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div className="col-span-2">
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Court name</label>
@@ -195,8 +208,11 @@ export default function CreateCourt() {
                         </div>
                     </div>
 
-                    <div className="space-y-6">
-                        <h2 className="text-lg font-bold text-slate-900 border-l-4 border-indigo-500 pl-3">Location</h2>
+                    <div className="space-y-6 rounded-2xl border border-amber-100 bg-amber-50/40 p-5 sm:p-6">
+                        <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                            <MapPinIcon className="h-5 w-5 text-amber-600" />
+                            Location
+                        </h2>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div className="col-span-2">
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Address</label>
@@ -221,8 +237,8 @@ export default function CreateCourt() {
                         </div>
                     </div>
 
-                    <div className="space-y-6">
-                        <h2 className="text-lg font-bold text-slate-900 border-l-4 border-indigo-500 pl-3">Details & amenities</h2>
+                    <div className="space-y-6 rounded-2xl bg-slate-50/70 p-5 sm:p-6">
+                        <h2 className="text-lg font-bold text-slate-900">Details & Amenities</h2>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Description</label>
@@ -247,8 +263,8 @@ export default function CreateCourt() {
                         </div>
                     </div>
 
-                    <div className="space-y-6">
-                        <h2 className="text-lg font-bold text-slate-900 border-l-4 border-indigo-500 pl-3">Operating hours</h2>
+                    <div className="space-y-6 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 sm:p-6">
+                        <h2 className="text-lg font-bold text-slate-900">Operating Hours</h2>
                         <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Opening time</label>
@@ -269,8 +285,8 @@ export default function CreateCourt() {
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-bold text-slate-900 border-l-4 border-indigo-500 pl-3">Court photos</h2>
+                    <div className="space-y-4 rounded-2xl bg-slate-50/70 p-5 sm:p-6">
+                        <h2 className="text-lg font-bold text-slate-900">Court Photos</h2>
                         <p className="text-sm text-slate-500">Up to 5 photos total (existing + new).</p>
                         <div className="flex gap-4 flex-wrap">
                             {existingImageUrls.map((url, i) => (
@@ -301,7 +317,7 @@ export default function CreateCourt() {
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current.click()}
-                                    className="h-28 w-28 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-indigo-500 hover:text-indigo-500 hover:bg-slate-50 transition-all gap-1"
+                                    className="h-28 w-28 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-200 bg-white text-slate-400 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all gap-1"
                                 >
                                     <PhotoIcon className="h-8 w-8" />
                                     <span className="text-[10px] font-bold uppercase tracking-wider">Add photo</span>
@@ -318,14 +334,14 @@ export default function CreateCourt() {
                         />
                     </div>
 
-                    <div className="pt-8 flex justify-end gap-4 border-t border-slate-50">
+                    <div className="pt-8 flex flex-col-reverse justify-end gap-3 border-t border-amber-100 sm:flex-row sm:gap-4">
                         <Link to="/org/courts">
                             <Button type="button" variant="outline" className="px-8 border-slate-200">Cancel</Button>
                         </Link>
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 rounded-xl shadow-lg shadow-indigo-100 min-w-[160px]"
+                            className="bg-indigo-950 hover:bg-indigo-900 text-amber-50 px-10 rounded-xl shadow-lg shadow-indigo-950/15 min-w-[160px]"
                         >
                             {isSubmitting ? (
                                 <span className="flex items-center gap-2">

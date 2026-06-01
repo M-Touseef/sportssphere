@@ -18,7 +18,7 @@ import {
     TrashIcon,
     InformationCircleIcon
 } from '@heroicons/react/24/outline';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
     TOURNAMENT_GRADES,
     TOURNAMENT_FORMAT,
@@ -84,7 +84,7 @@ const CreateTournament = () => {
             }
         })();
         return () => { cancelled = true; };
-    }, []);
+    }, [toastError]);
 
     const selectedCourt = myCourts.find((c) => String(c._id) === String(selectedCourtId));
 
@@ -101,39 +101,46 @@ const CreateTournament = () => {
                 contactPhone: String(data.contactPhone || '').replace(/\D/g, '')
             };
             await tournamentService.createTournament(payload);
-            success('Championship deployment successful! Redirecting to command center.');
+            success('Tournament created successfully. Redirecting to your tournaments.');
             setTimeout(() => navigate('/app/tournaments'), 2000);
         } catch (error) {
-            toastError(error.response?.data?.error || 'Intelligence failure during deployment.');
+            toastError(error.response?.data?.error || 'Failed to create tournament.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-enter">
-            <div className="mb-12">
+        <div className="max-w-6xl mx-auto animate-enter space-y-8">
+            <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-amber-500 p-6 sm:p-8 text-white shadow-lg">
+                <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+                <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+                <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-4">
-                    <div className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
+                    <div className="h-12 w-12 bg-indigo-950 rounded-xl flex items-center justify-center text-amber-100 shadow-lg shadow-indigo-950/20">
                         <TrophyIcon className="h-7 w-7" />
                     </div>
-                    <h1 className="text-4xl font-black text-foreground uppercase tracking-widest leading-none">Championship Setup</h1>
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-100">Tournament management</p>
+                        <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight leading-none">Create Tournament</h1>
+                    </div>
                 </div>
-                <p className="text-lg text-muted-foreground font-medium">Choose one of your courts as the venue, then set dates and divisions.</p>
-            </div>
+                <p className="max-w-2xl text-sm text-white/90 font-medium">Choose one of your courts as the venue, then set dates, divisions, prizes, and contact details.</p>
+                </div>
+            </header>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 pb-20">
                 {/* Basic Intel */}
-                <div className="bg-card shadow-sm ring-1 ring-border rounded-3xl p-8 md:p-10 space-y-8">
-                    <div className="flex items-center gap-3 border-b border-border pb-6">
-                        <InformationCircleIcon className="h-5 w-5 text-primary" />
+                <div className="bg-card shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl p-6 md:p-8 space-y-8">
+                    <div className="flex items-center gap-3 border-b border-amber-100 pb-6">
+                        <InformationCircleIcon className="h-5 w-5 text-indigo-600" />
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Tournament details</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="md:col-span-2">
                             <Input
-                                label="Championship Title"
+                                label="Tournament Title"
                                 placeholder="e.g. Winter Masters Open 2025"
                                 error={errors.name}
                                 {...register('name', { required: 'Championship title is mandatory' })}
@@ -144,8 +151,8 @@ const CreateTournament = () => {
                                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Strategic Description</label>
                                 <textarea
                                     className="w-full rounded-xl border border-input bg-background p-4 font-bold text-sm min-h-[120px] focus:ring-2 focus:ring-primary outline-none transition-all placeholder:font-normal"
-                                    placeholder="Brief the athletes on the event scope..."
-                                    {...register('description', { required: 'Mission briefing is required' })}
+                                    placeholder="Describe the event for players..."
+                                    {...register('description', { required: 'Tournament description is required' })}
                                 />
                                 {errors.description && <p className="text-[10px] font-black text-destructive uppercase pl-1">{errors.description.message}</p>}
                             </div>
@@ -213,24 +220,24 @@ const CreateTournament = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Combat Format</label>
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Tournament Format</label>
                             <input type="hidden" {...register('format')} value={TOURNAMENT_FORMAT} />
                             <div className="flex h-11 items-center px-4 rounded-xl border border-input bg-muted/40 font-bold text-sm text-foreground">
                                 {TOURNAMENT_FORMAT_LABEL}
                             </div>
                             <p className="text-xs text-muted-foreground pl-1">
-                                All championships use knockout single elimination.
+                                All tournaments use knockout single elimination.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Categories */}
-                <div className="bg-card shadow-sm ring-1 ring-border rounded-3xl p-8 md:p-10 space-y-8">
-                    <div className="flex items-center justify-between border-b border-border pb-6">
+                <div className="bg-card shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl p-6 md:p-8 space-y-8">
+                    <div className="flex items-center justify-between border-b border-amber-100 pb-6">
                         <div className="flex items-center gap-3">
-                            <Bars3CenterLeftIcon className="h-5 w-5 text-primary" />
-                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Conflict Tiers (Categories)</h3>
+                            <Bars3CenterLeftIcon className="h-5 w-5 text-indigo-600" />
+                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Divisions & Categories</h3>
                         </div>
                         <Button
                             type="button"
@@ -259,7 +266,7 @@ const CreateTournament = () => {
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
-                                    className="p-6 rounded-2xl bg-muted/50 border border-border space-y-6 relative group"
+                                    className="p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-amber-50/50 border border-amber-100 space-y-6 relative group"
                                 >
                                     {fields.length > 1 && (
                                         <button
@@ -299,7 +306,7 @@ const CreateTournament = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Tactical Grade</label>
+                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Skill Grade</label>
                                             <select
                                                 className="w-full h-11 px-4 rounded-xl border border-input bg-background font-bold text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
                                                 {...register(`categories.${index}.skillLevel`, { required: 'Tactical grade is required' })}
@@ -321,19 +328,19 @@ const CreateTournament = () => {
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border/50">
                                         <Input
-                                            label="1st Prize Intelligence"
+                                            label="1st Prize"
                                             type="number"
                                             placeholder="Winner bounty"
                                             {...register(`categories.${index}.prizePool.first`, { valueAsNumber: true })}
                                         />
                                         <Input
-                                            label="2nd Prize Intelligence"
+                                            label="2nd Prize"
                                             type="number"
                                             placeholder="Runner-up bounty"
                                             {...register(`categories.${index}.prizePool.second`, { valueAsNumber: true })}
                                         />
                                         <Input
-                                            label="3rd Prize Intelligence"
+                                            label="3rd Prize"
                                             type="number"
                                             placeholder="Semifinalist bounty"
                                             {...register(`categories.${index}.prizePool.third`, { valueAsNumber: true })}
@@ -346,21 +353,21 @@ const CreateTournament = () => {
                 </div>
 
                 {/* Comms Intel */}
-                <div className="bg-card shadow-sm ring-1 ring-border rounded-3xl p-8 md:p-10 space-y-8">
-                    <div className="flex items-center gap-3 border-b border-border pb-6">
-                        <EnvelopeIcon className="h-5 w-5 text-primary" />
-                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Communication Protocols</h3>
+                <div className="bg-card shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl p-6 md:p-8 space-y-8">
+                    <div className="flex items-center gap-3 border-b border-amber-100 pb-6">
+                        <EnvelopeIcon className="h-5 w-5 text-indigo-600" />
+                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Contact & Rules</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <Input
-                            label="Liaison Email"
+                            label="Contact Email"
                             type="email"
                             error={errors.contactEmail}
                             {...register('contactEmail', { required: 'Liaison email is mandatory' })}
                         />
                         <Input
-                            label="Emergency Signal (Phone)"
+                            label="Contact Phone"
                             placeholder="03XXXXXXXXX"
                             type="tel"
                             inputMode="numeric"
@@ -372,10 +379,10 @@ const CreateTournament = () => {
                             })}
                         />
                         <div className="md:col-span-2 space-y-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Championship Rules (Protocol)</label>
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Tournament Rules</label>
                             <textarea
                                 className="w-full rounded-xl border border-input bg-background p-4 font-bold text-sm min-h-[160px] focus:ring-2 focus:ring-primary outline-none transition-all placeholder:font-normal"
-                                placeholder="Formalized rules and regulations..."
+                                placeholder="Add rules and useful instructions for participants..."
                                 {...register('rules')}
                             />
                         </div>
@@ -388,7 +395,7 @@ const CreateTournament = () => {
                         onClick={() => navigate('/app/tournaments')}
                         className="text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all"
                     >
-                        Abort Mission
+                        Cancel
                     </button>
                     <Button
                         type="submit"
@@ -397,7 +404,7 @@ const CreateTournament = () => {
                         disabled={courtsLoading || myCourts.length === 0}
                         className="px-16 h-14"
                     >
-                        Deploy Championship
+                        Create Tournament
                     </Button>
                 </div>
             </form>

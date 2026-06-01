@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusIcon, TrophyIcon, UsersIcon, CheckBadgeIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import StatCard from '../../components/ui/StatCard';
+import { PlusIcon, TrophyIcon, UsersIcon, CheckBadgeIcon, MapPinIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import StatTile from '../../components/ui/StatTile';
 import tournamentService from '../../services/tournamentService';
 
 function registrationTotal(tournament) {
@@ -45,50 +45,59 @@ export default function OrganizerDashboard() {
     const completedCount = tournaments.filter((t) => t.status === 'completed').length;
 
     return (
-        <div className="space-y-12 animate-enter max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="space-y-8 animate-enter max-w-7xl mx-auto pb-20">
+            <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-amber-500 p-6 sm:p-8 text-white shadow-lg">
+                <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+                <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+                <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-none">
+                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-100">Court owner workspace</p>
+                    <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight leading-none">
                         Organizer Dashboard
                     </h1>
-                    <p className="mt-3 sm:mt-4 text-base sm:text-xl text-slate-500 font-medium max-w-2xl leading-relaxed">
-                        Manage your tournaments and participants.
+                    <p className="mt-3 text-sm sm:text-base text-white/90 font-medium max-w-2xl leading-relaxed">
+                        Manage your venues, tournaments, and player registrations from one place.
                     </p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-3">
+                    <Link
+                        to="/org/courts/create"
+                        className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-indigo-700 shadow-lg shadow-indigo-900/10 transition-all hover:bg-indigo-50"
+                    >
+                        <MapPinIcon className="h-5 w-5" aria-hidden="true" />
+                        Add Court
+                    </Link>
                     <Link
                         to="/app/tournaments/create"
-                        className="inline-flex items-center gap-2.5 bg-indigo-600 hover:bg-slate-900 text-white px-8 h-14 rounded-2xl font-bold shadow-xl shadow-indigo-100 transition-all"
+                        className="inline-flex h-12 items-center gap-2 rounded-xl bg-indigo-950 px-5 text-sm font-bold text-amber-50 shadow-lg shadow-indigo-950/20 transition-all hover:bg-indigo-900"
                     >
                         <PlusIcon className="h-5 w-5" aria-hidden="true" />
                         Create Tournament
                     </Link>
                 </div>
-            </div>
+                </div>
+            </header>
 
-            <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-3">
-                <StatCard
-                    title="Total Tournaments"
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <StatTile
+                    label="Total Tournaments"
                     value={loading ? '…' : String(tournaments.length)}
                     icon={TrophyIcon}
-                    color="indigo"
                 />
-                <StatCard
-                    title="Total registrations"
+                <StatTile
+                    label="Total Registrations"
                     value={loading ? '…' : String(totalParticipants)}
                     icon={UsersIcon}
-                    color="green"
                 />
-                <StatCard
-                    title="Completed"
+                <StatTile
+                    label="Completed Events"
                     value={loading ? '…' : String(completedCount)}
                     icon={CheckBadgeIcon}
-                    color="blue"
                 />
             </div>
 
             <div className="flex flex-col space-y-4">
-                <div className="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden flex flex-col">
+                <div className="bg-white shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl overflow-hidden flex flex-col">
                     <div className="px-6 sm:px-10 py-6 sm:py-8 flex items-center justify-between border-b border-slate-50">
                         <div className="flex items-center gap-3">
                             <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
@@ -129,7 +138,7 @@ export default function OrganizerDashboard() {
                                         <li key={t._id}>
                                             <Link
                                                 to={`/tournaments/${t._id}`}
-                                                className="group relative flex flex-col sm:flex-row justify-between gap-4 sm:gap-6 p-5 sm:p-6 bg-slate-50/50 hover:bg-white rounded-2xl sm:rounded-[2rem] border border-transparent hover:border-slate-100 hover:shadow-xl hover:shadow-slate-100 transition-all duration-300"
+                                                className="group relative flex flex-col sm:flex-row justify-between gap-4 sm:gap-6 p-5 sm:p-6 bg-gradient-to-r from-slate-50 to-amber-50/40 hover:from-white hover:to-indigo-50/40 rounded-2xl border border-transparent hover:border-amber-100 hover:shadow-lg hover:shadow-indigo-950/5 transition-all duration-300"
                                             >
                                                 <div className="flex min-w-0 gap-x-4 sm:gap-x-6">
                                                     <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
@@ -166,35 +175,31 @@ export default function OrganizerDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 rounded-3xl sm:rounded-[3rem] overflow-hidden flex flex-col">
-                    <div className="px-6 sm:px-10 py-6 sm:py-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-50">
+                <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 sm:p-8 text-white shadow-2xl">
+                    <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-indigo-600/20 blur-3xl" />
+                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+                        <div>
                         <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                            <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-amber-100">
                                 <MapPinIcon className="h-5 w-5" />
                             </div>
-                            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Your venues</h2>
+                            <h2 className="text-lg font-extrabold">Your Venues</h2>
                         </div>
-                        <Link
-                            to="/org/courts"
-                            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 shrink-0"
-                        >
-                            Manage courts
-                        </Link>
-                    </div>
-                    <div className="p-6 sm:p-8">
-                        <p className="text-slate-600 text-sm mb-6 max-w-2xl">
+                        <p className="mt-4 text-slate-300 text-sm max-w-2xl leading-relaxed">
                             Open any listing to see how players view it, edit pricing and photos, or add another court.
                         </p>
-                        <div className="flex flex-wrap gap-3">
+                        </div>
+                        <div className="flex flex-wrap gap-3 sm:justify-end">
                             <Link
                                 to="/org/courts"
-                                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white hover:bg-slate-800"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-500"
                             >
                                 Open My Courts
+                                <ArrowRightIcon className="h-4 w-4" />
                             </Link>
                             <Link
                                 to="/org/courts/create"
-                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50"
+                                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-bold text-white hover:bg-white/15"
                             >
                                 Add court
                             </Link>
