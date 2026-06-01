@@ -107,7 +107,9 @@ const TournamentBracketWrapper = ({ tournamentId }) => {
                 player2: {
                     name: getParticipantName(match.participant2),
                     score: getScore(match.participant2)
-                }
+                },
+                status: match.status,
+                rawMatch: match
             });
         });
 

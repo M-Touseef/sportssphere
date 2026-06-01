@@ -20,8 +20,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { cld, getPublicIdFromUrl } from '../utils/cloudinary';
 import { AdvancedImage } from '@cloudinary/react';
-import { auto } from '@cloudinary/url-gen/actions/resize';
-import { autoGravity } from '@cloudinary/url-gen/qualifiers/gravity';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Server base URL for static files (remove /api suffix if present)
@@ -49,7 +47,7 @@ const AdminDashboard = () => {
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
-    const [imageLoadState, setImageLoadState] = useState('loading'); // 'loading', 'loaded', 'error'
+    const [, setImageLoadState] = useState('loading'); // 'loading', 'loaded', 'error'
 
     useEffect(() => {
         if (!authLoading && user?.role !== 'admin') {
@@ -59,6 +57,8 @@ const AdminDashboard = () => {
             const interval = setInterval(fetchData, 30000);
             return () => clearInterval(interval);
         }
+    // fetchData is intentionally refreshed through this role-aware polling effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, authLoading, navigate]);
 
     useEffect(() => {
@@ -74,10 +74,14 @@ const AdminDashboard = () => {
         if (activeTab === 'bookings') fetchBookings();
         if (activeTab === 'tournaments') fetchTournaments();
         if (activeTab === 'courts') fetchCourts();
+    // Loaders are selected by the active tab and do not need to restart this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
 
     useEffect(() => {
         if (activeTab === 'users') fetchUsers();
+    // Refetch users whenever the filter values change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userFilters]);
 
     const fetchData = async () => {
@@ -268,18 +272,6 @@ const AdminDashboard = () => {
                         <div>
                             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Admin Dashboard</h1>
                             <p className="text-sm text-slate-500 font-medium mt-1">System Management & Operations</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={fetchData}
-                                className="text-sm bg-gradient-to-r from-slate-100 to-slate-50 hover:from-slate-200 hover:to-slate-100 text-slate-700 font-semibold px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm transition-all duration-200 flex items-center gap-2"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                <span className="hidden sm:inline">Sync Now</span>
-                            </button>
-                            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-indigo-200">Super Admin</span>
                         </div>
                     </div>
                 </div>
@@ -1062,14 +1054,6 @@ const StatCard = ({ title, value, subtext, color, highlight, className = '' }) =
         indigo: 'from-indigo-500 to-purple-600'
     };
     
-    const colorShadows = {
-        blue: 'shadow-blue-200',
-        amber: 'shadow-amber-200',
-        green: 'shadow-emerald-200',
-        orange: 'shadow-orange-200',
-        indigo: 'shadow-indigo-200'
-    };
-
     return (
         <div className={`bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden ${highlight ? 'ring-2 ring-amber-400 ring-offset-2' : ''} ${className} hover:shadow-lg transition-shadow duration-300`}>
             <div className={`h-1.5 bg-gradient-to-r ${colorGradients[color] || colorGradients.blue}`}></div>

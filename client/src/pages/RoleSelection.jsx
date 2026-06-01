@@ -10,8 +10,35 @@ import {
     BuildingOffice2Icon,
     CheckCircleIcon
 } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
+
+const ROLE_THEME = {
+    'non-professional': {
+        icon: 'bg-indigo-950 text-amber-200 border-indigo-800',
+        selected: 'border-amber-400 bg-amber-50 shadow-lg shadow-amber-100/80',
+        title: 'text-indigo-950',
+        check: 'text-amber-500'
+    },
+    professional: {
+        icon: 'bg-indigo-900 text-amber-200 border-indigo-700',
+        selected: 'border-amber-400 bg-amber-50 shadow-lg shadow-amber-100/80',
+        title: 'text-indigo-950',
+        check: 'text-amber-500'
+    },
+    coach: {
+        icon: 'bg-slate-800 text-amber-200 border-slate-700',
+        selected: 'border-amber-400 bg-amber-50 shadow-lg shadow-amber-100/80',
+        title: 'text-indigo-950',
+        check: 'text-amber-500'
+    },
+    organizer: {
+        icon: 'bg-indigo-950 text-amber-200 border-indigo-800',
+        selected: 'border-amber-400 bg-amber-50 shadow-lg shadow-amber-100/80',
+        title: 'text-indigo-950',
+        check: 'text-amber-500'
+    }
+};
 
 const RoleSelection = () => {
     const { selectRole } = useAuth();
@@ -29,7 +56,6 @@ const RoleSelection = () => {
             label: 'Non-Professional Player',
             description: 'Casual player looking for courts and sparring partners. Get started immediately!',
             icon: UserGroupIcon,
-            color: 'indigo',
             instant: true
         },
         {
@@ -39,7 +65,6 @@ const RoleSelection = () => {
             label: 'Professional Player',
             description: 'Elite player seeking tournaments and competitive matches. Requires verification.',
             icon: TrophyIcon,
-            color: 'emerald',
             instant: false
         },
         {
@@ -49,7 +74,6 @@ const RoleSelection = () => {
             label: 'Coach',
             description: 'Certified coach offering training sessions. Requires verification.',
             icon: AcademicCapIcon,
-            color: 'amber',
             instant: false
         },
         {
@@ -59,7 +83,6 @@ const RoleSelection = () => {
             label: 'Court Owner / Organizer',
             description: 'Venue owner or tournament organizer. Requires verification.',
             icon: BuildingOffice2Icon,
-            color: 'violet',
             instant: false
         }
     ];
@@ -112,68 +135,65 @@ const RoleSelection = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl w-full">
-                <motion.div
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl w-full rounded-[2rem] border border-amber-300/30 bg-white/95 p-6 sm:p-10 shadow-2xl shadow-indigo-950/40">
+                <Motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-center mb-10"
                 >
-                    <div className="mx-auto h-16 w-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-200">
-                        <TrophyIcon className="h-9 w-9 text-white" />
+                    <div className="mx-auto h-16 w-16 bg-indigo-950 rounded-2xl flex items-center justify-center mb-6 border border-indigo-800 shadow-lg shadow-indigo-200">
+                        <TrophyIcon className="h-9 w-9 text-amber-300" />
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-900 mb-3">
+                    <h1 className="text-3xl font-black text-indigo-950 mb-3 tracking-tight">
                         How will you use SportSphere?
                     </h1>
-                    <p className="text-slate-500 max-w-md mx-auto">
+                    <p className="text-slate-500 max-w-lg mx-auto font-medium">
                         Select your role to personalize your experience. You can always update this later.
                     </p>
-                </motion.div>
+                </Motion.div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                     {roleOptions.map((option, index) => (
-                        <motion.div
+                        <Motion.div
                             key={option.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
                         >
+                            {(() => {
+                                const theme = ROLE_THEME[option.id];
+                                const isSelected = getSelectedOption()?.id === option.id;
+                                return (
                             <button
                                 type="button"
                                 onClick={() => handleRoleSelect(option)}
                                 className={twMerge(
-                                    "w-full text-left p-5 rounded-2xl border-2 transition-all duration-200 relative",
-                                    getSelectedOption()?.id === option.id
-                                        ? `border-${option.color}-500 bg-${option.color}-50 shadow-lg`
-                                        : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
+                                    "w-full h-full text-left p-5 rounded-2xl border-2 transition-all duration-200 relative",
+                                    isSelected
+                                        ? theme.selected
+                                        : "border-slate-200 bg-white hover:border-amber-300 hover:shadow-md"
                                 )}
                             >
                                 <div className="flex items-start gap-4">
                                     <div className={twMerge(
-                                        "flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center",
-                                        getSelectedOption()?.id === option.id
-                                            ? `bg-${option.color}-100`
-                                            : "bg-slate-100"
+                                        "flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center border shadow-sm",
+                                        theme.icon
                                     )}>
-                                        <option.icon className={twMerge(
-                                            "h-6 w-6",
-                                            getSelectedOption()?.id === option.id
-                                                ? `text-${option.color}-600`
-                                                : "text-slate-500"
-                                        )} />
+                                        <option.icon className="h-6 w-6" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <h3 className={twMerge(
                                                 "font-semibold",
-                                                getSelectedOption()?.id === option.id
-                                                    ? `text-${option.color}-900`
+                                                isSelected
+                                                    ? theme.title
                                                     : "text-slate-800"
                                             )}>
                                                 {option.label}
                                             </h3>
                                             {option.instant && (
-                                                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                                                <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
                                                     Instant
                                                 </span>
                                             )}
@@ -183,15 +203,17 @@ const RoleSelection = () => {
                                         </p>
                                     </div>
                                 </div>
-                                {getSelectedOption()?.id === option.id && (
-                                    <CheckCircleIcon className={`absolute top-4 right-4 h-6 w-6 text-${option.color}-600`} />
+                                {isSelected && (
+                                    <CheckCircleIcon className={twMerge("absolute top-4 right-4 h-6 w-6", theme.check)} />
                                 )}
                             </button>
-                        </motion.div>
+                                );
+                            })()}
+                        </Motion.div>
                     ))}
                 </div>
 
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
@@ -202,20 +224,20 @@ const RoleSelection = () => {
                         size="lg"
                         isLoading={loading}
                         disabled={!selectedRole}
-                        className="h-14 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-14 font-bold bg-indigo-950 hover:bg-indigo-900 text-amber-50 rounded-xl border border-indigo-800 shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {getSelectedOption()?.instant ? 'Get Started' : 'Continue to Profile Setup'}
                     </Button>
-                </motion.div>
+                </Motion.div>
 
                 {getSelectedOption() && !getSelectedOption().instant && (
-                    <motion.p
+                    <Motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="text-center text-sm text-slate-500 mt-4"
                     >
                         Your account will require admin verification before you can access all features.
-                    </motion.p>
+                    </Motion.p>
                 )}
             </div>
         </div>

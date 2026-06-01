@@ -47,7 +47,9 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
         : user?.role;
     const userNavigation = [
-        { name: 'My Profile', href: '/profile', icon: UserIcon },
+        ...(user?.role === 'admin'
+            ? []
+            : [{ name: 'My Profile', href: '/profile', icon: UserIcon }]),
         { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon },
     ];
 
@@ -126,7 +128,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                                                 'w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 transition-colors flex gap-3',
                                                 active ? 'bg-slate-50' : 'bg-white'
                                             );
-                                        const inner = (active) => (
+                                        const inner = () => (
                                             <>
                                                 <div
                                                     className={twMerge(

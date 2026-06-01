@@ -25,7 +25,7 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
                 isActionable ? "ring-2 ring-amber-300/80 border-amber-200" : "border-slate-200"
             )}>
                 <div className="bg-slate-50 px-4 py-1.5 flex justify-between items-center border-b border-slate-100">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Match #{match.rawMatch.matchNumber}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Match #{match.rawMatch?.matchNumber ?? match.matchNumber ?? matchIndex + 1}</span>
                     {isActionable && (
                         <span className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">
                             Score
