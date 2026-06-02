@@ -3,11 +3,10 @@ import clsx from 'clsx';
 
 // Mock Component for individual match
 const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, isEditable }) => {
-    // Determine winner
     const p1 = match.player1;
     const p2 = match.player2;
-    const p1Won = p1.score > p2.score;
-    const p2Won = p2.score > p1.score;
+    const p1Won = p1.isWinner === true;
+    const p2Won = p2.isWinner === true;
 
     // Check if match is actionable
     const isActionable = isEditable && match.status !== 'completed' && match.status !== 'walkover';
@@ -51,10 +50,7 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
                                 {p1.name || "TBD"}
                             </span>
                         </div>
-                        <span className={clsx(
-                            "font-mono font-bold text-lg",
-                            p1Won ? "text-indigo-600" : "text-slate-300"
-                        )}>{p1.score !== undefined ? p1.score : '-'}</span>
+                        <SetScores scores={p1.scores} fallbackScore={p1.score} isWinner={p1Won} />
                     </div>
 
                     {/* Player 2 */}
@@ -74,10 +70,7 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
                                 {p2.name || "TBD"}
                             </span>
                         </div>
-                        <span className={clsx(
-                            "font-mono font-bold text-lg",
-                            p2Won ? "text-indigo-600" : "text-slate-300"
-                        )}>{p2.score !== undefined ? p2.score : '-'}</span>
+                        <SetScores scores={p2.scores} fallbackScore={p2.score} isWinner={p2Won} />
                     </div>
                 </div>
             </div>
@@ -86,6 +79,40 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
             {roundIndex < totalRounds - 1 && (
                 <div className="absolute top-1/2 -right-5 w-5 sm:-right-8 sm:w-8 h-px bg-slate-300"></div>
             )}
+        </div>
+    );
+};
+
+const SetScores = ({ scores, fallbackScore, isWinner }) => {
+    const visibleScores = Array.isArray(scores) ? scores.filter((score) => score !== null && score !== undefined) : [];
+
+    if (visibleScores.length === 0) {
+        if (fallbackScore !== undefined && fallbackScore !== null && fallbackScore !== '') {
+            return (
+                <span className={clsx(
+                    "font-mono font-bold text-lg",
+                    isWinner ? "text-indigo-600" : "text-slate-300"
+                )}>
+                    {fallbackScore}
+                </span>
+            );
+        }
+        return <span className="font-mono font-bold text-lg text-slate-300">-</span>;
+    }
+
+    return (
+        <div className="flex shrink-0 gap-1">
+            {visibleScores.map((score, index) => (
+                <span
+                    key={index}
+                    className={clsx(
+                        "flex h-7 min-w-7 items-center justify-center rounded px-1.5 font-mono text-xs font-bold",
+                        isWinner ? "bg-indigo-950 text-amber-100" : "bg-slate-100 text-slate-500"
+                    )}
+                >
+                    {score}
+                </span>
+            ))}
         </div>
     );
 };

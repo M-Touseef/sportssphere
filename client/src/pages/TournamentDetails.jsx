@@ -92,22 +92,17 @@ const TournamentBracketWrapper = ({ tournamentId }) => {
                 return reg.player?.name || "Unknown";
             };
 
-            const getScore = (participant) => {
-                if (participant.score && participant.score.length > 0) {
-                    return participant.score.join(', ');
-                }
-                return undefined;
-            };
-
             roundsMap[match.round].push({
                 id: match._id,
                 player1: {
                     name: getParticipantName(match.participant1),
-                    score: getScore(match.participant1)
+                    scores: match.participant1.score || [],
+                    isWinner: match.participant1.isWinner
                 },
                 player2: {
                     name: getParticipantName(match.participant2),
-                    score: getScore(match.participant2)
+                    scores: match.participant2.score || [],
+                    isWinner: match.participant2.isWinner
                 },
                 status: match.status,
                 rawMatch: match

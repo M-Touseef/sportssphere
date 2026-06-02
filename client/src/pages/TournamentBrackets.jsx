@@ -170,11 +170,13 @@ const TournamentBrackets = () => {
                 id: match._id,
                 player1: {
                     name: p1Reg ? p1Reg.player?.name || p1Reg.teamName || 'TBD' : 'TBD',
-                    score: match.participant1.score?.reduce((a, b) => a + b, 0) || 0
+                    scores: match.participant1.score || [],
+                    isWinner: match.participant1.isWinner
                 },
                 player2: {
                     name: p2Reg ? p2Reg.player?.name || p2Reg.teamName || 'TBD' : 'TBD',
-                    score: match.participant2.score?.reduce((a, b) => a + b, 0) || 0
+                    scores: match.participant2.score || [],
+                    isWinner: match.participant2.isWinner
                 },
                 status: match.status,
                 rawMatch: match

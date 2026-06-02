@@ -51,7 +51,6 @@ export default function TournamentView() {
             }
 
             // Map backend match structure to UI component structure
-            // Component expects: { id, player1: { name, score }, player2: { name, score } }
             // Backend provides: participant1.registration.player.name (or player1.name/player2.name for doubles)
 
             const getParticipantName = (participant) => {
@@ -65,29 +64,17 @@ export default function TournamentView() {
                 return reg.player?.name || "Unknown";
             };
 
-            const getScore = (participant) => {
-                // Score is stored as an array of set scores [21, 19]
-                // The Bracket component expects a single score or we might need to join them
-                // Looking at mock data: score is a number. 
-                // Let's assume we sum them or show sets won? 
-                // Mock data showed simple number (21). Tennis/Badminton usually shows sets.
-                // Converting array to string for display: "21-19, 21-15"
-                // But MatchCard expects `p1.score` to be rendered.
-                if (participant.score && participant.score.length > 0) {
-                    return participant.score.join(', ');
-                }
-                return undefined;
-            };
-
             const uiMatch = {
                 id: match._id,
                 player1: {
                     name: getParticipantName(match.participant1),
-                    score: getScore(match.participant1)
+                    scores: match.participant1.score || [],
+                    isWinner: match.participant1.isWinner
                 },
                 player2: {
                     name: getParticipantName(match.participant2),
-                    score: getScore(match.participant2)
+                    scores: match.participant2.score || [],
+                    isWinner: match.participant2.isWinner
                 }
             };
 
