@@ -26,37 +26,51 @@ async function run() {
 
     const users = await User.find({});
     for (const user of users) {
-        user.area = normalizeArea(user.area || inferArea(user.city), DEFAULT_AREA);
-        user.city = LAHORE_CITY;
-        await user.save();
+        await User.updateOne(
+            { _id: user._id },
+            {
+                $set: {
+                    area: normalizeArea(user.area || inferArea(user.city), DEFAULT_AREA),
+                    city: LAHORE_CITY
+                }
+            }
+        );
     }
 
     const courts = await Court.find({});
     for (const court of courts) {
-        court.location = court.location || {};
-        court.location.area = normalizeArea(court.location.area || inferArea(court.location.city, court.location.address), DEFAULT_AREA);
-        court.location.city = LAHORE_CITY;
-        await court.save();
+        await Court.updateOne(
+            { _id: court._id },
+            {
+                $set: {
+                    'location.area': normalizeArea(court.location?.area || inferArea(court.location?.city, court.location?.address), DEFAULT_AREA),
+                    'location.city': LAHORE_CITY
+                }
+            }
+        );
     }
 
     const tournaments = await Tournament.find({}).populate('court', 'location');
     for (const tournament of tournaments) {
-        tournament.city = LAHORE_CITY;
+        const update = { city: LAHORE_CITY };
         if (tournament.court?.location?.area && !String(tournament.venue || '').includes(tournament.court.location.area)) {
-            tournament.venue = [tournament.venue, tournament.court.location.area].filter(Boolean).join(', ');
+            update.venue = [tournament.venue, tournament.court.location.area].filter(Boolean).join(', ');
         }
-        await tournament.save();
+        await Tournament.updateOne({ _id: tournament._id }, { $set: update });
     }
 
     const coachProfiles = await CoachProfile.find({});
     for (const profile of coachProfiles) {
         const areas = Array.isArray(profile.location?.areas) ? profile.location.areas : [];
-        profile.location = {
-            ...(profile.location || {}),
-            city: LAHORE_CITY,
-            areas: areas.length ? areas.map((area) => normalizeArea(area, DEFAULT_AREA)) : [DEFAULT_AREA]
-        };
-        await profile.save();
+        await CoachProfile.updateOne(
+            { _id: profile._id },
+            {
+                $set: {
+                    'location.city': LAHORE_CITY,
+                    'location.areas': areas.length ? areas.map((area) => normalizeArea(area, DEFAULT_AREA)) : [DEFAULT_AREA]
+                }
+            }
+        );
     }
 
     console.log(`Migrated ${users.length} users, ${courts.length} courts, ${tournaments.length} tournaments, ${coachProfiles.length} coach profiles to Lahore area data.`);
