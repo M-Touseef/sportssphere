@@ -45,7 +45,7 @@ const RevealText = ({ text, className = '', delay = 0, as: Tag = 'span' }) => {
                     key={i}
                     className="st-word"
                     style={{
-                        animationDelay: isInView ? `${delay + i * 0.08}s` : '0s',
+                        animationDelay: isInView ? `${delay + i * 0.12}s` : '0s',
                         animationPlayState: isInView ? 'running' : 'paused',
                     }}
                 >
@@ -131,7 +131,7 @@ const HeroChapter = ({ user }) => {
     const scale = useTransform(scrollYProgress, [0, 0.8], [1, 0.92]);
 
     return (
-        <section ref={ref} className="st-chapter" style={{ minHeight: '100vh' }}>
+        <section ref={ref} className="st-chapter" style={{ minHeight: '120vh' }}>
             {/* Animated gradient background */}
             <motion.div
                 className="absolute inset-0 z-0"

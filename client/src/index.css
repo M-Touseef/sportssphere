@@ -197,7 +197,7 @@
 /* Each chapter fills the viewport */
 .st-chapter {
   position: relative;
-  min-height: 100vh;
+  min-height: 120vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,8 +233,13 @@
 
 .st-word {
   display: inline-block;
+  margin-right: 0.24em;
   opacity: 0;
-  animation: st-word-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: st-word-reveal 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.st-word:last-child {
+  margin-right: 0;
 }
 
 /* Gradient morph for CTA */
@@ -364,6 +369,7 @@
 
 .navbar-transparent .navbar-logo-text {
   color: white !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
 }
 
 .navbar-transparent .navbar-link {

@@ -51,7 +51,7 @@ export default function Navbar() {
                                     </div>
                                     <span className={twMerge(
                                         'text-base sm:text-lg font-black tracking-tight navbar-logo-text',
-                                        isHomePage ? 'text-white' : 'text-indigo-950 group-hover:text-indigo-800'
+                                        isHomePage ? 'text-white drop-shadow-md' : 'text-indigo-950 group-hover:text-indigo-800'
                                     )}>
                                         SportsSphere
                                     </span>
@@ -240,10 +240,10 @@ export default function Navbar() {
                                             <Link
                                                 to="/login"
                                                 className={twMerge(
-                                                    'rounded-lg border px-4 py-2 text-sm font-bold transition-colors navbar-link',
+                                                    'rounded-lg px-5 py-2 text-sm font-bold transition-colors',
                                                     isHomePage
-                                                        ? 'border-amber-300 bg-amber-300/10 text-amber-200 hover:bg-amber-300 hover:text-indigo-950'
-                                                        : 'border-indigo-950 text-indigo-950 hover:bg-indigo-950 hover:text-amber-50'
+                                                        ? 'bg-amber-400 text-indigo-950 shadow-lg shadow-amber-400/20 hover:bg-amber-300'
+                                                        : 'bg-indigo-950 text-amber-50 hover:bg-indigo-900'
                                                 )}
                                             >
                                                 Log in
@@ -306,7 +306,7 @@ export default function Navbar() {
                                     <div className="pt-3 mt-3 border-t border-slate-100 flex flex-col gap-2">
                                         <Link
                                             to="/login"
-                                            className="block px-4 py-3 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 text-center"
+                                            className="block rounded-lg bg-indigo-950 px-4 py-3 text-center text-sm font-bold text-amber-50 hover:bg-indigo-900"
                                         >
                                             Log in
                                         </Link>
