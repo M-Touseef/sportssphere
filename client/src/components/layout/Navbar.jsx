@@ -27,14 +27,11 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false)
 
     useEffect(() => {
-        if (!isHomePage) { setScrolled(false); return }
+        if (!isHomePage) return
         const onScroll = () => setScrolled(window.scrollY > 80)
-        onScroll() // initial check
         window.addEventListener('scroll', onScroll, { passive: true })
         return () => window.removeEventListener('scroll', onScroll)
     }, [isHomePage])
-
-    const isTransparent = isHomePage && !scrolled
 
     return (
         <Disclosure as="nav" className={twMerge(
@@ -60,7 +57,7 @@ export default function Navbar() {
                                     </span>
                                 </Link>
 
-                                <div className="hidden lg:flex gap-1">
+                                {user && <div className="hidden lg:flex gap-1">
                                     {navigation.map((item) => {
                                         const isActive = location.pathname.startsWith(item.href)
                                         return (
@@ -78,7 +75,7 @@ export default function Navbar() {
                                             </Link>
                                         )
                                     })}
-                                </div>
+                                </div>}
                             </div>
 
                             <div className="flex items-center gap-2 sm:gap-3">
@@ -243,10 +240,10 @@ export default function Navbar() {
                                             <Link
                                                 to="/login"
                                                 className={twMerge(
-                                                    'text-sm font-bold px-3 py-2 navbar-link',
+                                                    'rounded-lg border px-4 py-2 text-sm font-bold transition-colors navbar-link',
                                                     isHomePage
-                                                        ? 'text-white/85 hover:text-white'
-                                                        : 'text-slate-700 hover:text-indigo-950'
+                                                        ? 'border-amber-300 bg-amber-300/10 text-amber-200 hover:bg-amber-300 hover:text-indigo-950'
+                                                        : 'border-indigo-950 text-indigo-950 hover:bg-indigo-950 hover:text-amber-50'
                                                 )}
                                             >
                                                 Log in
@@ -290,7 +287,7 @@ export default function Navbar() {
                     {!isAuthPage && (
                         <Disclosure.Panel className="lg:hidden border-t border-slate-100 bg-white">
                             <div className="p-4 space-y-1">
-                                {navigation.map((item) => (
+                                {user && navigation.map((item) => (
                                     <Disclosure.Button
                                         key={item.name}
                                         as={Link}
