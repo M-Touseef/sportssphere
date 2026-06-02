@@ -725,7 +725,7 @@ const AdminDashboard = () => {
                                                     {court.owner?.name || 'Unknown'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                    {court.location?.city}
+                                                    {court.location?.area || court.location?.city}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                                     ₨{court.pricePerHour}/hr
@@ -789,7 +789,7 @@ const AdminDashboard = () => {
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">City</p>
-                                            <p className="font-bold text-slate-900 truncate">{selectedUser.city || 'Not specified'}</p>
+                                            <p className="font-bold text-slate-900 truncate">{selectedUser.area || selectedUser.city || 'Not specified'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border border-slate-200/60">

@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
 import UserAvatar from '../components/ui/UserAvatar';
+import { LAHORE_AREAS, LAHORE_CITY } from '../constants/lahoreAreas';
 
 const ROLE_THEME = {
     coach: {
@@ -78,7 +79,7 @@ const Profile = () => {
             name: user?.name || '',
             email: user?.email || '',
             phone: user?.phone || '',
-            city: user?.city || '',
+            area: user?.area || '',
             skillLevel: user?.skillLevel || ''
         }
     });
@@ -89,7 +90,7 @@ const Profile = () => {
                 name: user.name || '',
                 email: user.email || '',
                 phone: user.phone || '',
-                city: user.city || '',
+                area: user.area || '',
                 skillLevel: user.skillLevel || ''
             });
         }
@@ -100,7 +101,7 @@ const Profile = () => {
             { key: 'name', icon: UserIcon, label: 'Full name', value: user?.name },
             { key: 'email', icon: EnvelopeIcon, label: 'Email', value: user?.email },
             { key: 'phone', icon: PhoneIcon, label: 'Phone', value: user?.phone },
-            { key: 'city', icon: MapPinIcon, label: 'Location', value: user?.city }
+            { key: 'area', icon: MapPinIcon, label: 'Lahore area', value: user?.area ? `${user.area}, ${LAHORE_CITY}` : user?.city }
         ];
         if (user?.role === 'player') {
             base.push({
@@ -330,12 +331,21 @@ const Profile = () => {
                                         error={errors.phone}
                                         {...register('phone')}
                                     />
-                                    <Input
-                                        label="City"
-                                        placeholder="Islamabad"
-                                        error={errors.city}
-                                        {...register('city', { required: 'City is required' })}
-                                    />
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                                            Lahore area
+                                        </label>
+                                        <select
+                                            className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white font-semibold text-sm text-slate-700 focus:ring-indigo-500 focus:border-indigo-500"
+                                            {...register('area', { required: 'Area is required' })}
+                                        >
+                                            <option value="">Select area</option>
+                                            {LAHORE_AREAS.map((area) => (
+                                                <option key={area} value={area}>{area}</option>
+                                            ))}
+                                        </select>
+                                        {errors.area && <p className="text-xs text-rose-500 pl-1">{errors.area.message}</p>}
+                                    </div>
                                     {user.role === 'player' && (
                                         <div className="md:col-span-2 space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">

@@ -8,6 +8,7 @@ const ProfessionalProfile = require('../models/ProfessionalProfile');
 const { createNotification } = require('./notificationController');
 const { RESPONSE_DEADLINE_MS } = require('../constants/responseDeadlines');
 const { normalizeToHour } = require('../utils/timeUtils');
+const { normalizeArea } = require('../constants/lahoreAreas');
 
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -289,7 +290,8 @@ exports.toggleAvailability = async (req, res) => {
 // @access  Public
 exports.getAvailableProsForSlot = async (req, res) => {
     try {
-        const { date, startTime, city } = req.query;
+        const { date, startTime, city, area } = req.query;
+        const areaFilter = area || city;
 
         if (!date || !startTime) {
             return res.status(400).json({ error: 'Please provide date and startTime' });
@@ -317,15 +319,12 @@ exports.getAvailableProsForSlot = async (req, res) => {
         };
 
         const profiles = await ProfessionalProfile.find(proQuery)
-            .populate('user', 'name email city skillLevel rank profilePicture');
+            .populate('user', 'name email city area skillLevel rank profilePicture');
 
         const availablePros = [];
 
         for (const profile of profiles) {
-            // Further filter if city is provided (match user city or venue city)
-            if (city && profile.user.city.toLowerCase() !== city.toLowerCase()) {
-                // Check if the specific slot venue is in the city? 
-                // Simplification: Match user city for now.
+            if (areaFilter && profile.user.area?.toLowerCase() !== normalizeArea(areaFilter).toLowerCase()) {
                 continue;
             }
 
@@ -364,10 +363,15 @@ exports.getAvailableProsForSlot = async (req, res) => {
                     startTime: startTime
                 }
             }
-        }).populate('user', 'name email city skillLevel profilePicture');
+        }).populate('user', 'name email city area skillLevel profilePicture');
 
         for (const coach of coaches) {
-            if (city && coach.user.city.toLowerCase() !== city.toLowerCase()) continue;
+            if (areaFilter) {
+                const normalized = normalizeArea(areaFilter).toLowerCase();
+                const userArea = coach.user.area?.toLowerCase();
+                const serviceAreas = (coach.location?.areas || []).map((value) => String(value).toLowerCase());
+                if (userArea !== normalized && !serviceAreas.includes(normalized)) continue;
+            }
 
             const isBooked = await Booking.findOne({
                 proPlayer: coach.user._id, // Coaches are Users too
@@ -575,7 +579,8 @@ const getNextOccurrence = (dayName) => {
 // @route   GET /api/sparring/professionals
 exports.getProfessionalsWithAvailability = async (req, res) => {
     try {
-        const { city } = req.query;
+        const { city, area } = req.query;
+        const areaFilter = area || city;
         let query = { isActive: true };
 
         // Find profiles that have at least one active availability slot
@@ -583,12 +588,12 @@ exports.getProfessionalsWithAvailability = async (req, res) => {
             ...query,
             'availability.isActive': true,
             'availability.0': { $exists: true }
-        }).populate('user', 'name city rank achievements skillLevel profilePicture');
+        }).populate('user', 'name city area rank achievements skillLevel profilePicture');
 
         const formattedResults = profiles
             .filter(profile => {
-                if (!city) return true;
-                return profile.user?.city?.toLowerCase() === city.toLowerCase();
+                if (!areaFilter) return true;
+                return profile.user?.area?.toLowerCase() === normalizeArea(areaFilter).toLowerCase();
             })
             .map(profile => ({
                 player: profile.user,

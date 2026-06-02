@@ -385,7 +385,7 @@ const CourtDetails = () => {
                     <h1 className="text-lg sm:text-xl font-black text-slate-900 leading-tight truncate">{court.name}</h1>
                     <p className="text-xs font-bold text-slate-500 mt-1 flex items-center gap-1 truncate">
                         <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
-                        {court.location?.city}
+                        {court.location?.area || 'Lahore'}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
                         <span className="text-[10px] font-bold uppercase bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md">
@@ -532,7 +532,7 @@ const CourtDetails = () => {
                                 <ProSelectionList
                                     date={selectedDate}
                                     startTime={selectedSlot?.time}
-                                    city={court.location?.city}
+                                    area={court.location?.area}
                                     onSelect={(proData) => handleBooking(proData)}
                                     onCancel={goBack}
                                     preSelectedPro={location.state?.preSelectedPro}
@@ -650,7 +650,7 @@ const CourtDetails = () => {
                         </div>
                         <p className="text-xs text-slate-500 flex items-start gap-1">
                             <MapPinIcon className="h-4 w-4 shrink-0" />
-                            {court.location?.address}, {court.location?.city}
+                            {court.location?.address}, {court.location?.area || 'Lahore'}, Lahore
                         </p>
                     </div>
                 )}

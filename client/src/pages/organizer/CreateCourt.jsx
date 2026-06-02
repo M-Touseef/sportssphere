@@ -6,6 +6,7 @@ import courtService from '../../services/courtService';
 import uploadService from '../../services/uploadService';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/ui/Button';
+import { LAHORE_AREAS, LAHORE_CITY } from '../../constants/lahoreAreas';
 
 export default function CreateCourt() {
     const navigate = useNavigate();
@@ -36,7 +37,7 @@ export default function CreateCourt() {
                 reset({
                     name: c.name,
                     address: c.location?.address || '',
-                    city: c.location?.city || '',
+                    area: c.location?.area || c.location?.city || '',
                     surfaceType: c.surfaceType,
                     pricePerHour: c.pricePerHour,
                     description: c.description || '',
@@ -73,7 +74,8 @@ export default function CreateCourt() {
                 ...data,
                 location: {
                     address: data.address,
-                    city: data.city
+                    area: data.area,
+                    city: LAHORE_CITY
                 },
                 amenities: data.amenities ? data.amenities.split(',').map((i) => i.trim()).filter(Boolean) : [],
                 images: [...existingImageUrls, ...newUploaded]
@@ -225,14 +227,17 @@ export default function CreateCourt() {
                                 {errors.address && <p className="mt-1 text-xs text-rose-500">{errors.address.message}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">City</label>
-                                <input
-                                    type="text"
-                                    {...register('city', { required: 'City is required' })}
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Lahore area</label>
+                                <select
+                                    {...register('area', { required: 'Area is required' })}
                                     className="block w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 py-3"
-                                    placeholder="e.g. Islamabad"
-                                />
-                                {errors.city && <p className="mt-1 text-xs text-rose-500">{errors.city.message}</p>}
+                                >
+                                    <option value="">Select area</option>
+                                    {LAHORE_AREAS.map((area) => (
+                                        <option key={area} value={area}>{area}</option>
+                                    ))}
+                                </select>
+                                {errors.area && <p className="mt-1 text-xs text-rose-500">{errors.area.message}</p>}
                             </div>
                         </div>
                     </div>

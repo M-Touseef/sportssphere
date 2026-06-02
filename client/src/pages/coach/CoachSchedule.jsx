@@ -169,7 +169,7 @@ const CoachSchedule = () => {
         });
         return {
             court: selectedCourt?.name || 'Court',
-            city: selectedCourt?.location?.city,
+            city: selectedCourt?.location?.area || selectedCourt?.location?.city,
             when: `${dateLabel} · ${formatSlotHourRange(courtForm.startTime, courtForm.endTime)}`
         };
     }, [courtForm, selectedCourt]);
@@ -382,7 +382,7 @@ const CoachSchedule = () => {
                                             )}
                                         >
                                             <p className="font-black">{c.name}</p>
-                                            <p className="text-xs text-slate-500 mt-1">{c.location?.city}</p>
+                                            <p className="text-xs text-slate-500 mt-1">{c.location?.area || 'Lahore'}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -512,10 +512,10 @@ const CoachSchedule = () => {
                                                 Court reserved{' '}
                                                 {formatSlotHourRange(booking.startTime, booking.endTime)}
                                             </p>
-                                            {booking.court?.location?.city && (
+                                            {(booking.court?.location?.area || booking.court?.location?.city) && (
                                                 <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                                                     <MapPinIcon className="h-3.5 w-3.5" />
-                                                    {booking.court.location.city}
+                                                    {booking.court.location.area || booking.court.location.city}
                                                 </p>
                                             )}
                                         </div>

@@ -1,5 +1,6 @@
 const ProfessionalProfile = require('../models/ProfessionalProfile');
 const User = require('../models/User');
+const { normalizeArea } = require('../constants/lahoreAreas');
 
 // =============================================================================
 // PROFILE MANAGEMENT (Professional Players Only)
@@ -48,7 +49,7 @@ exports.createProfile = async (req, res) => {
 exports.getMyProfile = async (req, res) => {
     try {
         const profile = await ProfessionalProfile.findOne({ user: req.user.id })
-            .populate('user', 'name email city rank achievements profilePicture');
+            .populate('user', 'name email city area rank achievements profilePicture');
 
         if (!profile) {
             return res.status(404).json({
@@ -81,7 +82,7 @@ exports.updateProfile = async (req, res) => {
             { user: req.user.id },
             { matchFee, bio, experienceYears, specializations, isActive },
             { new: true, runValidators: true }
-        ).populate('user', 'name email city rank achievements profilePicture');
+        ).populate('user', 'name email city area rank achievements profilePicture');
 
         if (!profile) {
             return res.status(404).json({
@@ -115,7 +116,7 @@ exports.getPublicProfile = async (req, res) => {
         const profile = await ProfessionalProfile.findOne({
             user: req.params.id,
             isActive: true
-        }).populate('user', 'name city rank achievements skillLevel profilePicture');
+        }).populate('user', 'name city area rank achievements skillLevel profilePicture');
 
         if (!profile) {
             return res.status(404).json({
@@ -142,25 +143,26 @@ exports.getPublicProfile = async (req, res) => {
 // @access  Public
 exports.getAllProfessionals = async (req, res) => {
     try {
-        const { city, maxFee, specialization } = req.query;
+        const { city, area, maxFee, specialization } = req.query;
 
         const query = { isActive: true };
 
-        // Build filter for user's city
+        // Build filter for user's Lahore area
         let userFilter = {};
-        if (city) {
-            userFilter.city = city;
+        const areaFilter = area || city;
+        if (areaFilter) {
+            userFilter.area = normalizeArea(areaFilter);
         }
 
         let profiles = await ProfessionalProfile.find(query)
             .populate({
                 path: 'user',
-                select: 'name city rank achievements skillLevel profilePicture',
+                select: 'name city area rank achievements skillLevel profilePicture',
                 match: Object.keys(userFilter).length > 0 ? userFilter : undefined
             })
             .sort({ createdAt: -1 });
 
-        // Filter out profiles where user didn't match city filter
+        // Filter out profiles where user didn't match area filter
         profiles = profiles.filter(p => p.user !== null);
 
         // Apply additional filters

@@ -46,7 +46,7 @@ const ProfessionalCard = ({ professional, onSelect }) => {
                         </h3>
                         <p className="flex items-center gap-1.5 text-sm font-bold text-slate-600 mt-1">
                             <MapPinIcon className="h-4 w-4 text-amber-700 shrink-0" />
-                            {user.city || 'Pakistan'}
+                            {user.area || user.city || 'Lahore'}
                         </p>
                         {experienceYears != null && (
                             <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wider text-violet-900 bg-violet-100 px-2.5 py-1 rounded-lg border border-violet-200">

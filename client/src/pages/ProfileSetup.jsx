@@ -12,6 +12,7 @@ import {
     DocumentArrowUpIcon
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import { LAHORE_AREAS, LAHORE_CITY } from '../constants/lahoreAreas';
 
 const ProfileSetup = () => {
     const { completeProfile, user } = useAuth();
@@ -25,18 +26,13 @@ const ProfileSetup = () => {
         formState: { errors }
     } = useForm({
         defaultValues: {
-            city: '',
+            area: '',
             phone: '',
             rank: '',
             achievements: '',
             coachLevel: ''
         }
     });
-
-    const pakistanCities = [
-        'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
-        'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala'
-    ];
 
     // Determine which fields to show based on user's role
     const isProfessionalPlayer = user?.role === 'player' && user?.skillLevel === 'professional';
@@ -72,7 +68,8 @@ const ProfileSetup = () => {
         try {
             const formData = new FormData();
 
-            formData.append('city', data.city);
+            formData.append('city', LAHORE_CITY);
+            formData.append('area', data.area);
             if (data.phone) formData.append('phone', data.phone);
 
             // Append role-specific fields
@@ -242,20 +239,19 @@ const ProfileSetup = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    City *
+                                    Lahore area *
                                 </label>
                                 <select
                                     className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                                    {...register('city', { required: 'City is required' })}
+                                    {...register('area', { required: 'Area is required' })}
                                 >
-                                    <option value="">Select your city</option>
-                                    {pakistanCities.map(city => (
-                                        <option key={city} value={city}>{city}</option>
+                                    <option value="">Select Lahore area</option>
+                                    {LAHORE_AREAS.map(area => (
+                                        <option key={area} value={area}>{area}</option>
                                     ))}
-                                    <option value="other">Other</option>
                                 </select>
-                                {errors.city && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.city.message}</p>
+                                {errors.area && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.area.message}</p>
                                 )}
                             </div>
                             <Input

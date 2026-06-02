@@ -291,7 +291,7 @@ const CoachProfile = () => {
 
     const coachUser = coach?.user && typeof coach.user === 'object' ? coach.user : null;
     const displayName = coachUser?.name || 'Coach';
-    const displayCity = coachUser?.city || coach?.location?.city || '—';
+    const displayCity = coachUser?.area || coach?.location?.areas?.[0] || coachUser?.city || coach?.location?.city || '—';
     const specializations = Array.isArray(coach?.specialization) ? coach.specialization : [];
     const hasMonthly = coach?.monthlyFee != null && coach.monthlyFee > 0;
     const totalPrice = paymentPlan === 'hourly' ? coach?.hourlyRate : coach?.monthlyFee;

@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    area: {
+        type: String,
+        trim: true
+    },
     skillLevel: {
         type: String,
         enum: ['professional', 'non-professional', null],

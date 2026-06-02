@@ -16,6 +16,7 @@ import { useToast } from '../../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/ui/Button';
 import { formatSlotHourRange } from '../../utils/timeFormat';
+import { LAHORE_AREAS } from '../../constants/lahoreAreas';
 
 const SPEC_LABELS = {
     singles: 'Singles',
@@ -31,7 +32,7 @@ const formatSpec = (spec) =>
 const FindProfessional = () => {
     const [professionals, setProfessionals] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [cityFilter, setCityFilter] = useState('');
+    const [areaFilter, setAreaFilter] = useState('');
 
     const [selectedProfile, setSelectedProfile] = useState(null);
     const [proAvailability, setProAvailability] = useState([]);
@@ -44,10 +45,10 @@ const FindProfessional = () => {
         fetchProfessionals();
     }, []);
 
-    const fetchProfessionals = async (city = '') => {
+    const fetchProfessionals = async (area = '') => {
         try {
             setLoading(true);
-            const response = await sparringService.getProfessionalsWithAvailability(city);
+            const response = await sparringService.getProfessionalsWithAvailability(area);
             setProfessionals(response.data || []);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -59,7 +60,7 @@ const FindProfessional = () => {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        fetchProfessionals(cityFilter);
+        fetchProfessionals(areaFilter);
     };
 
     const resetModal = () => {
@@ -135,13 +136,16 @@ const FindProfessional = () => {
                 <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <div className="relative flex-1">
                         <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
-                        <input
-                            type="text"
-                            placeholder="Search by city..."
-                            value={cityFilter}
-                            onChange={(e) => setCityFilter(e.target.value)}
+                        <select
+                            value={areaFilter}
+                            onChange={(e) => setAreaFilter(e.target.value)}
                             className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-xl sm:rounded-2xl border border-slate-200 sm:border-none bg-slate-50 font-bold text-sm focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
-                        />
+                        >
+                            <option value="">All Lahore areas</option>
+                            {LAHORE_AREAS.map((area) => (
+                                <option key={area} value={area}>{area}</option>
+                            ))}
+                        </select>
                     </div>
                     <Button type="submit" className="h-12 sm:h-14 px-10 rounded-xl sm:rounded-2xl bg-slate-900 text-white font-bold">Search</Button>
                 </form>
@@ -211,7 +215,7 @@ const FindProfessional = () => {
                                         <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">{selectedUser.name}</h2>
                                         <div className="flex items-center gap-2 text-indigo-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-1.5">
                                             <MapPinIcon className="h-4 w-4 text-amber-400" />
-                                            {selectedUser.city || 'Pakistan'} <span className="text-indigo-400/50">•</span> Pro player
+                                            {selectedUser.area || selectedUser.city || 'Lahore'} <span className="text-indigo-400/50">•</span> Pro player
                                         </div>
                                     </div>
                                 </div>

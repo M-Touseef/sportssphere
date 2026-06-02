@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useAuth } from '../../context/AuthContext';
 import {
     createOrUpdateProfile,
     getMyProfile
 } from '../../services/coachService';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import UserAvatar from '../../components/ui/UserAvatar';
 import {
     CheckCircleIcon,
     ExclamationCircleIcon,
     CurrencyDollarIcon,
     AcademicCapIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    CameraIcon
 } from '@heroicons/react/24/outline';
 
 const SpecializationOption = ({ label, value, register }) => (
@@ -30,8 +33,11 @@ const SpecializationOption = ({ label, value, register }) => (
 );
 
 const CoachProfileEditor = () => {
+    const { user, updateProfilePicture } = useAuth();
     const [loading, setLoading] = useState(true);
     const [submitStatus, setSubmitStatus] = useState(null);
+    const [imageUploading, setImageUploading] = useState(false);
+    const [imageError, setImageError] = useState('');
 
     const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm();
 
@@ -72,6 +78,35 @@ const CoachProfileEditor = () => {
         }
     };
 
+    const handleProfilePictureChange = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        setImageError('');
+        setSubmitStatus(null);
+
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            setImageError('Please choose an image file.');
+            return;
+        }
+        if (file.size > 3 * 1024 * 1024) {
+            setImageError('Profile image must be 3MB or smaller.');
+            return;
+        }
+
+        setImageUploading(true);
+        try {
+            await updateProfilePicture(file);
+            setSubmitStatus('success');
+            setTimeout(() => setSubmitStatus(null), 3000);
+        } catch (error) {
+            console.error('Error uploading coach photo:', error);
+            setImageError(error.response?.data?.error || 'Failed to upload profile picture.');
+        } finally {
+            setImageUploading(false);
+        }
+    };
+
     if (loading) return <LoadingSpinner />;
 
     return (
@@ -82,13 +117,43 @@ const CoachProfileEditor = () => {
                 <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl" />
                 <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-indigo-400/10 rounded-full blur-2xl" />
 
-                <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                    <div>
-                        <p className="text-sm text-indigo-200/90 font-medium">Settings</p>
-                        <h1 className="text-3xl font-black tracking-tight mt-1">Coach Profile</h1>
-                        <p className="mt-2 text-sm text-indigo-100/80">
-                            Update your qualifications, fees, and specialization details.
-                        </p>
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-5">
+                    <div className="flex items-end gap-4 sm:gap-5">
+                        <div className="relative shrink-0">
+                            <UserAvatar
+                                user={user}
+                                className="h-20 w-20 rounded-2xl bg-white text-indigo-950 text-2xl shadow-xl ring-2 ring-white/70"
+                                fallbackClassName="text-indigo-950"
+                            />
+                            <label className="absolute -right-2 -top-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-amber-400 text-indigo-950 shadow-lg ring-1 ring-amber-200 transition hover:bg-amber-300">
+                                <CameraIcon className="h-4 w-4" />
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="sr-only"
+                                    onChange={handleProfilePictureChange}
+                                    disabled={imageUploading}
+                                />
+                            </label>
+                        </div>
+                        <div>
+                            <p className="text-sm text-indigo-200/90 font-medium">Settings</p>
+                            <h1 className="text-3xl font-black tracking-tight mt-1">Coach Profile</h1>
+                            <p className="mt-2 text-sm text-indigo-100/80">
+                                Update your qualifications, fees, specialization details, and public photo.
+                            </p>
+                            <label className="mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-white/12 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/18">
+                                <CameraIcon className="h-4 w-4" />
+                                {imageUploading ? 'Uploading...' : user?.profilePicture ? 'Change photo' : 'Upload photo'}
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="sr-only"
+                                    onChange={handleProfilePictureChange}
+                                    disabled={imageUploading}
+                                />
+                            </label>
+                        </div>
                     </div>
                     <button
                         type="submit"
@@ -113,6 +178,13 @@ const CoachProfileEditor = () => {
                 <div className="rounded-2xl bg-red-50 p-4 border border-red-200 flex items-center gap-3 animate-enter">
                     <ExclamationCircleIcon className="h-5 w-5 text-red-500 shrink-0" />
                     <h3 className="text-sm font-medium text-red-800">Error saving profile. Please try again.</h3>
+                </div>
+            )}
+
+            {imageError && (
+                <div className="rounded-2xl bg-red-50 p-4 border border-red-200 flex items-center gap-3 animate-enter">
+                    <ExclamationCircleIcon className="h-5 w-5 text-red-500 shrink-0" />
+                    <h3 className="text-sm font-medium text-red-800">{imageError}</h3>
                 </div>
             )}
 

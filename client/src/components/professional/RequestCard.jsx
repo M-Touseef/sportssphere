@@ -82,8 +82,8 @@ const RequestCard = ({ request, onStatusChange }) => {
                                     request.availabilitySlot?.courtName ||
                                     request.availabilitySlot?.venue?.name ||
                                     'Court TBD'}
-                                {(request.booking?.court?.location?.city || request.availabilitySlot?.venue?.city) &&
-                                    `, ${request.booking?.court?.location?.city || request.availabilitySlot?.venue?.city}`}
+                                {(request.booking?.court?.location?.area || request.availabilitySlot?.venue?.area || request.booking?.court?.location?.city || request.availabilitySlot?.venue?.city) &&
+                                    `, ${request.booking?.court?.location?.area || request.availabilitySlot?.venue?.area || request.booking?.court?.location?.city || request.availabilitySlot?.venue?.city}`}
                             </div>
                         </div>
 

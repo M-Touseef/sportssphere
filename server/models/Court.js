@@ -8,6 +8,7 @@ const courtSchema = new mongoose.Schema({
     },
     location: {
         address: { type: String, required: true },
+        area: { type: String, required: true },
         city: { type: String, required: true },
         coordinates: {
             lat: Number,
@@ -52,7 +53,7 @@ const courtSchema = new mongoose.Schema({
     }
 });
 
-// Prevent duplicate courts with same name in same city
-courtSchema.index({ name: 1, 'location.city': 1 }, { unique: true });
+// Prevent duplicate courts with same name in same Lahore area
+courtSchema.index({ name: 1, 'location.area': 1 }, { unique: true });
 
 module.exports = mongoose.model('Court', courtSchema);

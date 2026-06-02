@@ -4,7 +4,7 @@ import { StarIcon, MapPinIcon, CheckCircleIcon } from '@heroicons/react/24/outli
 import Button from '../ui/Button';
 import UserAvatar from '../ui/UserAvatar';
 
-export default function ProSelectionList({ date, startTime, city, onSelect, onCancel, preSelectedPro }) {
+export default function ProSelectionList({ date, startTime, area, city, onSelect, onCancel, preSelectedPro }) {
     const [pros, setPros] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedProId, setSelectedProId] = useState(null);
@@ -20,12 +20,12 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
 
     useEffect(() => {
         fetchPros();
-    }, [date, startTime, city]);
+    }, [date, startTime, area, city]);
 
     const fetchPros = async () => {
         try {
             setLoading(true);
-            const data = await sparringService.getAvailableProsForSlot(date, startTime, '', city);
+            const data = await sparringService.getAvailableProsForSlot(date, startTime, '', area || city);
             setPros(data.data);
         } catch (error) {
             console.error('Error fetching available pros:', error);
@@ -94,7 +94,7 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
                                     <div className="flex items-center gap-1">
                                         <MapPinIcon className={`h-3 w-3 ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`} />
                                         <span className={`text-sm font-bold uppercase tracking-widest ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`}>
-                                            {item.player.city}
+                                            {item.player.area || item.player.city || 'Lahore'}
                                         </span>
                                     </div>
                                 </div>

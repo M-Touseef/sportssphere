@@ -37,6 +37,11 @@ export const getOwnerOverview = async () => {
     return response.data;
 };
 
+export const getOwnerCourtDetails = async (id) => {
+    const response = await axiosInstance.get(`${API_ENDPOINTS.COURTS}/my/${id}/details`);
+    return response.data;
+};
+
 export const updateCourt = async (id, courtData) => {
     const response = await axiosInstance.put(`${API_ENDPOINTS.COURTS}/${id}`, courtData);
     return response.data;
@@ -73,6 +78,7 @@ const courtService = {
     confirmPayment,
     getMyCourts,
     getOwnerOverview,
+    getOwnerCourtDetails,
     deleteCourt,
     createCourt,
     updateCourt

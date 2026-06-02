@@ -14,6 +14,7 @@ import {
     ArrowRightIcon,
     BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
+import { LAHORE_AREAS } from '../constants/lahoreAreas';
 
 const SURFACE_LABELS = {
     synthetic: 'Mat / Synthetic',
@@ -30,7 +31,7 @@ const CourtList = () => {
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(false);
     const { error } = useToast();
-    const [filters, setFilters] = useState({ city: '', surfaceType: '' });
+    const [filters, setFilters] = useState({ area: '', surfaceType: '' });
 
     const fetchCourts = useCallback(
         async (activeFilters = filters) => {
@@ -64,18 +65,18 @@ const CourtList = () => {
     };
 
     const resetFilters = () => {
-        const cleared = { city: '', surfaceType: '' };
+        const cleared = { area: '', surfaceType: '' };
         setFilters(cleared);
         fetchCourts(cleared);
     };
 
-    const hasActiveFilters = Boolean(filters.city.trim() || filters.surfaceType);
+    const hasActiveFilters = Boolean(filters.area.trim() || filters.surfaceType);
 
     const stats = useMemo(() => {
-        const cities = new Set(
-            courts.map((c) => c.location?.city).filter(Boolean)
+        const areas = new Set(
+            courts.map((c) => c.location?.area).filter(Boolean)
         );
-        return { total: courts.length, cities: cities.size };
+        return { total: courts.length, areas: areas.size };
     }, [courts]);
 
     return (
@@ -101,7 +102,7 @@ const CourtList = () => {
                                 </span>
                             </h1>
                             <p className="mt-4 text-base sm:text-lg text-indigo-100/85 font-medium leading-relaxed max-w-xl">
-                                Find and book professional-grade venues across the region — filter by city and surface type.
+                                Find and book professional-grade venues across Lahore — filter by area and surface type.
                             </p>
                         </div>
 
@@ -112,8 +113,8 @@ const CourtList = () => {
                                     <p className="text-2xl font-black text-white mt-1">{stats.total}</p>
                                 </div>
                                 <div className="rounded-2xl bg-teal-500/20 backdrop-blur-md border border-teal-300/25 px-5 py-4 min-w-[6.5rem]">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-teal-100/80">Cities</p>
-                                    <p className="text-2xl font-black text-white mt-1">{stats.cities}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-teal-100/80">Areas</p>
+                                    <p className="text-2xl font-black text-white mt-1">{stats.areas}</p>
                                 </div>
                             </div>
                         )}
@@ -127,22 +128,25 @@ const CourtList = () => {
                     <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
                         <div className="md:col-span-4">
                             <label
-                                htmlFor="city"
+                                htmlFor="area"
                                 className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1"
                             >
-                                Location
+                                Lahore area
                             </label>
                             <div className="relative">
                                 <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-800 pointer-events-none" />
-                                <input
-                                    type="text"
-                                    name="city"
-                                    id="city"
-                                    placeholder="Search city..."
+                                <select
+                                    name="area"
+                                    id="area"
                                     className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-2xl border border-amber-100 bg-gradient-to-br from-slate-50 to-amber-50/40 font-semibold text-sm text-slate-900 focus:ring-4 focus:ring-amber-200/50 focus:border-amber-300/80 outline-none transition-all placeholder:text-slate-400"
-                                    value={filters.city}
+                                    value={filters.area}
                                     onChange={handleFilterChange}
-                                />
+                                >
+                                    <option value="">All Lahore areas</option>
+                                    {LAHORE_AREAS.map((area) => (
+                                        <option key={area} value={area}>{area}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
@@ -186,9 +190,9 @@ const CourtList = () => {
                             <span className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest">
                                 Active filters
                             </span>
-                            {filters.city.trim() && (
+                            {filters.area.trim() && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 px-3 py-1 text-xs font-bold border border-amber-200">
-                                    City: {filters.city.trim()}
+                                    Area: {filters.area.trim()}
                                 </span>
                             )}
                             {filters.surfaceType && (
@@ -297,7 +301,7 @@ const CourtList = () => {
 
                                     <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-slate-50 to-amber-50/60 border border-amber-100/80 px-3 py-2 text-sm font-bold text-indigo-900 w-fit">
                                         <MapPinIcon className="h-4 w-4 text-amber-700 shrink-0" />
-                                        {court.location?.city || 'Location TBA'}
+                                        {court.location?.area || 'Area TBA'}, Lahore
                                     </div>
 
                                     <div className="mt-auto pt-5 flex items-center justify-between gap-3">
@@ -324,7 +328,7 @@ const CourtList = () => {
                         <EmptyState
                             icon={SparklesIcon}
                             title="No courts found"
-                            description="Try a different city or surface type, or clear your filters to see all venues."
+                            description="Try a different Lahore area or surface type, or clear your filters to see all venues."
                             actionLabel="Clear filters"
                             action={resetFilters}
                         />

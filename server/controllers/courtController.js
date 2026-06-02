@@ -2,17 +2,19 @@ const Court = require('../models/Court');
 const Booking = require('../models/Booking');
 const Tournament = require('../models/Tournament');
 const TournamentRegistration = require('../models/TournamentRegistration');
+const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
 // @desc    Get all courts with filtering
 // @route   GET /api/courts
 // @access  Public
 exports.getCourts = async (req, res, next) => {
     try {
-        const { city, minPrice, maxPrice, surfaceType } = req.query;
-        let query = {};
+        const { city, area, minPrice, maxPrice, surfaceType } = req.query;
+        let query = { 'location.city': LAHORE_CITY };
 
-        if (city) {
-            query['location.city'] = { $regex: city, $options: 'i' };
+        const areaFilter = area || city;
+        if (areaFilter) {
+            query['location.area'] = { $regex: normalizeArea(areaFilter), $options: 'i' };
         }
 
         if (minPrice || maxPrice) {
@@ -62,10 +64,17 @@ exports.getCourt = async (req, res, next) => {
 // @access  Private (Organizer/Admin)
 exports.createCourt = async (req, res, next) => {
     try {
-        // Add user to body
-        req.body.owner = req.user.id;
+        const payload = {
+            ...req.body,
+            owner: req.user.id,
+            location: {
+                ...(req.body.location || {}),
+                city: LAHORE_CITY,
+                area: normalizeArea(req.body.location?.area || req.body.area || req.body.location?.city)
+            }
+        };
 
-        const court = await Court.create(req.body);
+        const court = await Court.create(payload);
 
         res.status(201).json({
             success: true,
@@ -183,6 +192,13 @@ exports.updateCourt = async (req, res, next) => {
 
         const payload = { ...req.body };
         delete payload.owner;
+        if (payload.location) {
+            payload.location = {
+                ...payload.location,
+                city: LAHORE_CITY,
+                area: normalizeArea(payload.location.area || payload.area || payload.location.city || court.location?.area)
+            };
+        }
 
         const updated = await Court.findByIdAndUpdate(req.params.id, payload, {
             new: true,
@@ -301,13 +317,100 @@ exports.getOwnerOverview = async (req, res, next) => {
                             registrationRevenue: courtRegistrations
                                 .filter((registration) => registration.paymentStatus === 'paid')
                                 .reduce((sum, registration) => sum + registration.paymentAmount, 0)
-                        },
-                        bookings: courtBookings,
-                        tournaments: courtTournaments,
-                        registrations: courtRegistrations
+                        }
                     };
                 }),
-                bookings
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get one owner court with booking logs and analytics
+// @route   GET /api/courts/my/:id/details
+// @access  Private (Organizer/Admin)
+exports.getOwnerCourtDetails = async (req, res, next) => {
+    try {
+        const court = await Court.findOne({ _id: req.params.id, owner: req.user.id });
+        if (!court) {
+            return res.status(404).json({ error: 'Court not found' });
+        }
+
+        const bookings = await Booking.find({ court: court._id })
+            .populate('user', 'name email profilePicture')
+            .populate('proPlayer', 'name email profilePicture')
+            .sort({ date: -1, startTime: -1 });
+
+        const tournaments = await Tournament.find({ court: court._id })
+            .select('name status startDate endDate categories')
+            .sort({ startDate: -1 });
+
+        const tournamentIds = tournaments.map((tournament) => tournament._id);
+        const registrations = await TournamentRegistration.find({ tournament: { $in: tournamentIds } })
+            .populate('tournament', 'name court')
+            .populate('player', 'name email profilePicture')
+            .populate('player1', 'name email profilePicture')
+            .populate('player2', 'name email profilePicture')
+            .sort({ registeredAt: -1 });
+
+        const paidBookings = bookings.filter((booking) => booking.paymentStatus === 'paid');
+        const confirmedBookings = bookings.filter((booking) => booking.status === 'confirmed');
+        const paidRegistrations = registrations.filter((registration) => registration.paymentStatus === 'paid');
+
+        const monthlyMap = new Map();
+        bookings.forEach((booking) => {
+            const date = new Date(booking.date);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const entry = monthlyMap.get(key) || { month: key, bookings: 0, revenue: 0 };
+            entry.bookings += 1;
+            if (booking.paymentStatus === 'paid') entry.revenue += booking.totalPrice || 0;
+            monthlyMap.set(key, entry);
+        });
+
+        const dailyMap = new Map();
+        bookings.forEach((booking) => {
+            const date = new Date(booking.date);
+            const key = date.toISOString().slice(0, 10);
+            const entry = dailyMap.get(key) || { date: key, bookings: 0 };
+            entry.bookings += 1;
+            dailyMap.set(key, entry);
+        });
+
+        const statusCounts = bookings.reduce((acc, booking) => {
+            acc[booking.status] = (acc[booking.status] || 0) + 1;
+            return acc;
+        }, {});
+
+        const paymentCounts = bookings.reduce((acc, booking) => {
+            acc[booking.paymentStatus] = (acc[booking.paymentStatus] || 0) + 1;
+            return acc;
+        }, {});
+
+        res.status(200).json({
+            success: true,
+            data: {
+                court,
+                stats: {
+                    bookings: bookings.length,
+                    confirmedBookings: confirmedBookings.length,
+                    bookingRevenue: paidBookings.reduce((sum, booking) => sum + (booking.totalPrice || 0), 0),
+                    pendingAmount: bookings
+                        .filter((booking) => booking.paymentStatus === 'pending')
+                        .reduce((sum, booking) => sum + (booking.totalPrice || 0), 0),
+                    tournaments: tournaments.length,
+                    registrations: registrations.length,
+                    registrationRevenue: paidRegistrations.reduce((sum, registration) => sum + (registration.paymentAmount || 0), 0)
+                },
+                analytics: {
+                    monthly: Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month)).slice(-6),
+                    daily: Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date)).slice(-14),
+                    statusCounts,
+                    paymentCounts
+                },
+                bookings,
+                tournaments,
+                registrations
             }
         });
     } catch (error) {

@@ -1,5 +1,6 @@
 const CoachProfile = require('../models/CoachProfile');
 const User = require('../models/User');
+const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
 /**
  * Coaches can reserve courts before finishing public profile setup.
@@ -23,7 +24,7 @@ const ensureCoachProfile = async (userId) => {
             hourlyRate: 1500,
             bio: `Badminton coaching with ${user.name || 'SportsSphere coach'}. Profile details can be updated anytime.`,
             specialization: ['technique'],
-            location: { city: user.city || '' },
+            location: { city: LAHORE_CITY, areas: [normalizeArea(user.area || user.city)] },
             isActive: true
         });
         return { profile, created: true };

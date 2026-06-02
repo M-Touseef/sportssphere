@@ -17,6 +17,7 @@ import {
     BanknotesIcon,
     SparklesIcon
 } from '@heroicons/react/24/outline';
+import { LAHORE_AREAS } from '../constants/lahoreAreas';
 
 const SPEC_LABELS = {
     singles: 'Singles',
@@ -31,7 +32,7 @@ const formatSpec = (spec) =>
     SPEC_LABELS[spec] || spec?.replace(/_/g, ' ') || spec;
 
 const DEFAULT_FILTERS = {
-    city: '',
+    area: '',
     skillLevel: '',
     court: '',
     minRate: '',
@@ -136,7 +137,7 @@ const CoachList = () => {
     };
 
     const hasActiveFilters = Boolean(
-        filters.court || filters.maxRate !== '' || filters.paymentType !== 'hourly'
+        filters.area || filters.court || filters.maxRate !== '' || filters.paymentType !== 'hourly'
     );
 
     const selectedCourtName = useMemo(() => {
@@ -197,7 +198,27 @@ const CoachList = () => {
             <div className="relative -mt-4 sm:-mt-6 mb-10 sm:mb-14 z-10">
                 <div className="rounded-3xl sm:rounded-[2rem] bg-white/95 backdrop-blur-xl border border-amber-100/90 shadow-[0_20px_50px_-20px_rgba(30,27,75,0.15)] p-6 sm:p-8">
                     <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
-                        <div className="md:col-span-4">
+                        <div className="md:col-span-3">
+                            <label className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1">
+                                Lahore area
+                            </label>
+                            <div className="relative">
+                                <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-800 pointer-events-none" />
+                                <select
+                                    name="area"
+                                    className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-2xl border border-amber-100 bg-gradient-to-br from-slate-50 to-amber-50/40 font-semibold text-sm text-slate-900 focus:ring-4 focus:ring-amber-200/50 focus:border-amber-300/80 outline-none transition-all appearance-none"
+                                    value={filters.area}
+                                    onChange={handleFilterChange}
+                                >
+                                    <option value="">All Lahore areas</option>
+                                    {LAHORE_AREAS.map((area) => (
+                                        <option key={area} value={area}>{area}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="md:col-span-3">
                             <label className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1">
                                 Location / hall
                             </label>
@@ -212,14 +233,14 @@ const CoachList = () => {
                                     <option value="">All halls</option>
                                     {courts.map((court) => (
                                         <option key={court._id} value={court._id}>
-                                            {court.name} — {court.location?.city}
+                                            {court.name} — {court.location?.area || 'Lahore'}
                                         </option>
                                     ))}
                                 </select>
                             </div>
                         </div>
 
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-2">
                             <label className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1">
                                 Fee plan
                             </label>
@@ -234,7 +255,7 @@ const CoachList = () => {
                             </select>
                         </div>
 
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-2">
                             <label className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1">
                                 Max fee (PKR)
                             </label>
@@ -273,6 +294,11 @@ const CoachList = () => {
                             {selectedCourtName && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 px-3 py-1 text-xs font-bold border border-amber-200 max-w-[200px] truncate">
                                     {selectedCourtName}
+                                </span>
+                            )}
+                            {filters.area && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-900 px-3 py-1 text-xs font-bold border border-emerald-200">
+                                    {filters.area}
                                 </span>
                             )}
                             {filters.paymentType !== 'hourly' && (
@@ -372,7 +398,7 @@ const CoachList = () => {
                                                 <div className="flex items-center gap-1.5 mt-1.5 text-slate-600">
                                                     <MapPinIcon className="h-4 w-4 text-amber-700 shrink-0" />
                                                     <span className="text-xs font-bold truncate">
-                                                        {coach.user?.city || 'Pakistan'}
+                                                        {coach.user?.area || coach.user?.city || 'Lahore'}
                                                     </span>
                                                 </div>
                                             </div>

@@ -28,8 +28,8 @@ const sparringService = {
     },
 
     // Non-Professional: Browsing Professionals
-    getProfessionalsWithAvailability: async (city = '') => {
-        const params = city ? `?city=${city}` : '';
+    getProfessionalsWithAvailability: async (area = '') => {
+        const params = area ? `?area=${encodeURIComponent(area)}` : '';
         const response = await axiosInstance.get(`${API_BASE_URL}/sparring/professionals${params}`);
         return response.data;
     },
@@ -39,8 +39,8 @@ const sparringService = {
         return response.data;
     },
 
-    getAvailableProsForSlot: async (date, startTime, endTime, city) => {
-        const params = new URLSearchParams({ date, startTime, endTime, city }).toString();
+    getAvailableProsForSlot: async (date, startTime, endTime, area) => {
+        const params = new URLSearchParams({ date, startTime, endTime, area }).toString();
         const response = await axiosInstance.get(`${API_BASE_URL}/sparring/available-pros?${params}`);
         return response.data;
     },

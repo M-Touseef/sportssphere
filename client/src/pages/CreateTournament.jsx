@@ -171,7 +171,7 @@ const CreateTournament = () => {
                                 <option value="">{courtsLoading ? 'Loading your courts…' : 'Select your court…'}</option>
                                 {myCourts.map((c) => (
                                     <option key={c._id} value={c._id}>
-                                        {c.name} — {c.location?.city || 'City'}
+                                        {c.name} — {c.location?.area || 'Lahore'}
                                     </option>
                                 ))}
                             </select>
@@ -190,7 +190,7 @@ const CreateTournament = () => {
                             {selectedCourt && (
                                 <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs font-medium text-emerald-800">
                                     <p>
-                                        Venue: <span className="font-bold">{selectedCourt.location?.address}, {selectedCourt.location?.city}</span>
+                                        Venue: <span className="font-bold">{selectedCourt.location?.address}, {selectedCourt.location?.area || 'Lahore'}, Lahore</span>
                                     </p>
                                     <p className="mt-1">This is your court. No court booking or venue payment is required to host the tournament.</p>
                                 </div>

@@ -4,15 +4,24 @@ const { validateCoachCourtBookingForSlot } = require('./coachCourtBookingControl
 const { normalizeToHour } = require('../utils/timeUtils');
 const { dayFromDate, getBookingId, timesOverlap } = require('../utils/coachAvailabilityUtils');
 const { ensureCoachProfile } = require('../utils/coachProfileUtils');
+const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
 // @desc    Create or update coach profile
 // @route   POST /api/coaches/profile
 // @access  Private (Coach only)
 exports.createOrUpdateProfile = async (req, res) => {
     try {
+        const requestedAreas = req.body.location?.areas || req.body.areas || [req.body.location?.area, req.body.area].filter(Boolean);
         const profileData = {
             user: req.user.id,
-            ...req.body
+            ...req.body,
+            location: {
+                ...(req.body.location || {}),
+                city: LAHORE_CITY,
+                areas: Array.isArray(requestedAreas) && requestedAreas.length
+                    ? requestedAreas.map((value) => normalizeArea(value))
+                    : [normalizeArea(req.body.location?.city)]
+            }
         };
 
         let profile = await CoachProfile.findOne({ user: req.user.id });
@@ -23,11 +32,11 @@ exports.createOrUpdateProfile = async (req, res) => {
                 { user: req.user.id },
                 profileData,
                 { new: true, runValidators: true }
-            ).populate('user', 'name email city profilePicture');
+            ).populate('user', 'name email city area profilePicture');
         } else {
             // Create new profile
             profile = await CoachProfile.create(profileData);
-            profile = await profile.populate('user', 'name email city profilePicture');
+            profile = await profile.populate('user', 'name email city area profilePicture');
         }
 
         res.status(200).json({
@@ -45,11 +54,12 @@ exports.createOrUpdateProfile = async (req, res) => {
 // @access  Public
 exports.getCoaches = async (req, res) => {
     try {
-        const { city, specialization, skillLevel, minRate, maxRate, court, paymentType } = req.query;
+        const { city, area, specialization, skillLevel, minRate, maxRate, court, paymentType } = req.query;
         let query = { isActive: true };
 
-        if (city) {
-            query['location.city'] = { $regex: city, $options: 'i' };
+        const areaFilter = area || city;
+        if (areaFilter) {
+            query['location.areas'] = { $regex: normalizeArea(areaFilter), $options: 'i' };
         }
 
         if (specialization) {
@@ -88,7 +98,7 @@ exports.getCoaches = async (req, res) => {
         }
 
         const coaches = await CoachProfile.find(query)
-            .populate('user', 'name email city skillLevel profilePicture')
+            .populate('user', 'name email city area skillLevel profilePicture')
             .sort({ experience: -1, createdAt: -1 });
 
         res.status(200).json({
@@ -108,11 +118,11 @@ exports.getCoaches = async (req, res) => {
 exports.getCoachProfile = async (req, res) => {
     try {
         let profile = await CoachProfile.findById(req.params.id)
-            .populate('user', 'name email city phone profilePicture');
+            .populate('user', 'name email city area phone profilePicture');
 
         if (!profile) {
             profile = await CoachProfile.findOne({ user: req.params.id })
-                .populate('user', 'name email city phone profilePicture');
+                .populate('user', 'name email city area phone profilePicture');
         }
 
         if (!profile) {
@@ -142,7 +152,7 @@ exports.getCoachProfile = async (req, res) => {
 exports.getMyProfile = async (req, res) => {
     try {
         const profile = await CoachProfile.findOne({ user: req.user.id })
-            .populate('user', 'name email city phone profilePicture')
+            .populate('user', 'name email city area phone profilePicture')
             .populate('availability.court', 'name location');
 
         if (!profile) {

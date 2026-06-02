@@ -60,6 +60,7 @@ import MyBookings from './pages/MyBookings';
 import MySparringRequests from './pages/sparring/MySparringRequestsV2';
 import OrganizerCourts from './pages/organizer/OrganizerCourts';
 import CreateCourt from './pages/organizer/CreateCourt';
+import OrganizerCourtDetails from './pages/organizer/OrganizerCourtDetails';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -190,6 +191,7 @@ const AnimatedRoutes = () => {
               <Route path="/org/courts" element={<PageTransition><OrganizerCourts /></PageTransition>} />
               <Route path="/org/coaching-requests" element={<Navigate to="/org/courts" replace />} />
               <Route path="/org/courts/create" element={<PageTransition><CreateCourt /></PageTransition>} />
+              <Route path="/org/courts/:courtId/details" element={<PageTransition><OrganizerCourtDetails /></PageTransition>} />
               <Route path="/org/courts/:courtId/edit" element={<PageTransition><CreateCourt /></PageTransition>} />
             </Route>
           </Route>

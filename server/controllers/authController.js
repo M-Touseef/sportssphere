@@ -3,6 +3,7 @@ const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { uploadToCloudinary } = require('../utils/cloudinary');
+const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
 // Generate JWT Token (include verified so middleware and routes stay aligned with DB)
 const generateToken = (user) => {
@@ -35,7 +36,7 @@ const inferUserStatus = (user) => {
     // - If they have a role and city set, they're likely approved (legacy users)
     // - If they have only role, they might be waiting
     // - Otherwise, they're pending
-    if (user.role && user.city) return 'approved';
+    if (user.role && (user.area || user.city)) return 'approved';
     if (user.role && user.isProfileComplete) return 'waiting_for_approval';
     if (user.status === 'pending') return 'pending';
 
@@ -51,7 +52,7 @@ const buildUserResponse = (user) => {
     const isProfileComplete = user.isProfileComplete === true ||
         user.verified === true ||
         status === 'approved' ||
-        !!user.city;
+        !!(user.area || user.city);
 
     return {
         id: user._id,
@@ -60,6 +61,7 @@ const buildUserResponse = (user) => {
         role: user.role,
         status: status,
         city: user.city,
+        area: user.area,
         phone: user.phone,
         skillLevel: user.skillLevel,
         profilePicture: user.role === 'admin' ? undefined : user.profilePicture,
@@ -215,7 +217,7 @@ exports.selectRole = async (req, res, next) => {
 // @access  Private
 exports.completeProfile = async (req, res, next) => {
     try {
-        const { phone, city, rank, achievements, coachLevel } = req.body;
+        const { phone, area, city, rank, achievements, coachLevel } = req.body;
 
         let verificationDocument = '';
         if (req.file) {
@@ -234,7 +236,8 @@ exports.completeProfile = async (req, res, next) => {
 
         const fieldsToUpdate = {
             phone,
-            city,
+            city: LAHORE_CITY,
+            area: normalizeArea(area || city),
             isProfileComplete: true,
             status: 'waiting_for_approval'
         };
@@ -300,7 +303,10 @@ exports.updateDetails = async (req, res) => {
             name: req.body.name,
             email: req.body.email,
             phone: req.body.phone,
-            city: req.body.city
+            city: LAHORE_CITY,
+            area: req.body.area !== undefined || req.body.city !== undefined
+                ? normalizeArea(req.body.area || req.body.city)
+                : undefined
         };
 
         // Remove undefined fields
