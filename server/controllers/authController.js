@@ -60,7 +60,12 @@ const buildUserResponse = (user) => {
         role: user.role,
         status: status,
         city: user.city,
+        phone: user.phone,
         skillLevel: user.skillLevel,
+        profilePicture: user.role === 'admin' ? undefined : user.profilePicture,
+        rank: user.rank,
+        achievements: user.achievements,
+        coachLevel: user.coachLevel,
         isProfileComplete: isProfileComplete,
         rejectionReason: user.rejectionReason
     };
@@ -316,5 +321,40 @@ exports.updateDetails = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// @desc    Upload or replace the current user's profile picture
+// @route   PUT /api/auth/profile-picture
+// @access  Private
+exports.uploadProfilePicture = async (req, res) => {
+    try {
+        const currentUser = await User.findById(req.user.id).select('role');
+        if (!currentUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (currentUser.role === 'admin') {
+            return res.status(403).json({ error: 'Admin accounts do not use profile pictures.' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Profile image is required.' });
+        }
+
+        const result = await uploadToCloudinary(req.file.buffer, 'profile_pictures');
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { profilePicture: result.secure_url },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        res.status(200).json({
+            success: true,
+            user: buildUserResponse(user)
+        });
+    } catch (error) {
+        console.error('[ProfilePictureUpload] Error:', error);
+        res.status(500).json({ error: 'Failed to upload profile picture.' });
     }
 };

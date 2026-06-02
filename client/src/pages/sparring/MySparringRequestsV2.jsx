@@ -6,6 +6,7 @@ import sparringService from '../../services/sparringService';
 import courtService from '../../services/courtService';
 import { formatSlotHourRange } from '../../utils/timeFormat';
 import Button from '../../components/ui/Button';
+import UserAvatar from '../../components/ui/UserAvatar';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -269,12 +270,14 @@ const MySparringRequestsV2 = () => {
 
                                     <div className="flex flex-col lg:flex-row lg:items-center gap-6 p-6 sm:p-8 pl-8">
                                         <div className="flex gap-4 flex-1 min-w-0">
-                                            <div className={twMerge(
-                                                "h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-2xl flex items-center justify-center text-amber-200 shadow-md",
-                                                isPro ? "bg-indigo-950 text-indigo-200" : "bg-rose-950 text-rose-200"
-                                            )}>
-                                                <UserIcon className="h-7 w-7 sm:h-8 sm:w-8" />
-                                            </div>
+                                            <UserAvatar
+                                                user={displayUser}
+                                                className={twMerge(
+                                                    "h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-2xl shadow-md",
+                                                    isPro ? "bg-indigo-950 text-indigo-200" : "bg-rose-950 text-rose-200"
+                                                )}
+                                                fallbackClassName="text-lg sm:text-xl"
+                                            />
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2 mb-2">
                                                     <h3 className="text-xl font-extrabold text-slate-900 tracking-tight truncate">

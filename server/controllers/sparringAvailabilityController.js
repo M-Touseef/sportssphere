@@ -317,7 +317,7 @@ exports.getAvailableProsForSlot = async (req, res) => {
         };
 
         const profiles = await ProfessionalProfile.find(proQuery)
-            .populate('user', 'name email city skillLevel rank');
+            .populate('user', 'name email city skillLevel rank profilePicture');
 
         const availablePros = [];
 
@@ -364,7 +364,7 @@ exports.getAvailableProsForSlot = async (req, res) => {
                     startTime: startTime
                 }
             }
-        }).populate('user', 'name email city skillLevel');
+        }).populate('user', 'name email city skillLevel profilePicture');
 
         for (const coach of coaches) {
             if (city && coach.user.city.toLowerCase() !== city.toLowerCase()) continue;
@@ -537,7 +537,7 @@ exports.sendSparringRequest = async (req, res) => {
 exports.getMySentRequests = async (req, res) => {
     try {
         const requests = await SparringSessionRequest.find({ requester: req.user.id })
-            .populate('proPlayer', 'name email')
+            .populate('proPlayer', 'name email profilePicture')
             .populate({
                 path: 'booking',
                 populate: { path: 'court', select: 'name location' }
@@ -583,7 +583,7 @@ exports.getProfessionalsWithAvailability = async (req, res) => {
             ...query,
             'availability.isActive': true,
             'availability.0': { $exists: true }
-        }).populate('user', 'name city rank achievements skillLevel');
+        }).populate('user', 'name city rank achievements skillLevel profilePicture');
 
         const formattedResults = profiles
             .filter(profile => {
@@ -622,7 +622,7 @@ exports.getIncomingRequests = async (req, res) => {
     try {
         // Fetch requests linked to bookings for me
         const requests = await SparringSessionRequest.find({ proPlayer: req.user.id })
-            .populate('requester', 'name email')
+            .populate('requester', 'name email skillLevel profilePicture')
             .populate({
                 path: 'booking',
                 populate: { path: 'court', select: 'name location' }

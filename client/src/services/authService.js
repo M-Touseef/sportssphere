@@ -39,6 +39,18 @@ const authService = {
         return response.data;
     },
 
+    updateProfilePicture: async (file) => {
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+
+        const response = await axiosInstance.put(API_ENDPOINTS.UPDATE_PROFILE_PICTURE, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
     // Complete user profile setup
     completeProfile: async (userData) => {
         // Use put or post? Usually PUT for update, but this is a specific action. 

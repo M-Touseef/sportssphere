@@ -109,9 +109,9 @@ exports.registerForTournament = async (req, res) => {
         const registration = await TournamentRegistration.create(registrationData);
 
         const populatedRegistration = await TournamentRegistration.findById(registration._id)
-            .populate('player', 'name email')
-            .populate('player1', 'name email')
-            .populate('player2', 'name email')
+            .populate('player', 'name email profilePicture')
+            .populate('player1', 'name email profilePicture')
+            .populate('player2', 'name email profilePicture')
             .populate('tournament', 'name startDate');
 
         res.status(201).json({
@@ -137,9 +137,9 @@ exports.getTournamentRegistrations = async (req, res) => {
         }
 
         const registrations = await TournamentRegistration.find(query)
-            .populate('player', 'name email skillLevel')
-            .populate('player1', 'name email skillLevel')
-            .populate('player2', 'name email skillLevel')
+            .populate('player', 'name email skillLevel profilePicture')
+            .populate('player1', 'name email skillLevel profilePicture')
+            .populate('player2', 'name email skillLevel profilePicture')
             .sort({ registeredAt: 1 });
 
         res.status(200).json({
@@ -166,9 +166,9 @@ exports.getMyRegistrations = async (req, res) => {
             ]
         })
             .populate('tournament', 'name startDate endDate venue city status')
-            .populate('player', 'name email')
-            .populate('player1', 'name email')
-            .populate('player2', 'name email')
+            .populate('player', 'name email profilePicture')
+            .populate('player1', 'name email profilePicture')
+            .populate('player2', 'name email profilePicture')
             .sort({ registeredAt: -1 });
 
         res.status(200).json({

@@ -48,7 +48,7 @@ exports.createProfile = async (req, res) => {
 exports.getMyProfile = async (req, res) => {
     try {
         const profile = await ProfessionalProfile.findOne({ user: req.user.id })
-            .populate('user', 'name email city rank achievements');
+            .populate('user', 'name email city rank achievements profilePicture');
 
         if (!profile) {
             return res.status(404).json({
@@ -81,7 +81,7 @@ exports.updateProfile = async (req, res) => {
             { user: req.user.id },
             { matchFee, bio, experienceYears, specializations, isActive },
             { new: true, runValidators: true }
-        ).populate('user', 'name email city rank achievements');
+        ).populate('user', 'name email city rank achievements profilePicture');
 
         if (!profile) {
             return res.status(404).json({
@@ -115,7 +115,7 @@ exports.getPublicProfile = async (req, res) => {
         const profile = await ProfessionalProfile.findOne({
             user: req.params.id,
             isActive: true
-        }).populate('user', 'name city rank achievements skillLevel');
+        }).populate('user', 'name city rank achievements skillLevel profilePicture');
 
         if (!profile) {
             return res.status(404).json({
@@ -155,7 +155,7 @@ exports.getAllProfessionals = async (req, res) => {
         let profiles = await ProfessionalProfile.find(query)
             .populate({
                 path: 'user',
-                select: 'name city rank achievements skillLevel',
+                select: 'name city rank achievements skillLevel profilePicture',
                 match: Object.keys(userFilter).length > 0 ? userFilter : undefined
             })
             .sort({ createdAt: -1 });

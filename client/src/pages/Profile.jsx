@@ -16,9 +16,11 @@ import {
     XMarkIcon,
     ChartBarIcon,
     ShieldCheckIcon,
-    SparklesIcon
+    SparklesIcon,
+    CameraIcon
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
+import UserAvatar from '../components/ui/UserAvatar';
 
 const ROLE_THEME = {
     coach: {
@@ -58,10 +60,11 @@ const ROLE_THEME = {
 const defaultTheme = ROLE_THEME.player;
 
 const Profile = () => {
-    const { user, updateProfile } = useAuth();
+    const { user, updateProfile, updateProfilePicture } = useAuth();
     const { success, error: toastError } = useToast();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [imageUploading, setImageUploading] = useState(false);
 
     const theme = ROLE_THEME[user?.role] || defaultTheme;
 
@@ -128,9 +131,36 @@ const Profile = () => {
         }
     };
 
+    const handleProfilePictureChange = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toastError('Please choose an image file.');
+            return;
+        }
+
+        if (file.size > 3 * 1024 * 1024) {
+            toastError('Profile image must be 3MB or smaller.');
+            return;
+        }
+
+        setImageUploading(true);
+        try {
+            await updateProfilePicture(file);
+            success('Profile picture updated successfully.');
+        } catch (err) {
+            toastError(err.response?.data?.error || 'Failed to upload profile picture.');
+        } finally {
+            setImageUploading(false);
+        }
+    };
+
     if (!user) return null;
 
     const roleLabel = user.role?.charAt(0).toUpperCase() + user.role?.slice(1);
+    const canUploadProfilePicture = user.role !== 'admin';
 
     return (
         <motion.div
@@ -154,16 +184,30 @@ const Profile = () => {
                 <div className="relative px-6 sm:px-10 pt-10 pb-8 sm:pt-12 sm:pb-10">
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
                         <div className="flex items-end gap-5 sm:gap-6">
-                            <div
-                                className={twMerge(
-                                    'relative flex h-24 w-24 sm:h-28 sm:w-28 shrink-0 items-center justify-center rounded-[1.75rem] bg-white text-4xl sm:text-5xl font-black text-slate-800 shadow-2xl',
-                                    theme.glow
-                                )}
-                            >
-                                {user.name?.[0]?.toUpperCase() || '?'}
+                            <div className="relative">
+                                <UserAvatar
+                                    user={user}
+                                    className={twMerge(
+                                        'h-24 w-24 sm:h-28 sm:w-28 rounded-[1.75rem] bg-white text-4xl sm:text-5xl text-slate-800 shadow-2xl ring-2 ring-white/70',
+                                        theme.glow
+                                    )}
+                                    fallbackClassName="text-slate-800"
+                                />
                                 <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-white ring-4 ring-white/90">
                                     <ShieldCheckIcon className="h-4 w-4" />
                                 </span>
+                                {canUploadProfilePicture && (
+                                    <label className="absolute -top-2 -right-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-white text-indigo-700 shadow-lg ring-1 ring-slate-200 transition hover:bg-indigo-50">
+                                        <CameraIcon className="h-4 w-4" />
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="sr-only"
+                                            onChange={handleProfilePictureChange}
+                                            disabled={imageUploading}
+                                        />
+                                    </label>
+                                )}
                             </div>
                             <div className="pb-1 min-w-0">
                                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/70 mb-1">
@@ -186,6 +230,19 @@ const Profile = () => {
                                         {user.email}
                                     </span>
                                 </div>
+                                {canUploadProfilePicture && (
+                                    <label className="mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-white/12 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/18">
+                                        <CameraIcon className="h-4 w-4" />
+                                        {imageUploading ? 'Uploading...' : user.profilePicture ? 'Change photo' : 'Upload photo'}
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="sr-only"
+                                            onChange={handleProfilePictureChange}
+                                            disabled={imageUploading}
+                                        />
+                                    </label>
+                                )}
                             </div>
                         </div>
 

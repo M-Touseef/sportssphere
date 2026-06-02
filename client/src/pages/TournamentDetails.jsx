@@ -5,6 +5,7 @@ import tournamentService from '../services/tournamentService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import TournamentBracket from '../components/tournament/TournamentBracket';
+import UserAvatar from '../components/ui/UserAvatar';
 import {
     payForTournamentRegistration,
     getPaymentConfig,
@@ -353,6 +354,13 @@ const TournamentDetails = () => {
     if (isOrganizer) {
         tabs.push({ id: 'registrations', label: 'Registrations', icon: UsersIcon });
     }
+
+    const getRegistrationPlayers = (registration) => {
+        if (registration?.player1 || registration?.player2) {
+            return [registration.player1, registration.player2].filter(Boolean);
+        }
+        return registration?.player ? [registration.player] : [];
+    };
 
     const InfoItem = ({ icon: Icon, label, value, subValue, accent = 'indigo' }) => {
         const accents = {
@@ -797,10 +805,32 @@ const TournamentDetails = () => {
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-slate-50">
-                                                            {registrations.map((reg) => (
-                                                                <tr key={reg._id} className="hover:bg-slate-50/50 transition-colors">
+                                                            {registrations.map((reg) => {
+                                                                const participants = getRegistrationPlayers(reg);
+                                                                return (
+                                                                    <tr key={reg._id} className="hover:bg-slate-50/50 transition-colors">
                                                                     <td className="px-6 py-4 font-bold text-slate-700">
-                                                                        {reg.teamName || reg.player?.name || (reg.player1 ? `${reg.player1.name} & ${reg.player2?.name}` : 'Unknown')}
+                                                                        <div className="flex items-center gap-3 min-w-52">
+                                                                            <div className="flex -space-x-2">
+                                                                                {participants.length > 0 ? participants.slice(0, 2).map((participant) => (
+                                                                                    <UserAvatar
+                                                                                        key={participant._id || participant.name}
+                                                                                        user={participant}
+                                                                                        className="h-9 w-9 rounded-xl border-2 border-white bg-indigo-950 text-xs shadow-sm"
+                                                                                        fallbackClassName="text-xs"
+                                                                                    />
+                                                                                )) : (
+                                                                                    <UserAvatar
+                                                                                        user={{ name: 'Unknown' }}
+                                                                                        className="h-9 w-9 rounded-xl border-2 border-white bg-slate-100 text-slate-500 text-xs shadow-sm"
+                                                                                        fallbackClassName="text-xs"
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+                                                                            <span className="truncate">
+                                                                                {reg.teamName || reg.player?.name || (reg.player1 ? `${reg.player1.name} & ${reg.player2?.name}` : 'Unknown')}
+                                                                            </span>
+                                                                        </div>
                                                                     </td>
                                                                     <td className="px-6 py-4 font-medium text-slate-500">
                                                                         {getCategoryLabel(reg.category)}
@@ -815,8 +845,9 @@ const TournamentDetails = () => {
                                                                             {reg.paymentStatus}
                                                                         </span>
                                                                     </td>
-                                                                </tr>
-                                                            ))}
+                                                                    </tr>
+                                                                );
+                                                            })}
                                                         </tbody>
                                                     </table>
                                                 </div>

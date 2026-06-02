@@ -106,6 +106,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateProfilePicture = async (file) => {
+        setLoading(true);
+        try {
+            const response = await authService.updateProfilePicture(file);
+            setUser(response.user);
+            setLoading(false);
+            return response;
+        } catch (err) {
+            setLoading(false);
+            throw err;
+        }
+    };
+
     const completeProfile = async (userData) => {
         setLoading(true);
         try {
@@ -140,6 +153,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateProfile,
+        updateProfilePicture,
         completeProfile,
         selectRole,
         isAuthenticated: !!user,

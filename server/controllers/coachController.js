@@ -23,11 +23,11 @@ exports.createOrUpdateProfile = async (req, res) => {
                 { user: req.user.id },
                 profileData,
                 { new: true, runValidators: true }
-            ).populate('user', 'name email city');
+            ).populate('user', 'name email city profilePicture');
         } else {
             // Create new profile
             profile = await CoachProfile.create(profileData);
-            profile = await profile.populate('user', 'name email city');
+            profile = await profile.populate('user', 'name email city profilePicture');
         }
 
         res.status(200).json({
@@ -88,7 +88,7 @@ exports.getCoaches = async (req, res) => {
         }
 
         const coaches = await CoachProfile.find(query)
-            .populate('user', 'name email city skillLevel')
+            .populate('user', 'name email city skillLevel profilePicture')
             .sort({ experience: -1, createdAt: -1 });
 
         res.status(200).json({
@@ -108,11 +108,11 @@ exports.getCoaches = async (req, res) => {
 exports.getCoachProfile = async (req, res) => {
     try {
         let profile = await CoachProfile.findById(req.params.id)
-            .populate('user', 'name email city phone');
+            .populate('user', 'name email city phone profilePicture');
 
         if (!profile) {
             profile = await CoachProfile.findOne({ user: req.params.id })
-                .populate('user', 'name email city phone');
+                .populate('user', 'name email city phone profilePicture');
         }
 
         if (!profile) {
@@ -142,7 +142,7 @@ exports.getCoachProfile = async (req, res) => {
 exports.getMyProfile = async (req, res) => {
     try {
         const profile = await CoachProfile.findOne({ user: req.user.id })
-            .populate('user', 'name email city phone')
+            .populate('user', 'name email city phone profilePicture')
             .populate('availability.court', 'name location');
 
         if (!profile) {

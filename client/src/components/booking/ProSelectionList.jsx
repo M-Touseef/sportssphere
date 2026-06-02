@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import sparringService from '../../services/sparringService';
-import { UserIcon, StarIcon, MapPinIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { StarIcon, MapPinIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import Button from '../ui/Button';
+import UserAvatar from '../ui/UserAvatar';
 
 export default function ProSelectionList({ date, startTime, city, onSelect, onCancel, preSelectedPro }) {
     const [pros, setPros] = useState([]);
@@ -72,10 +73,12 @@ export default function ProSelectionList({ date, startTime, city, onSelect, onCa
                             }`}
                     >
                         <div className="flex items-center gap-5">
-                            <div className={`h-14 w-14 rounded-xl flex items-center justify-center shadow-sm ${selectedProId === item.player._id ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-400'
-                                }`}>
-                                <UserIcon className="h-7 w-7" />
-                            </div>
+                            <UserAvatar
+                                user={item.player}
+                                className={`h-14 w-14 rounded-xl shadow-sm ${selectedProId === item.player._id ? 'bg-white/20 text-white ring-1 ring-white/30' : 'bg-slate-50 text-slate-400 ring-1 ring-slate-100'
+                                    }`}
+                                fallbackClassName={selectedProId === item.player._id ? 'text-white' : 'text-slate-500'}
+                            />
                             <div className="flex-1 min-w-0">
                                 <h4 className={`text-base font-black tracking-tight leading-tight mb-0.5 break-words line-clamp-2 ${selectedProId === item.player._id ? 'text-white' : 'text-slate-900'}`}>
                                     {item.player.name}

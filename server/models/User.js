@@ -72,6 +72,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    profilePicture: {
+        type: String,
+        trim: true
+    },
     rejectionReason: {
         type: String,
         trim: true

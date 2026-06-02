@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import {
     CalendarIcon,
     ClockIcon,
-    UserIcon,
     MapPinIcon,
     CheckCircleIcon,
     XCircleIcon
 } from '@heroicons/react/24/outline';
 import { acceptRequest, rejectRequest } from '../../services/professionalService';
 import sessionService from '../../services/sessionService';
+import UserAvatar from '../ui/UserAvatar';
 
 const formatDeadline = (deadline) => {
     if (!deadline) return null;
@@ -58,9 +58,11 @@ const RequestCard = ({ request, onStatusChange }) => {
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
                 <div className="flex items-start space-x-4">
-                    <div className="bg-indigo-50 rounded-full p-2.5 sm:p-3">
-                        <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
-                    </div>
+                    <UserAvatar
+                        user={request.requester}
+                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-indigo-50 text-indigo-600"
+                        fallbackClassName="text-sm sm:text-base text-indigo-700"
+                    />
                     <div>
                         <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">{request.requester?.name}</h3>
                         <p className="text-[10px] sm:text-sm text-slate-500 mt-0.5 sm:mt-0">{request.requester?.skillLevel || 'Non-Professional'}</p>

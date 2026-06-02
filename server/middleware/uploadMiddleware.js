@@ -27,4 +27,25 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
+const imageFileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = file.mimetype.startsWith('image/') && allowedTypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+        return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed!'));
+};
+
+const imageUpload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 3 * 1024 * 1024
+    },
+    fileFilter: imageFileFilter
+});
+
+upload.imageUpload = imageUpload;
+
 module.exports = upload;

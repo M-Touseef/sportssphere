@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     // Users
     USER_PROFILE: `${API_BASE_URL}/auth/me`,
     UPDATE_PROFILE: `${API_BASE_URL}/auth/updatedetails`,
+    UPDATE_PROFILE_PICTURE: `${API_BASE_URL}/auth/profile-picture`,
     COMPLETE_PROFILE: `${API_BASE_URL}/auth/complete-profile`,
     SELECT_ROLE: `${API_BASE_URL}/auth/select-role`,
     GET_USER_BY_ID: `${API_BASE_URL}/users/profile`,

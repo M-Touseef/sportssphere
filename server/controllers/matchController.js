@@ -186,17 +186,17 @@ exports.getTournamentMatches = async (req, res) => {
             .populate({
                 path: 'participant1.registration',
                 populate: [
-                    { path: 'player', select: 'name email' },
-                    { path: 'player1', select: 'name email' },
-                    { path: 'player2', select: 'name email' }
+                    { path: 'player', select: 'name email profilePicture' },
+                    { path: 'player1', select: 'name email profilePicture' },
+                    { path: 'player2', select: 'name email profilePicture' }
                 ]
             })
             .populate({
                 path: 'participant2.registration',
                 populate: [
-                    { path: 'player', select: 'name email' },
-                    { path: 'player1', select: 'name email' },
-                    { path: 'player2', select: 'name email' }
+                    { path: 'player', select: 'name email profilePicture' },
+                    { path: 'player1', select: 'name email profilePicture' },
+                    { path: 'player2', select: 'name email profilePicture' }
                 ]
             })
             .populate('referee', 'name email')
@@ -275,17 +275,17 @@ exports.submitMatchResult = async (req, res) => {
             .populate({
                 path: 'participant1.registration',
                 populate: [
-                    { path: 'player', select: 'name email' },
-                    { path: 'player1', select: 'name email' },
-                    { path: 'player2', select: 'name email' }
+                    { path: 'player', select: 'name email profilePicture' },
+                    { path: 'player1', select: 'name email profilePicture' },
+                    { path: 'player2', select: 'name email profilePicture' }
                 ]
             })
             .populate({
                 path: 'participant2.registration',
                 populate: [
-                    { path: 'player', select: 'name email' },
-                    { path: 'player1', select: 'name email' },
-                    { path: 'player2', select: 'name email' }
+                    { path: 'player', select: 'name email profilePicture' },
+                    { path: 'player1', select: 'name email profilePicture' },
+                    { path: 'player2', select: 'name email profilePicture' }
                 ]
             });
 
@@ -406,9 +406,9 @@ exports.getLeaderboard = async (req, res) => {
         await TournamentRegistration.populate(leaderboard, {
             path: 'registration',
             populate: [
-                { path: 'player', select: 'name email skillLevel' },
-                { path: 'player1', select: 'name email skillLevel' },
-                { path: 'player2', select: 'name email skillLevel' }
+                { path: 'player', select: 'name email skillLevel profilePicture' },
+                { path: 'player1', select: 'name email skillLevel profilePicture' },
+                { path: 'player2', select: 'name email skillLevel profilePicture' }
             ]
         });
 

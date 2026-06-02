@@ -19,6 +19,7 @@ import {
 import { Link, useLocation } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import Tooltip from '../ui/Tooltip'
+import UserAvatar from '../ui/UserAvatar'
 import { useNotifications } from '../../hooks/useNotifications'
 import { getNotificationHref } from '../../utils/notificationLinks'
 import { getPageTitleFromPath, getPageIconKeyFromPath } from '../../utils/routeLabels'
@@ -206,9 +207,11 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
                             <span className="text-[13px] font-extrabold text-slate-900 leading-none">{user?.name}</span>
                             <span className="text-[10px] font-semibold text-slate-500 mt-1.5 tracking-wide max-w-[11rem] truncate" title={userRoleLabel}>{userRoleLabel}</span>
                         </div>
-                        <div className="h-11 w-11 rounded-xl bg-indigo-950 flex items-center justify-center text-amber-100 font-black text-sm border border-indigo-800 group-hover:bg-indigo-900 transition-colors">
-                            {user?.name?.[0]?.toUpperCase() || 'U'}
-                        </div>
+                        <UserAvatar
+                            user={user}
+                            className="h-11 w-11 rounded-xl border border-indigo-800 text-sm transition-colors group-hover:bg-indigo-900"
+                            fallbackClassName="text-sm"
+                        />
                     </Menu.Button>
 
                     <Transition

@@ -1,10 +1,11 @@
 import { Fragment, useState, useEffect } from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon, BellIcon, TrophyIcon, SparklesIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, BellIcon, TrophyIcon, SparklesIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import { Link, useLocation } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import { useAuth } from '../../context/AuthContext'
 import Button from '../ui/Button'
+import UserAvatar from '../ui/UserAvatar'
 import { useNotifications } from '../../hooks/useNotifications'
 import { getNotificationHref } from '../../utils/notificationLinks'
 
@@ -189,8 +190,12 @@ export default function Navbar() {
 
                                 {user ? (
                                     <Menu as="div" className="relative">
-                                        <Menu.Button className="h-9 w-9 rounded-lg bg-indigo-950 text-amber-100 font-bold text-sm flex items-center justify-center">
-                                            {user.name?.[0]?.toUpperCase()}
+                                        <Menu.Button className="block rounded-lg outline-none">
+                                            <UserAvatar
+                                                user={user}
+                                                className="h-9 w-9 rounded-lg text-sm"
+                                                fallbackClassName="text-sm"
+                                            />
                                         </Menu.Button>
                                         <Transition
                                             as={Fragment}
