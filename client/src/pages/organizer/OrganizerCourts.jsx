@@ -5,7 +5,6 @@ import {
     TrashIcon,
     MapPinIcon,
     CurrencyDollarIcon,
-    EyeIcon,
     PencilSquareIcon,
     BuildingOffice2Icon
 } from '@heroicons/react/24/outline';
@@ -106,7 +105,7 @@ export default function OrganizerCourts() {
                             key={court._id}
                             className="group/card flex flex-col overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_24px_56px_-22px_rgba(30,27,75,0.24)]"
                         >
-                            <Link to={`/courts/${court._id}`} className="block aspect-video bg-slate-100 relative group">
+                            <div className="block aspect-video bg-slate-100 relative">
                                 {court.images?.[0] ? (
                                     <img src={court.images[0]} alt={court.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -114,20 +113,14 @@ export default function OrganizerCourts() {
                                         <MapPinIcon className="h-12 w-12" />
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-indigo-950/0 group-hover:bg-indigo-950/35 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                    <span className="inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-indigo-950 shadow">
-                                        <EyeIcon className="h-4 w-4" />
-                                        View listing
-                                    </span>
-                                </div>
-                            </Link>
+                            </div>
                             <div className="p-5 flex-1 flex flex-col">
                                 <div className="mb-3">
                                     <span className="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                                         Published
                                     </span>
                                 </div>
-                                <Link to={`/courts/${court._id}`} className="block group">
+                                <div>
                                     <h3 className="font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">
                                         {court.name}
                                     </h3>
@@ -135,7 +128,7 @@ export default function OrganizerCourts() {
                                         <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                                         {court.location?.address}, {court.location?.city}
                                     </p>
-                                </Link>
+                                </div>
 
                                 <div className="flex items-center justify-between text-sm mt-auto pt-2 border-t border-slate-100">
                                     <span className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-950/5 to-amber-50 px-2.5 py-1 font-bold text-indigo-950">
@@ -148,13 +141,6 @@ export default function OrganizerCourts() {
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-4">
-                                    <Link
-                                        to={`/courts/${court._id}`}
-                                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-amber-100 py-2.5 text-sm font-semibold text-indigo-950 hover:bg-amber-50/60"
-                                    >
-                                        <EyeIcon className="h-4 w-4" />
-                                        View
-                                    </Link>
                                     <Link
                                         to={`/org/courts/${court._id}/edit`}
                                         className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-950 py-2.5 text-sm font-semibold text-amber-50 hover:bg-indigo-900"

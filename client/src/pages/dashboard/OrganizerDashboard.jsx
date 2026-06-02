@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { createElement, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     BanknotesIcon,
     BuildingOffice2Icon,
     CalendarDaysIcon,
     CheckCircleIcon,
+    ChevronDownIcon,
     ClockIcon,
     MapPinIcon,
-    PlusIcon
+    PlusIcon,
+    TrophyIcon,
+    UserGroupIcon
 } from '@heroicons/react/24/outline';
 import StatTile from '../../components/ui/StatTile';
 import courtService from '../../services/courtService';
@@ -24,6 +27,7 @@ function badgeClass(value) {
 export default function OrganizerDashboard() {
     const [overview, setOverview] = useState({ stats: {}, bookings: [], courts: [] });
     const [loading, setLoading] = useState(true);
+    const [expandedCourt, setExpandedCourt] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -66,6 +70,68 @@ export default function OrganizerDashboard() {
                 <StatTile label="Payments Received" value={loading ? '...' : money(stats.paidAmount)} icon={BanknotesIcon} />
                 <StatTile label="Payment Pending" value={loading ? '...' : money(stats.pendingAmount)} icon={ClockIcon} />
             </div>
+
+            <section className="space-y-4">
+                <div>
+                    <h2 className="text-xl font-extrabold text-slate-900">Court Performance</h2>
+                    <p className="mt-1 text-sm text-slate-500">Open a court to see its bookings, tournaments, and registration details separately.</p>
+                </div>
+                {!loading && courts.length === 0 ? (
+                    <div className="rounded-3xl border border-dashed border-amber-200 bg-white px-6 py-12 text-center text-slate-500">Add your first court to start tracking venue activity.</div>
+                ) : (
+                    courts.map((court) => {
+                        const expanded = expandedCourt === court._id;
+                        return (
+                            <article key={court._id} className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-sm">
+                                <button type="button" onClick={() => setExpandedCourt(expanded ? null : court._id)} className="flex w-full flex-col gap-4 p-5 text-left hover:bg-amber-50/30 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-extrabold text-slate-900">{court.name}</h3>
+                                        <p className="mt-1 flex items-center gap-1 text-sm text-slate-500"><MapPinIcon className="h-4 w-4" />{court.location?.address}, {court.location?.city}</p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                                        <span><strong>{court.stats?.bookings || 0}</strong> bookings</span>
+                                        <span><strong>{court.stats?.registrations || 0}</strong> registrations</span>
+                                        <span className="font-black text-indigo-950">{money((court.stats?.bookingRevenue || 0) + (court.stats?.registrationRevenue || 0))}</span>
+                                        <ChevronDownIcon className={`h-5 w-5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                                    </div>
+                                </button>
+                                {expanded && (
+                                    <div className="space-y-6 border-t border-slate-100 bg-slate-50/50 p-5 sm:p-6">
+                                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                            <MiniStat icon={CalendarDaysIcon} label="Bookings" value={court.stats?.bookings} />
+                                            <MiniStat icon={CheckCircleIcon} label="Confirmed" value={court.stats?.confirmedBookings} />
+                                            <MiniStat icon={BanknotesIcon} label="Booking Revenue" value={money(court.stats?.bookingRevenue)} />
+                                            <MiniStat icon={TrophyIcon} label="Tournaments" value={court.stats?.tournaments} />
+                                            <MiniStat icon={UserGroupIcon} label="Registrations" value={court.stats?.registrations} />
+                                        </div>
+                                        <div>
+                                            <h4 className="mb-3 text-sm font-extrabold uppercase tracking-wider text-slate-700">Tournament Registrations</h4>
+                                            {court.registrations?.length ? (
+                                                <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white">
+                                                    <table className="min-w-full divide-y divide-slate-100 text-sm">
+                                                        <thead className="bg-slate-50 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500"><tr><th className="px-4 py-3">Tournament</th><th className="px-4 py-3">Player / Team</th><th className="px-4 py-3">Category</th><th className="px-4 py-3">Payment</th><th className="px-4 py-3 text-right">Amount</th></tr></thead>
+                                                        <tbody className="divide-y divide-slate-100">
+                                                            {court.registrations.map((registration) => (
+                                                                <tr key={registration._id}>
+                                                                    <td className="px-4 py-3 font-bold text-slate-900">{registration.tournament?.name}</td>
+                                                                    <td className="px-4 py-3 text-slate-600">{registration.teamName || registration.player?.name || [registration.player1?.name, registration.player2?.name].filter(Boolean).join(' & ') || 'Player'}</td>
+                                                                    <td className="px-4 py-3 capitalize text-slate-600">{titleCase(registration.category)}</td>
+                                                                    <td className="px-4 py-3 capitalize">{registration.paymentStatus}</td>
+                                                                    <td className="px-4 py-3 text-right font-bold">{money(registration.paymentAmount)}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : <p className="text-sm text-slate-500">No tournament registrations for this court yet.</p>}
+                                        </div>
+                                    </div>
+                                )}
+                            </article>
+                        );
+                    })
+                )}
+            </section>
 
             <section className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-sm">
                 <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -111,6 +177,16 @@ export default function OrganizerDashboard() {
                     <Link to="/org/courts" className="rounded-xl bg-indigo-600 px-5 py-3 text-center text-sm font-bold text-white hover:bg-indigo-500">Manage My Courts</Link>
                 </div>
             </section>
+        </div>
+    );
+}
+
+function MiniStat({ icon, label, value = 0 }) {
+    return (
+        <div className="rounded-2xl border border-slate-100 bg-white p-4">
+            {createElement(icon, { className: 'mb-3 h-5 w-5 text-indigo-700' })}
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+            <p className="mt-1 text-lg font-black text-slate-900">{value || 0}</p>
         </div>
     );
 }

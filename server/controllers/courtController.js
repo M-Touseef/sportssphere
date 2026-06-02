@@ -1,5 +1,7 @@
 const Court = require('../models/Court');
 const Booking = require('../models/Booking');
+const Tournament = require('../models/Tournament');
+const TournamentRegistration = require('../models/TournamentRegistration');
 
 // @desc    Get all courts with filtering
 // @route   GET /api/courts
@@ -253,6 +255,16 @@ exports.getOwnerOverview = async (req, res, next) => {
             .populate('court', 'name location')
             .populate('user', 'name email')
             .sort({ createdAt: -1 });
+        const tournaments = await Tournament.find({ court: { $in: courtIds } })
+            .select('name court status startDate')
+            .sort({ startDate: -1 });
+        const tournamentIds = tournaments.map((tournament) => tournament._id);
+        const registrations = await TournamentRegistration.find({ tournament: { $in: tournamentIds } })
+            .populate('tournament', 'name court')
+            .populate('player', 'name email')
+            .populate('player1', 'name email')
+            .populate('player2', 'name email')
+            .sort({ registeredAt: -1 });
 
         const paidBookings = bookings.filter((booking) => booking.paymentStatus === 'paid');
         const pendingPayments = bookings.filter((booking) => booking.paymentStatus === 'pending');
@@ -268,7 +280,33 @@ exports.getOwnerOverview = async (req, res, next) => {
                     paidAmount: paidBookings.reduce((sum, booking) => sum + booking.totalPrice, 0),
                     pendingAmount: pendingPayments.reduce((sum, booking) => sum + booking.totalPrice, 0)
                 },
-                courts,
+                courts: courts.map((court) => {
+                    const courtId = String(court._id);
+                    const courtBookings = bookings.filter((booking) => String(booking.court?._id) === courtId);
+                    const courtTournaments = tournaments.filter((tournament) => String(tournament.court) === courtId);
+                    const courtTournamentIds = new Set(courtTournaments.map((tournament) => String(tournament._id)));
+                    const courtRegistrations = registrations.filter((registration) =>
+                        courtTournamentIds.has(String(registration.tournament?._id))
+                    );
+                    const paidCourtBookings = courtBookings.filter((booking) => booking.paymentStatus === 'paid');
+
+                    return {
+                        ...court.toObject(),
+                        stats: {
+                            bookings: courtBookings.length,
+                            confirmedBookings: courtBookings.filter((booking) => booking.status === 'confirmed').length,
+                            bookingRevenue: paidCourtBookings.reduce((sum, booking) => sum + booking.totalPrice, 0),
+                            tournaments: courtTournaments.length,
+                            registrations: courtRegistrations.length,
+                            registrationRevenue: courtRegistrations
+                                .filter((registration) => registration.paymentStatus === 'paid')
+                                .reduce((sum, registration) => sum + registration.paymentAmount, 0)
+                        },
+                        bookings: courtBookings,
+                        tournaments: courtTournaments,
+                        registrations: courtRegistrations
+                    };
+                }),
                 bookings
             }
         });

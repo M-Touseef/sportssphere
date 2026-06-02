@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import courtService from '../services/courtService';
@@ -335,6 +335,10 @@ const CourtDetails = () => {
                 </Link>
             </div>
         );
+    }
+
+    if (isOrganizerAccount) {
+        return <Navigate to="/app" replace />;
     }
 
     const amenities = Array.isArray(court.amenities) ? court.amenities : [];
