@@ -239,3 +239,40 @@ exports.getMyCourts = async (req, res, next) => {
         next(error);
     }
 };
+
+// @desc    Get court-owner dashboard overview
+// @route   GET /api/courts/my/overview
+// @access  Private (Organizer/Admin)
+exports.getOwnerOverview = async (req, res, next) => {
+    try {
+        const courts = await Court.find({ owner: req.user.id })
+            .select('name location pricePerHour openingTime closingTime')
+            .sort({ createdAt: -1 });
+        const courtIds = courts.map((court) => court._id);
+        const bookings = await Booking.find({ court: { $in: courtIds } })
+            .populate('court', 'name location')
+            .populate('user', 'name email')
+            .sort({ createdAt: -1 });
+
+        const paidBookings = bookings.filter((booking) => booking.paymentStatus === 'paid');
+        const pendingPayments = bookings.filter((booking) => booking.paymentStatus === 'pending');
+        const confirmedBookings = bookings.filter((booking) => booking.status === 'confirmed');
+
+        res.status(200).json({
+            success: true,
+            data: {
+                stats: {
+                    courts: courts.length,
+                    bookings: bookings.length,
+                    confirmedBookings: confirmedBookings.length,
+                    paidAmount: paidBookings.reduce((sum, booking) => sum + booking.totalPrice, 0),
+                    pendingAmount: pendingPayments.reduce((sum, booking) => sum + booking.totalPrice, 0)
+                },
+                courts,
+                bookings
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};

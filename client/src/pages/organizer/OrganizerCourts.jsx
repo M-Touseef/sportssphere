@@ -122,6 +122,11 @@ export default function OrganizerCourts() {
                                 </div>
                             </Link>
                             <div className="p-5 flex-1 flex flex-col">
+                                <div className="mb-3">
+                                    <span className="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                                        Published
+                                    </span>
+                                </div>
                                 <Link to={`/courts/${court._id}`} className="block group">
                                     <h3 className="font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">
                                         {court.name}

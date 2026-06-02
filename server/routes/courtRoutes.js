@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { getCourts, getCourt, createCourt, getAvailability, updateCourt, deleteCourt, getMyCourts } = require('../controllers/courtController');
+const { getCourts, getCourt, createCourt, getAvailability, updateCourt, deleteCourt, getMyCourts, getOwnerOverview } = require('../controllers/courtController');
 const { auth, authorize } = require('../middleware/auth');
 
 // Public routes
 // Place specific routes before generic :id parameter routes
 router.get('/', getCourts);
 router.get('/:id/availability', getAvailability);
+router.get('/my/overview', auth, authorize('organizer', 'admin'), getOwnerOverview);
 router.get('/my/all', auth, authorize('organizer', 'admin'), getMyCourts);
 router.get('/:id', getCourt);
 

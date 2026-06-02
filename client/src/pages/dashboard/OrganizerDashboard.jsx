@@ -1,212 +1,116 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusIcon, TrophyIcon, UsersIcon, CheckBadgeIcon, MapPinIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import {
+    BanknotesIcon,
+    BuildingOffice2Icon,
+    CalendarDaysIcon,
+    CheckCircleIcon,
+    ClockIcon,
+    MapPinIcon,
+    PlusIcon
+} from '@heroicons/react/24/outline';
 import StatTile from '../../components/ui/StatTile';
-import tournamentService from '../../services/tournamentService';
+import courtService from '../../services/courtService';
 
-function registrationTotal(tournament) {
-    const counts = tournament.registrationCounts || {};
-    return Object.values(counts).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
-}
+const money = (amount = 0) => `Rs. ${Number(amount).toLocaleString()}`;
+const titleCase = (value = '') => value.replace(/_/g, ' ');
 
-function statusBadgeClass(status) {
-    const map = {
-        draft: 'bg-slate-100 text-slate-600 border-slate-200',
-        registration_open: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-        registration_closed: 'bg-amber-50 text-amber-600 border-amber-100',
-        in_progress: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-        completed: 'bg-purple-50 text-purple-700 border-purple-100',
-        cancelled: 'bg-rose-50 text-rose-600 border-rose-100'
-    };
-    return map[status] || 'bg-slate-100 text-slate-500 border-slate-200';
+function badgeClass(value) {
+    if (value === 'paid' || value === 'confirmed') return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+    if (value === 'cancelled' || value === 'refunded') return 'bg-rose-50 text-rose-700 border-rose-100';
+    return 'bg-amber-50 text-amber-700 border-amber-100';
 }
 
 export default function OrganizerDashboard() {
-    const [tournaments, setTournaments] = useState([]);
+    const [overview, setOverview] = useState({ stats: {}, bookings: [], courts: [] });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         let cancelled = false;
-        (async () => {
-            try {
-                const res = await tournamentService.getMyTournaments();
-                if (!cancelled && res?.data) setTournaments(res.data);
-            } catch (e) {
-                console.error('Error loading organizer tournaments:', e);
-                if (!cancelled) setTournaments([]);
-            } finally {
+        courtService.getOwnerOverview()
+            .then((res) => {
+                if (!cancelled && res?.data) setOverview(res.data);
+            })
+            .catch((error) => console.error('Error loading owner overview:', error))
+            .finally(() => {
                 if (!cancelled) setLoading(false);
-            }
-        })();
+            });
         return () => { cancelled = true; };
     }, []);
 
-    const totalParticipants = tournaments.reduce((sum, t) => sum + registrationTotal(t), 0);
-    const completedCount = tournaments.filter((t) => t.status === 'completed').length;
+    const { stats, bookings, courts } = overview;
+    const display = (value) => loading ? '...' : String(value || 0);
 
     return (
-        <div className="space-y-8 animate-enter max-w-7xl mx-auto pb-20">
-            <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-amber-500 p-6 sm:p-8 text-white shadow-lg">
-                <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-                <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+        <div className="mx-auto max-w-7xl space-y-8 pb-20 animate-enter">
+            <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-700 to-amber-500 p-6 text-white shadow-lg sm:p-8">
                 <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-                <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-100">Court owner workspace</p>
-                    <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight leading-none">
-                        Organizer Dashboard
-                    </h1>
-                    <p className="mt-3 text-sm sm:text-base text-white/90 font-medium max-w-2xl leading-relaxed">
-                        Manage your venues, tournaments, and player registrations from one place.
-                    </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                    <Link
-                        to="/org/courts/create"
-                        className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-indigo-700 shadow-lg shadow-indigo-900/10 transition-all hover:bg-indigo-50"
-                    >
-                        <MapPinIcon className="h-5 w-5" aria-hidden="true" />
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-100">Court owner workspace</p>
+                        <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Court Owner Dashboard</h1>
+                        <p className="mt-3 max-w-2xl text-sm font-medium text-white/90 sm:text-base">
+                            Track your courts, received bookings, and payment status from one place.
+                        </p>
+                    </div>
+                    <Link to="/org/courts/create" className="inline-flex h-12 items-center gap-2 self-start rounded-xl bg-white px-5 text-sm font-bold text-indigo-700 shadow-lg hover:bg-indigo-50">
+                        <PlusIcon className="h-5 w-5" />
                         Add Court
                     </Link>
-                    <Link
-                        to="/app/tournaments/create"
-                        className="inline-flex h-12 items-center gap-2 rounded-xl bg-indigo-950 px-5 text-sm font-bold text-amber-50 shadow-lg shadow-indigo-950/20 transition-all hover:bg-indigo-900"
-                    >
-                        <PlusIcon className="h-5 w-5" aria-hidden="true" />
-                        Create Tournament
-                    </Link>
-                </div>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                <StatTile
-                    label="Total Tournaments"
-                    value={loading ? '…' : String(tournaments.length)}
-                    icon={TrophyIcon}
-                />
-                <StatTile
-                    label="Total Registrations"
-                    value={loading ? '…' : String(totalParticipants)}
-                    icon={UsersIcon}
-                />
-                <StatTile
-                    label="Completed Events"
-                    value={loading ? '…' : String(completedCount)}
-                    icon={CheckBadgeIcon}
-                />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <StatTile label="Published Courts" value={display(stats.courts)} icon={BuildingOffice2Icon} href="/org/courts" />
+                <StatTile label="Bookings Received" value={display(stats.bookings)} icon={CalendarDaysIcon} />
+                <StatTile label="Confirmed Bookings" value={display(stats.confirmedBookings)} icon={CheckCircleIcon} />
+                <StatTile label="Payments Received" value={loading ? '...' : money(stats.paidAmount)} icon={BanknotesIcon} />
+                <StatTile label="Payment Pending" value={loading ? '...' : money(stats.pendingAmount)} icon={ClockIcon} />
             </div>
 
-            <div className="flex flex-col space-y-4">
-                <div className="bg-white shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl overflow-hidden flex flex-col">
-                    <div className="px-6 sm:px-10 py-6 sm:py-8 flex items-center justify-between border-b border-slate-50">
-                        <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                                <TrophyIcon className="h-5 w-5" />
-                            </div>
-                            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 uppercase tracking-tight">Your tournaments</h2>
-                        </div>
-                        <Link
-                            to="/app/tournaments"
-                            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800"
-                        >
-                            View all
-                        </Link>
+            <section className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 className="text-lg font-extrabold text-slate-900">Received Bookings</h2>
+                        <p className="mt-1 text-sm text-slate-500">Every reservation made for one of your courts, with payment details.</p>
                     </div>
-                    <div className="p-4 sm:p-8">
-                        {loading ? (
-                            <div className="flex justify-center py-12">
-                                <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" aria-label="Loading" />
-                            </div>
-                        ) : tournaments.length === 0 ? (
-                            <div className="text-center py-12 px-4">
-                                <p className="text-slate-600 font-medium mb-2">No tournaments yet</p>
-                                <p className="text-sm text-slate-500 mb-6">Create a tournament to see it here.</p>
-                                <Link
-                                    to="/app/tournaments/create"
-                                    className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-700"
-                                >
-                                    Create tournament
-                                </Link>
-                            </div>
-                        ) : (
-                            <ul role="list" className="space-y-4">
-                                {tournaments.map((t) => {
-                                    const regs = registrationTotal(t);
-                                    const start = t.startDate ? new Date(t.startDate).toLocaleDateString() : '—';
-                                    const label = (t.status || 'draft').replace(/_/g, ' ');
-                                    return (
-                                        <li key={t._id}>
-                                            <Link
-                                                to={`/tournaments/${t._id}`}
-                                                className="group relative flex flex-col sm:flex-row justify-between gap-4 sm:gap-6 p-5 sm:p-6 bg-gradient-to-r from-slate-50 to-amber-50/40 hover:from-white hover:to-indigo-50/40 rounded-2xl border border-transparent hover:border-amber-100 hover:shadow-lg hover:shadow-indigo-950/5 transition-all duration-300"
-                                            >
-                                                <div className="flex min-w-0 gap-x-4 sm:gap-x-6">
-                                                    <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                                                        <TrophyIcon className="h-5 w-5 sm:h-7 sm:w-7" />
-                                                    </div>
-                                                    <div className="min-w-0 flex-auto flex flex-col justify-center">
-                                                        <p className="text-sm sm:text-lg font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight mb-1 break-words">
-                                                            {t.name}
-                                                        </p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
-                                                            Starts {start}
-                                                            {t.city ? ` · ${t.city}` : ''}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex shrink-0 items-center justify-between sm:justify-end min-w-0">
-                                                    <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-2 min-w-0">
-                                                        <span
-                                                            className={`inline-flex items-center rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 text-[8px] sm:text-[9px] font-black uppercase tracking-widest border shrink-0 ${statusBadgeClass(t.status)}`}
-                                                        >
-                                                            {label}
-                                                        </span>
-                                                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase truncate">
-                                                            {regs} registered
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </Link>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        )}
-                    </div>
+                    <span className="text-sm font-bold text-indigo-700">{bookings.length} total</span>
                 </div>
+                {loading ? (
+                    <div className="flex justify-center py-16"><div className="h-9 w-9 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" /></div>
+                ) : bookings.length === 0 ? (
+                    <div className="px-6 py-16 text-center text-slate-500">No bookings received yet.</div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-100 text-sm">
+                            <thead className="bg-slate-50 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <tr><th className="px-6 py-4">Court</th><th className="px-6 py-4">Player</th><th className="px-6 py-4">Schedule</th><th className="px-6 py-4">Booking</th><th className="px-6 py-4">Payment</th><th className="px-6 py-4 text-right">Amount</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {bookings.map((booking) => (
+                                    <tr key={booking._id} className="hover:bg-amber-50/30">
+                                        <td className="px-6 py-4 font-bold text-slate-900">{booking.court?.name || 'Court removed'}</td>
+                                        <td className="px-6 py-4 text-slate-600">{booking.user?.name || 'Player'}</td>
+                                        <td className="px-6 py-4 text-slate-600">{new Date(booking.date).toLocaleDateString()}<br /><span className="text-xs text-slate-400">{booking.startTime} - {booking.endTime}</span></td>
+                                        <td className="px-6 py-4"><span className={`rounded-full border px-2.5 py-1 text-xs font-bold capitalize ${badgeClass(booking.status)}`}>{titleCase(booking.status)}</span></td>
+                                        <td className="px-6 py-4"><span className={`rounded-full border px-2.5 py-1 text-xs font-bold capitalize ${badgeClass(booking.paymentStatus)}`}>{booking.paymentStatus}</span></td>
+                                        <td className="px-6 py-4 text-right font-black text-indigo-950">{money(booking.totalPrice)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
 
-                <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 sm:p-8 text-white shadow-2xl">
-                    <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-indigo-600/20 blur-3xl" />
-                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
-                        <div>
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-amber-100">
-                                <MapPinIcon className="h-5 w-5" />
-                            </div>
-                            <h2 className="text-lg font-extrabold">Your Venues</h2>
-                        </div>
-                        <p className="mt-4 text-slate-300 text-sm max-w-2xl leading-relaxed">
-                            Open any listing to see how players view it, edit pricing and photos, or add another court.
-                        </p>
-                        </div>
-                        <div className="flex flex-wrap gap-3 sm:justify-end">
-                            <Link
-                                to="/org/courts"
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-500"
-                            >
-                                Open My Courts
-                                <ArrowRightIcon className="h-4 w-4" />
-                            </Link>
-                            <Link
-                                to="/org/courts/create"
-                                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-bold text-white hover:bg-white/15"
-                            >
-                                Add court
-                            </Link>
-                        </div>
+            <section className="rounded-3xl bg-slate-900 p-6 text-white shadow-lg sm:p-8">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 className="flex items-center gap-2 text-lg font-extrabold"><MapPinIcon className="h-5 w-5 text-amber-300" />Court Listings</h2>
+                        <p className="mt-2 text-sm text-slate-300">{courts.length} published court{courts.length === 1 ? '' : 's'}. Edit pricing, photos, and availability from My Courts.</p>
                     </div>
+                    <Link to="/org/courts" className="rounded-xl bg-indigo-600 px-5 py-3 text-center text-sm font-bold text-white hover:bg-indigo-500">Manage My Courts</Link>
                 </div>
-            </div>
+            </section>
         </div>
     );
 }
