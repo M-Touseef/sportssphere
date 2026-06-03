@@ -2,6 +2,7 @@ const Tournament = require('../models/Tournament');
 const TournamentRegistration = require('../models/TournamentRegistration');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const { notifyTournamentRegistrationCreated } = require('../services/emailNotificationService');
 
 // @desc    Register for a tournament
 // @route   POST /api/tournaments/:id/register
@@ -113,6 +114,8 @@ exports.registerForTournament = async (req, res) => {
             .populate('player1', 'name email profilePicture')
             .populate('player2', 'name email profilePicture')
             .populate('tournament', 'name startDate');
+
+        await notifyTournamentRegistrationCreated(registration._id);
 
         res.status(201).json({
             success: true,

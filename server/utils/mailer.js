@@ -296,12 +296,11 @@ const sendWithSmtp = async (email) => {
     return info;
 };
 
-const sendVerificationCodeEmail = async ({ to, name, code }) => {
-    const email = buildVerificationEmail({ to, name, code });
+const sendConfiguredEmail = async (email, label = 'email') => {
     const provider = getEmailProvider();
 
     try {
-        console.log('[Mailer] Preparing verification email', {
+        console.log(`[Mailer] Preparing ${label}`, {
             to: email.to,
             from: email.from,
             provider
@@ -324,7 +323,7 @@ const sendVerificationCodeEmail = async ({ to, name, code }) => {
     } catch (error) {
         const settings = getMailTransportSettings();
 
-        console.error('[Mailer] Verification email failed', {
+        console.error(`[Mailer] ${label} failed`, {
             to: email.to,
             provider,
             host: getSmtpHost(),
@@ -342,6 +341,24 @@ const sendVerificationCodeEmail = async ({ to, name, code }) => {
     }
 };
 
+const sendVerificationCodeEmail = async ({ to, name, code }) => {
+    const email = buildVerificationEmail({ to, name, code });
+    return sendConfiguredEmail(email, 'verification email');
+};
+
+const sendAppEmail = async ({ to, subject, text, html }) => {
+    const email = {
+        from: buildFromAddress(),
+        to,
+        subject,
+        text,
+        html
+    };
+
+    return sendConfiguredEmail(email, 'notification email');
+};
+
 module.exports = {
-    sendVerificationCodeEmail
+    sendVerificationCodeEmail,
+    sendAppEmail
 };

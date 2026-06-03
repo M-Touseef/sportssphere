@@ -8,6 +8,11 @@ const Match = require('../models/Match');
 const { createNotification } = require('./notificationController');
 const { RESPONSE_DEADLINE_MS } = require('../constants/responseDeadlines');
 const { normalizeToHour } = require('../utils/timeUtils');
+const {
+    notifyBookingCreated,
+    notifyBookingConfirmed,
+    notifyIncomingRequest
+} = require('../services/emailNotificationService');
 
 // @desc    Create new booking
 // @route   POST /api/bookings
@@ -194,7 +199,16 @@ exports.createBooking = async (req, res, next) => {
             } catch (notifyErr) {
                 console.error('Failed to create incoming sparring notification:', notifyErr);
             }
+
+            await notifyIncomingRequest({
+                recipientId: proPlayerId,
+                requesterId: req.user.id,
+                bookingId: booking._id,
+                requestType: 'sparring/coaching'
+            });
         }
+
+        await notifyBookingCreated(booking._id);
 
         res.status(201).json({
             success: true,
@@ -284,6 +298,8 @@ exports.confirmPayment = async (req, res) => {
         booking.status = 'confirmed';
         booking.paymentStatus = 'paid';
         await booking.save();
+
+        await notifyBookingConfirmed(booking._id);
 
         res.status(200).json({
             success: true,

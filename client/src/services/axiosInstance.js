@@ -1,7 +1,14 @@
 import axios from 'axios';
 
 // Prioritize REACT_APP_API_BASE_URL as requested, fallback to VITE_API_URL, then localhost
-const baseURL = import.meta.env.REACT_APP_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const resolveBaseURL = () => {
+    const configuredUrl = import.meta.env.REACT_APP_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const trimmedUrl = configuredUrl.replace(/\/+$/, '');
+
+    return trimmedUrl.endsWith('/api') ? trimmedUrl : `${trimmedUrl}/api`;
+};
+
+const baseURL = resolveBaseURL();
 
 const axiosInstance = axios.create({
     baseURL,

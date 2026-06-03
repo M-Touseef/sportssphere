@@ -8,6 +8,7 @@ const Match = require('../models/Match');
 const SparringAvailability = require('../models/SparringAvailability');
 const { createNotification } = require('./notificationController');
 const { normalizeToHour } = require('../utils/timeUtils');
+const { notifyBookingCreated } = require('../services/emailNotificationService');
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -180,6 +181,8 @@ exports.createCoachCourtBooking = async (req, res) => {
         } catch (notifyErr) {
             console.error('Failed to notify court owner of coach reservation:', notifyErr);
         }
+
+        await notifyBookingCreated(booking._id);
 
         const populated = await Booking.findById(booking._id).populate('court', 'name location');
 

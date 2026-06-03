@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const Tournament = require('../models/Tournament');
 const Court = require('../models/Court');
 const Session = require('../models/Session');
+const { notifyUserStatusChanged } = require('../services/emailNotificationService');
 
 // @desc    Get system-wide statistics
 // @route   GET /api/admin/stats
@@ -108,6 +109,10 @@ exports.updateUser = async (req, res, next) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        if (status === 'approved' || status === 'rejected') {
+            await notifyUserStatusChanged(user, status, user.rejectionReason);
+        }
+
         res.status(200).json({
             success: true,
             data: user
@@ -175,6 +180,8 @@ exports.approveUser = async (req, res, next) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        await notifyUserStatusChanged(user, 'approved');
+
         res.status(200).json({
             success: true,
             message: 'User approved successfully',
@@ -209,6 +216,8 @@ exports.rejectUser = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
+
+        await notifyUserStatusChanged(user, 'rejected', reason);
 
         res.status(200).json({
             success: true,

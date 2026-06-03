@@ -5,6 +5,10 @@ const Booking = require('../models/Booking');
 const { createNotification } = require('./notificationController');
 const { validateCoachCourtBookingForSlot } = require('./coachCourtBookingController');
 const { getBookingId, normalizeDate } = require('../utils/coachAvailabilityUtils');
+const {
+    notifyCoachingSessionRequest,
+    notifyCoachingSessionStudents
+} = require('../services/emailNotificationService');
 
 const { RESPONSE_DEADLINE_MS: COACH_RESPONSE_MS } = require('../constants/responseDeadlines');
 
@@ -33,6 +37,8 @@ const notifySessionStudents = async (session, { title, message, status }) => {
             })
         )
     );
+
+    await notifyCoachingSessionStudents(session._id, { title, message, status });
 };
 
 const applyPendingStudentRequest = (session) => {
@@ -105,6 +111,11 @@ const notifyCoachOfSessionRequest = async (session, requesterId) => {
     } catch (notifyErr) {
         console.error('Failed to create coaching request notification:', notifyErr);
     }
+
+    await notifyCoachingSessionRequest({
+        sessionId: session._id,
+        requesterId
+    });
 };
 
 // @desc    Publish a coaching session (Coach creates available slot)

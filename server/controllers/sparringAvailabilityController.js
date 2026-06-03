@@ -9,6 +9,10 @@ const { createNotification } = require('./notificationController');
 const { RESPONSE_DEADLINE_MS } = require('../constants/responseDeadlines');
 const { normalizeToHour } = require('../utils/timeUtils');
 const { normalizeArea } = require('../constants/lahoreAreas');
+const {
+    notifyIncomingRequest,
+    notifyRequestStatusChanged
+} = require('../services/emailNotificationService');
 
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -41,6 +45,13 @@ const notifySparringRequester = async (request, { title, message, status }) => {
     } catch (notifyErr) {
         console.error('Failed to create sparring status notification:', notifyErr);
     }
+
+    await notifyRequestStatusChanged({
+        requesterId,
+        responderId: request.proPlayer,
+        bookingId: request.booking?._id || request.booking || null,
+        status
+    });
 };
 
 // =============================================================================
@@ -520,6 +531,13 @@ exports.sendSparringRequest = async (req, res) => {
         } catch (notifyErr) {
             console.error('Failed to create incoming sparring notification:', notifyErr);
         }
+
+        await notifyIncomingRequest({
+            recipientId: proId,
+            requesterId: req.user.id,
+            bookingId: booking._id,
+            requestType: 'sparring'
+        });
 
         res.status(201).json({
             success: true,

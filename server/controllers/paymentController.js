@@ -7,6 +7,10 @@ const {
     buildPaymentParams,
     isJazzCashConfigured
 } = require('../services/jazzcashService');
+const {
+    notifyBookingConfirmed,
+    notifyTournamentRegistrationConfirmed
+} = require('../services/emailNotificationService');
 
 const loadOrderForTransaction = async (transaction) => {
     if (transaction.orderType === 'Booking') {
@@ -49,6 +53,12 @@ const fulfillPaidTransaction = async (transaction, { jazzcashTxnId, ipnPayload =
         }
         order.jazzcashTxnId = jazzcashTxnId;
         await order.save();
+
+        if (transaction.orderType === 'Booking') {
+            await notifyBookingConfirmed(order._id);
+        } else if (transaction.orderType === 'TournamentRegistration') {
+            await notifyTournamentRegistrationConfirmed(order._id);
+        }
     }
 
     return { order, alreadyPaid: false };

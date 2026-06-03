@@ -2,6 +2,7 @@ const Tournament = require('../models/Tournament');
 const TournamentRegistration = require('../models/TournamentRegistration');
 const Match = require('../models/Match');
 const Court = require('../models/Court');
+const { notifyTournamentPublished } = require('../services/emailNotificationService');
 
 const TOURNAMENT_GRADES = ['division', 'national', 'international'];
 
@@ -250,6 +251,8 @@ exports.publishTournament = async (req, res, next) => {
         tournament.isPublished = true;
         tournament.status = 'registration_open';
         await tournament.save();
+
+        await notifyTournamentPublished(tournament._id);
 
         res.status(200).json({
             success: true,
