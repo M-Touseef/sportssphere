@@ -4,6 +4,11 @@ import { API_ENDPOINTS } from './api';
 // Note: axiosInstance already has interceptors and default headers configured.
 
 const authService = {
+    requestRegistrationCode: async (userData) => {
+        const response = await axiosInstance.post(API_ENDPOINTS.REQUEST_REGISTRATION_CODE, userData);
+        return response.data;
+    },
+
     // Register user
     register: async (userData) => {
         const response = await axiosInstance.post(API_ENDPOINTS.REGISTER, userData);

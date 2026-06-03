@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import authService from '../services/authService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import {
     TrophyIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 
@@ -16,6 +18,7 @@ const Register = () => {
     const { success, error: toastError } = useToast();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [verificationSent, setVerificationSent] = useState(false);
 
     const {
         register,
@@ -27,28 +30,56 @@ const Register = () => {
             name: '',
             email: '',
             password: '',
-            confirmPassword: ''
+            confirmPassword: '',
+            emailVerificationCode: ''
         }
     });
 
     const onSubmit = async (data) => {
         setLoading(true);
         try {
+            if (!verificationSent) {
+                await authService.requestRegistrationCode({
+                    name: data.name,
+                    email: data.email
+                });
+
+                setVerificationSent(true);
+                success('Verification code sent. Please check your email.');
+                return;
+            }
+
             const formData = {
                 name: data.name,
                 email: data.email,
-                password: data.password
+                password: data.password,
+                emailVerificationCode: data.emailVerificationCode
             };
 
             await authRegister(formData);
 
-            success('Account created! Please select your role to continue.');
+            success('Email verified and account created! Please select your role to continue.');
             // After registration, the user is logged in (per authContext implementation)
             // Redirect to role selection
             navigate('/role-selection');
 
         } catch (err) {
             toastError(err.message || 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resendCode = async () => {
+        setLoading(true);
+        try {
+            await authService.requestRegistrationCode({
+                name: watch('name'),
+                email: watch('email')
+            });
+            success('A new verification code was sent.');
+        } catch (err) {
+            toastError(err.response?.data?.error || err.message || 'Could not resend code.');
         } finally {
             setLoading(false);
         }
@@ -133,7 +164,7 @@ const Register = () => {
                             Create your account
                         </h2>
                         <p className="text-slate-500">
-                            Enter your details to get started
+                            {verificationSent ? 'Enter the code we sent to your email' : 'Enter your details to get started'}
                         </p>
                     </motion.div>
 
@@ -147,6 +178,7 @@ const Register = () => {
                                 label="Full Name"
                                 placeholder="Enter your full name"
                                 error={errors.name}
+                                disabled={verificationSent}
                                 {...register('name', { required: 'Name is required' })}
                             />
 
@@ -155,6 +187,7 @@ const Register = () => {
                                 type="email"
                                 placeholder="you@example.com"
                                 error={errors.email}
+                                disabled={verificationSent}
                                 {...register('email', {
                                     required: 'Email is required',
                                     pattern: {
@@ -170,6 +203,7 @@ const Register = () => {
                                     type="password"
                                     placeholder="Min 6 characters"
                                     error={errors.password}
+                                    disabled={verificationSent}
                                     {...register('password', {
                                         required: 'Password is required',
                                         minLength: { value: 6, message: 'At least 6 characters' }
@@ -180,6 +214,7 @@ const Register = () => {
                                     type="password"
                                     placeholder="Re-enter password"
                                     error={errors.confirmPassword}
+                                    disabled={verificationSent}
                                     {...register('confirmPassword', {
                                         required: 'Please confirm password',
                                         validate: (val) => {
@@ -191,6 +226,56 @@ const Register = () => {
                                 />
                             </div>
 
+                            {verificationSent && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-3"
+                                >
+                                    <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+                                        <div className="flex items-start gap-3">
+                                            <EnvelopeIcon className="mt-0.5 h-5 w-5 flex-none text-indigo-600" />
+                                            <p>
+                                                We sent a 6-digit code to <span className="font-semibold">{watch('email')}</span>. It expires in 10 minutes.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <Input
+                                        label="Verification Code"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        placeholder="Enter 6-digit code"
+                                        error={errors.emailVerificationCode}
+                                        {...register('emailVerificationCode', {
+                                            required: 'Verification code is required',
+                                            pattern: {
+                                                value: /^\d{6}$/,
+                                                message: 'Enter the 6-digit code'
+                                            }
+                                        })}
+                                    />
+
+                                    <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                                        <button
+                                            type="button"
+                                            onClick={() => setVerificationSent(false)}
+                                            className="font-semibold text-slate-500 hover:text-slate-700"
+                                        >
+                                            Edit email
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={resendCode}
+                                            disabled={loading}
+                                            className="font-semibold text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                                        >
+                                            Resend code
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+
                             <Button
                                 type="submit"
                                 fullWidth
@@ -198,7 +283,7 @@ const Register = () => {
                                 isLoading={loading}
                                 className="h-12 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200"
                             >
-                                Continue
+                                {verificationSent ? 'Verify & Create Account' : 'Continue'}
                             </Button>
                         </motion.div>
                     </form>

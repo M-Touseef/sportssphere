@@ -1,8 +1,11 @@
 const User = require('../models/User');
+const EmailVerification = require('../models/EmailVerification');
 const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { uploadToCloudinary } = require('../utils/cloudinary');
+const { sendVerificationCodeEmail } = require('../utils/mailer');
 const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
 // Generate JWT Token (include verified so middleware and routes stay aligned with DB)
@@ -63,6 +66,7 @@ const buildUserResponse = (user) => {
         city: user.city,
         area: user.area,
         phone: user.phone,
+        emailVerified: user.emailVerified === true,
         skillLevel: user.skillLevel,
         profilePicture: user.role === 'admin' ? undefined : user.profilePicture,
         rank: user.rank,
@@ -73,17 +77,130 @@ const buildUserResponse = (user) => {
     };
 };
 
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+
+const hashVerificationCode = (email, code) => {
+    const secret = process.env.JWT_SECRET || 'sportssphere-email-verification';
+    return crypto
+        .createHmac('sha256', secret)
+        .update(`${normalizeEmail(email)}:${code}`)
+        .digest('hex');
+};
+
+const generateVerificationCode = () => {
+    return String(crypto.randomInt(100000, 1000000));
+};
+
+const verifyRegistrationCode = async (email, code) => {
+    const normalizedEmail = normalizeEmail(email);
+    const verification = await EmailVerification.findOne({
+        email: normalizedEmail,
+        purpose: 'registration'
+    });
+
+    if (!verification) {
+        return { ok: false, status: 400, error: 'Please request a new verification code.' };
+    }
+
+    if (verification.expiresAt <= new Date()) {
+        await EmailVerification.deleteOne({ _id: verification._id });
+        return { ok: false, status: 400, error: 'Verification code expired. Please request a new code.' };
+    }
+
+    if (verification.attempts >= 5) {
+        await EmailVerification.deleteOne({ _id: verification._id });
+        return { ok: false, status: 429, error: 'Too many incorrect attempts. Please request a new code.' };
+    }
+
+    const submittedHash = hashVerificationCode(normalizedEmail, code);
+    if (submittedHash !== verification.codeHash) {
+        verification.attempts += 1;
+        await verification.save();
+        return { ok: false, status: 400, error: 'Invalid verification code.' };
+    }
+
+    await EmailVerification.deleteOne({ _id: verification._id });
+    return { ok: true };
+};
+
+// @desc    Send registration email verification code
+// @route   POST /api/auth/request-registration-code
+// @access  Public
+exports.requestRegistrationCode = async (req, res, next) => {
+    try {
+        const { name, email } = req.body;
+        const normalizedEmail = normalizeEmail(email);
+
+        const existingUser = await User.findOne({ email: normalizedEmail });
+        if (existingUser) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        const existingVerification = await EmailVerification.findOne({
+            email: normalizedEmail,
+            purpose: 'registration'
+        });
+
+        if (existingVerification && Date.now() - existingVerification.lastSentAt.getTime() < 60000) {
+            return res.status(429).json({
+                error: 'Please wait before requesting another verification code.'
+            });
+        }
+
+        const code = generateVerificationCode();
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
+
+        await EmailVerification.findOneAndUpdate(
+            { email: normalizedEmail, purpose: 'registration' },
+            {
+                email: normalizedEmail,
+                purpose: 'registration',
+                codeHash: hashVerificationCode(normalizedEmail, code),
+                expiresAt,
+                lastSentAt: now,
+                attempts: 0
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        try {
+            await sendVerificationCodeEmail({ to: normalizedEmail, name, code });
+        } catch (mailError) {
+            await EmailVerification.deleteOne({ email: normalizedEmail, purpose: 'registration' });
+            throw mailError;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Verification code sent to your email.',
+            expiresInMinutes: 10
+        });
+    } catch (error) {
+        if (error.message === 'Mail service is not configured') {
+            return res.status(500).json({ error: 'Email verification is not configured on the server.' });
+        }
+        next(error);
+    }
+};
+
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, emailVerificationCode } = req.body;
+        const normalizedEmail = normalizeEmail(email);
 
         // Check if user exists
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ email: normalizedEmail });
         if (user) {
             return res.status(400).json({ error: 'User already exists' });
+        }
+
+        const verificationResult = await verifyRegistrationCode(normalizedEmail, emailVerificationCode);
+        if (!verificationResult.ok) {
+            return res.status(verificationResult.status).json({ error: verificationResult.error });
         }
 
         // Hash password
@@ -93,12 +210,14 @@ exports.register = async (req, res, next) => {
         // Create user with pending status and no role
         user = await User.create({
             name,
-            email,
+            email: normalizedEmail,
             password: hashedPassword,
             role: null,
             status: 'pending',
             skillLevel: null,
-            isProfileComplete: false
+            isProfileComplete: false,
+            emailVerified: true,
+            emailVerifiedAt: new Date()
         });
 
         // Create token

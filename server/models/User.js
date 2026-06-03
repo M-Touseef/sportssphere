@@ -52,6 +52,13 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerifiedAt: {
+        type: Date
+    },
     isProfileComplete: {
         type: Boolean,
         default: false

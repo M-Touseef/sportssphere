@@ -19,8 +19,15 @@ exports.registerValidation = [
     check('name', 'Name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
+    check('emailVerificationCode', 'Email verification code is required').isLength({ min: 6, max: 6 }).isNumeric(),
     check('role', 'Invalid role').optional().isIn(['player', 'coach', 'organizer', 'admin']),
     check('skillLevel', 'Invalid skill level').optional().isIn(['professional', 'non-professional']),
+    validate
+];
+
+exports.registrationCodeValidation = [
+    check('name', 'Name is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
     validate
 ];
 
