@@ -7,6 +7,26 @@ const parseBoolean = (value, fallback) => {
     return String(value).toLowerCase() === 'true';
 };
 
+const getMailTransportSettings = () => {
+    const port = Number(process.env.MAIL_PORT) || 587;
+    let secure = parseBoolean(process.env.MAIL_SECURE, port === 465);
+
+    if (port === 587 && secure) {
+        console.warn('[Mailer] MAIL_SECURE=true is invalid for Gmail port 587. Using STARTTLS with secure=false.');
+        secure = false;
+    }
+
+    return {
+        port,
+        secure,
+        requireTLS: !secure,
+        family: Number(process.env.MAIL_IP_FAMILY) || 4,
+        connectionTimeout: Number(process.env.MAIL_CONNECTION_TIMEOUT) || 15000,
+        greetingTimeout: Number(process.env.MAIL_GREETING_TIMEOUT) || 10000,
+        socketTimeout: Number(process.env.MAIL_SOCKET_TIMEOUT) || 20000
+    };
+};
+
 const buildFromAddress = () => {
     const configuredFrom = process.env.MAIL_FROM;
     const mailUser = process.env.MAIL_USER;
@@ -24,33 +44,31 @@ const buildFromAddress = () => {
 const getTransporter = () => {
     if (transporter) return transporter;
 
-    const port = Number(process.env.MAIL_PORT) || 587;
-    const secure = parseBoolean(process.env.MAIL_SECURE, port === 465);
-    const family = Number(process.env.MAIL_IP_FAMILY) || 4;
+    const settings = getMailTransportSettings();
 
     console.log('[Mailer] Creating SMTP transport', {
         host: process.env.MAIL_HOST,
-        port,
-        secure,
-        requireTLS: !secure,
+        port: settings.port,
+        secure: settings.secure,
+        requireTLS: settings.requireTLS,
         user: process.env.MAIL_USER,
         from: buildFromAddress(),
-        family,
-        connectionTimeout: Number(process.env.MAIL_CONNECTION_TIMEOUT) || 15000,
-        greetingTimeout: Number(process.env.MAIL_GREETING_TIMEOUT) || 10000,
-        socketTimeout: Number(process.env.MAIL_SOCKET_TIMEOUT) || 20000,
+        family: settings.family,
+        connectionTimeout: settings.connectionTimeout,
+        greetingTimeout: settings.greetingTimeout,
+        socketTimeout: settings.socketTimeout,
         hasPassword: Boolean(process.env.MAIL_PASS)
     });
 
     transporter = nodemailer.createTransport({
         host: process.env.MAIL_HOST,
-        port,
-        secure,
-        requireTLS: !secure,
-        connectionTimeout: Number(process.env.MAIL_CONNECTION_TIMEOUT) || 15000,
-        greetingTimeout: Number(process.env.MAIL_GREETING_TIMEOUT) || 10000,
-        socketTimeout: Number(process.env.MAIL_SOCKET_TIMEOUT) || 20000,
-        family,
+        port: settings.port,
+        secure: settings.secure,
+        requireTLS: settings.requireTLS,
+        connectionTimeout: settings.connectionTimeout,
+        greetingTimeout: settings.greetingTimeout,
+        socketTimeout: settings.socketTimeout,
+        family: settings.family,
         auth: {
             user: process.env.MAIL_USER,
             pass: process.env.MAIL_PASS
@@ -75,11 +93,14 @@ const sendVerificationCodeEmail = async ({ to, name, code }) => {
     const safeName = name || 'there';
 
     try {
+        const settings = getMailTransportSettings();
+
         console.log('[Mailer] Sending verification email', {
             to,
             host: process.env.MAIL_HOST,
-            port: Number(process.env.MAIL_PORT) || 587,
-            secure: parseBoolean(process.env.MAIL_SECURE, (Number(process.env.MAIL_PORT) || 587) === 465)
+            port: settings.port,
+            secure: settings.secure,
+            requireTLS: settings.requireTLS
         });
 
         const info = await getTransporter().sendMail({
@@ -107,11 +128,14 @@ const sendVerificationCodeEmail = async ({ to, name, code }) => {
             response: info.response
         });
     } catch (error) {
+        const settings = getMailTransportSettings();
+
         console.error('[Mailer] Verification email failed', {
             to,
             host: process.env.MAIL_HOST,
-            port: Number(process.env.MAIL_PORT) || 587,
-            secure: parseBoolean(process.env.MAIL_SECURE, (Number(process.env.MAIL_PORT) || 587) === 465),
+            port: settings.port,
+            secure: settings.secure,
+            requireTLS: settings.requireTLS,
             code: error.code,
             command: error.command,
             responseCode: error.responseCode,
