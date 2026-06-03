@@ -1,17 +1,16 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install --production
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Copy the rest of the application code
+COPY package*.json ./
+
+RUN npm install --omit=dev
+
 COPY . .
 
-# Expose the backend port
-EXPOSE 5000
+EXPOSE 3000
 
-# Start the server
 CMD ["npm", "start"]
