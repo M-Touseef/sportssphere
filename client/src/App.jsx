@@ -147,16 +147,24 @@ const AnimatedRoutes = () => {
         </Route>
 
         {/* ============================================================ */}
-        {/* PUBLIC BROWSING (Context-Aware Layout) */}
+        {/* AUTHENTICATED BROWSING (Sign-in Required) */}
+        {/* ============================================================ */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<ContextualLayout />}>
+            <Route path="/tournaments" element={<PageTransition><TournamentList /></PageTransition>} />
+            <Route path="/tournaments/:id" element={<PageTransition><TournamentDetails /></PageTransition>} />
+            <Route path="/tournaments/:id/brackets" element={<PageTransition><TournamentBrackets /></PageTransition>} />
+            <Route path="/coaches" element={<PageTransition><CoachList /></PageTransition>} />
+            <Route path="/coaches/:id" element={<PageTransition><CoachProfile /></PageTransition>} />
+            <Route path="/courts" element={<PageTransition><CourtList /></PageTransition>} />
+            <Route path="/courts/:id" element={<PageTransition><CourtDetails /></PageTransition>} />
+          </Route>
+        </Route>
+
+        {/* ============================================================ */}
+        {/* PUBLIC TOOLS */}
         {/* ============================================================ */}
         <Route element={<ContextualLayout />}>
-          <Route path="/tournaments" element={<PageTransition><TournamentList /></PageTransition>} />
-          <Route path="/tournaments/:id" element={<PageTransition><TournamentDetails /></PageTransition>} />
-          <Route path="/tournaments/:id/brackets" element={<PageTransition><TournamentBrackets /></PageTransition>} />
-          <Route path="/coaches" element={<PageTransition><CoachList /></PageTransition>} />
-          <Route path="/coaches/:id" element={<PageTransition><CoachProfile /></PageTransition>} />
-          <Route path="/courts" element={<PageTransition><CourtList /></PageTransition>} />
-          <Route path="/courts/:id" element={<PageTransition><CourtDetails /></PageTransition>} />
           <Route path="/chatbot" element={<PageTransition><Chatbot /></PageTransition>} />
         </Route>
 
