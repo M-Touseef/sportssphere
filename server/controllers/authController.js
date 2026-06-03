@@ -131,8 +131,18 @@ exports.requestRegistrationCode = async (req, res, next) => {
         const { name, email } = req.body;
         const normalizedEmail = normalizeEmail(email);
 
+        console.log('[EmailVerification] Registration code requested', {
+            email: normalizedEmail,
+            hasName: Boolean(name),
+            ip: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
         const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
+            console.log('[EmailVerification] Registration code blocked: user already exists', {
+                email: normalizedEmail
+            });
             return res.status(400).json({ error: 'User already exists' });
         }
 
@@ -142,6 +152,10 @@ exports.requestRegistrationCode = async (req, res, next) => {
         });
 
         if (existingVerification && Date.now() - existingVerification.lastSentAt.getTime() < 60000) {
+            console.log('[EmailVerification] Registration code blocked: resend throttled', {
+                email: normalizedEmail,
+                lastSentAt: existingVerification.lastSentAt
+            });
             return res.status(429).json({
                 error: 'Please wait before requesting another verification code.'
             });
@@ -164,12 +178,27 @@ exports.requestRegistrationCode = async (req, res, next) => {
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
+        console.log('[EmailVerification] Registration code stored; sending email', {
+            email: normalizedEmail,
+            expiresAt
+        });
+
         try {
             await sendVerificationCodeEmail({ to: normalizedEmail, name, code });
         } catch (mailError) {
             await EmailVerification.deleteOne({ email: normalizedEmail, purpose: 'registration' });
+            console.error('[EmailVerification] Email send failed; verification row removed', {
+                email: normalizedEmail,
+                errorCode: mailError.code,
+                errorMessage: mailError.message
+            });
             throw mailError;
         }
+
+        console.log('[EmailVerification] Registration code email sent', {
+            email: normalizedEmail,
+            expiresAt
+        });
 
         res.status(200).json({
             success: true,
@@ -179,6 +208,11 @@ exports.requestRegistrationCode = async (req, res, next) => {
     } catch (error) {
         if (error.message === 'Mail service is not configured') {
             return res.status(500).json({ error: 'Email verification is not configured on the server.' });
+        }
+        if (['ETIMEDOUT', 'ESOCKET', 'ECONNECTION'].includes(error.code) || error.message === 'Connection timeout') {
+            return res.status(503).json({
+                error: 'Email service is unreachable. Please try again shortly or contact support.'
+            });
         }
         next(error);
     }
