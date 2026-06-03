@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { LAHORE_AREAS } = require('../constants/lahoreAreas');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -38,6 +39,7 @@ const userSchema = new mongoose.Schema({
     },
     area: {
         type: String,
+        enum: LAHORE_AREAS,
         trim: true
     },
     skillLevel: {

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { LAHORE_AREAS } = require('../constants/lahoreAreas');
 
 const coachProfileSchema = new mongoose.Schema({
     user: {
@@ -54,7 +55,10 @@ const coachProfileSchema = new mongoose.Schema({
     }],
     location: {
         city: String,
-        areas: [String] // Areas where coach provides services
+        areas: [{
+            type: String,
+            enum: LAHORE_AREAS
+        }] // Lahore areas where coach provides services
     },
     isActive: {
         type: Boolean,

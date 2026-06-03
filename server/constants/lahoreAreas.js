@@ -38,11 +38,17 @@ const normalizeArea = (value, fallback = 'Johar Town') => {
     if (!raw) return fallback;
     if (raw.toLowerCase() === LAHORE_CITY.toLowerCase()) return fallback;
     const found = LAHORE_AREAS.find((area) => area.toLowerCase() === raw.toLowerCase());
-    return found || raw;
+    return found || fallback;
+};
+
+const isLahoreArea = (value) => {
+    const raw = String(value || '').trim();
+    return LAHORE_AREAS.some((area) => area.toLowerCase() === raw.toLowerCase());
 };
 
 module.exports = {
     LAHORE_CITY,
     LAHORE_AREAS,
-    normalizeArea
+    normalizeArea,
+    isLahoreArea
 };

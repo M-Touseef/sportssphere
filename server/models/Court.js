@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { LAHORE_AREAS } = require('../constants/lahoreAreas');
 
 const courtSchema = new mongoose.Schema({
     name: {
@@ -8,7 +9,7 @@ const courtSchema = new mongoose.Schema({
     },
     location: {
         address: { type: String, required: true },
-        area: { type: String, required: true },
+        area: { type: String, enum: LAHORE_AREAS, required: true },
         city: { type: String, required: true },
         coordinates: {
             lat: Number,
