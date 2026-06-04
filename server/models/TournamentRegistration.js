@@ -25,6 +25,10 @@ const tournamentRegistrationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    partnerName: {
+        type: String,
+        trim: true
+    },
     teamName: {
         type: String,
         trim: true

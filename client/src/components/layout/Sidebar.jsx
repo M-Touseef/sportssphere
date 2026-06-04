@@ -54,7 +54,6 @@ export default function Sidebar({ user, logout, onCloseMobile, isMobile = false 
         navigation.push({ name: 'Coaching Sessions', href: '/app/sessions', icon: ClipboardDocumentListIcon });
 
         if (user.skillLevel === 'professional') {
-            navigation.push({ name: 'Sparring Manager', href: '/app/sparring', icon: UserGroupIcon });
             navigation.push({ name: 'Sparring Invites', href: '/app/sparring/requests', icon: CalendarIcon });
             navigation.push({ name: 'My Registrations', href: '/pro/registrations', icon: FireIcon });
         } else {
@@ -71,7 +70,7 @@ export default function Sidebar({ user, logout, onCloseMobile, isMobile = false 
     const secondaryNav = [
         ...(user?.role === 'admin'
             ? []
-            : [{ name: 'Profile', href: '/app/profile', icon: UserCircleIcon }]),
+            : [{ name: 'Profile', href: user?.role === 'player' && user?.skillLevel === 'professional' ? '/pro/profile' : '/app/profile', icon: UserCircleIcon }]),
         { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon }
     ];
 
@@ -209,7 +208,7 @@ export default function Sidebar({ user, logout, onCloseMobile, isMobile = false 
                                 </div>
                             </div>
                         ) : (
-                            <Link to="/app/profile" className="flex items-center gap-x-4 p-4 rounded-3xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 transition-all group">
+                            <Link to={user?.role === 'player' && user?.skillLevel === 'professional' ? '/pro/profile' : '/app/profile'} className="flex items-center gap-x-4 p-4 rounded-3xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 transition-all group">
                                 <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-900 font-black shadow-inner border border-white group-hover:scale-110 group-hover:from-slate-800 group-hover:to-slate-900 group-hover:text-white transition-all duration-500">
                                     {user?.name?.[0]?.toUpperCase() || 'U'}
                                 </div>

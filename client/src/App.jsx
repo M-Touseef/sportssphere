@@ -175,7 +175,7 @@ const AnimatedRoutes = () => {
           <Route element={<DashboardLayout />}>
             {/* Main Dashboard */}
             <Route path="/app" element={<PageTransition><DashboardHome /></PageTransition>} />
-            <Route path="/app/profile" element={user?.role === 'admin' ? <Navigate to="/admin/dashboard" replace /> : <PageTransition><Profile /></PageTransition>} />
+            <Route path="/app/profile" element={user?.role === 'admin' ? <Navigate to="/admin/dashboard" replace /> : user?.role === 'player' && user?.skillLevel === 'professional' ? <Navigate to="/pro/profile" replace /> : <PageTransition><Profile /></PageTransition>} />
             <Route path="/app/verification" element={<PageTransition><VerificationStatus /></PageTransition>} />
             <Route path="/app/bookings" element={user?.role === 'organizer' ? <Navigate to="/app" replace /> : <PageTransition><ProRedirect to="/pro/bookings"><MyBookings /></ProRedirect></PageTransition>} />
             <Route path="/app/sessions" element={<PageTransition><ProRedirect to="/pro/sessions"><MySessions /></ProRedirect></PageTransition>} />

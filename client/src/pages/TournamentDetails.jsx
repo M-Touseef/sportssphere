@@ -86,6 +86,12 @@ const TournamentBracketWrapper = ({ tournamentId }) => {
             const getParticipantName = (participant) => {
                 if (!participant.registration) return "Bye";
                 const reg = participant.registration;
+                if (reg.teamName) {
+                    return reg.teamName;
+                }
+                if (reg.player1 && reg.partnerName) {
+                    return `${reg.player1.name} & ${reg.partnerName}`;
+                }
                 if (reg.player1 && reg.player2) {
                     return `${reg.player1.name} & ${reg.player2.name}`;
                 }
@@ -154,8 +160,7 @@ const TournamentDetails = () => {
     const [activeTab, setActiveTab] = useState('details');
     const [registrationData, setRegistrationData] = useState({
         category: '',
-        player2Id: '',
-        teamName: ''
+        partnerName: ''
     });
     const [message, setMessage] = useState({ type: '', text: '' });
     const [registering, setRegistering] = useState(false);
@@ -744,17 +749,11 @@ const TournamentDetails = () => {
                                                                 <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-widest">Doubles partner</h4>
                                                             </div>
                                                             <Input
-                                                                label="Partner user ID"
-                                                                value={registrationData.player2Id}
-                                                                onChange={(e) => setRegistrationData({ ...registrationData, player2Id: e.target.value })}
+                                                                label="Partner name"
+                                                                value={registrationData.partnerName}
+                                                                onChange={(e) => setRegistrationData({ ...registrationData, partnerName: e.target.value })}
                                                                 required
-                                                                placeholder="Partner's account ID"
-                                                            />
-                                                            <Input
-                                                                label="Team name (optional)"
-                                                                value={registrationData.teamName}
-                                                                onChange={(e) => setRegistrationData({ ...registrationData, teamName: e.target.value })}
-                                                                placeholder="e.g. Smash Squad"
+                                                                placeholder="Enter partner's name"
                                                             />
                                                         </Motion.div>
                                                     )}
@@ -823,7 +822,7 @@ const TournamentDetails = () => {
                                                                                 )}
                                                                             </div>
                                                                             <span className="truncate">
-                                                                                {reg.teamName || reg.player?.name || (reg.player1 ? `${reg.player1.name} & ${reg.player2?.name}` : 'Unknown')}
+                                                                                {reg.teamName || reg.player?.name || (reg.player1 && reg.partnerName ? `${reg.player1.name} & ${reg.partnerName}` : (reg.player1 ? `${reg.player1.name} & ${reg.player2?.name}` : 'Unknown'))}
                                                                             </span>
                                                                         </div>
                                                                     </td>

@@ -47,10 +47,13 @@ const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
     const userRoleLabel = user?.role === 'player'
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
         : user?.role;
+    const profileHref = user?.role === 'player' && user?.skillLevel === 'professional'
+        ? '/pro/profile'
+        : '/profile';
     const userNavigation = [
         ...(user?.role === 'admin'
             ? []
-            : [{ name: 'My Profile', href: '/profile', icon: UserIcon }]),
+            : [{ name: 'My Profile', href: profileHref, icon: UserIcon }]),
         { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon },
     ];
 
