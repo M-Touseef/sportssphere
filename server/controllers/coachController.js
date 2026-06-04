@@ -57,18 +57,20 @@ exports.getCoaches = async (req, res) => {
         const { city, area, specialization, skillLevel, minRate, maxRate, court, paymentType } = req.query;
         let query = { isActive: true };
 
-        const areaFilter = area || city;
-        if (areaFilter) {
-            query['location.areas'] = { $regex: normalizeArea(areaFilter), $options: 'i' };
-        }
-
         if (specialization) {
             query.specialization = specialization;
         }
 
-        // Filter by User skillLevel
+        const userFilters = {};
+        const areaFilter = area || (city && city !== LAHORE_CITY ? city : '');
+        if (areaFilter) {
+            userFilters.area = normalizeArea(areaFilter);
+        }
         if (skillLevel) {
-            const users = await User.find({ skillLevel }).select('_id');
+            userFilters.skillLevel = skillLevel;
+        }
+        if (Object.keys(userFilters).length > 0) {
+            const users = await User.find({ role: 'coach', ...userFilters }).select('_id');
             const userIds = users.map(user => user._id);
             query.user = { $in: userIds };
         }

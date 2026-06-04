@@ -43,14 +43,14 @@ const ProfessionalLayout = () => {
     const SidebarContent = ({ isMobile = false }) => (
         <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-b from-slate-50 via-white to-slate-50 border-r border-slate-200/60 shadow-[10px_0_60px_-20px_rgba(0,0,0,0.12)]">
             <div className="flex items-center h-24 flex-shrink-0 px-8 border-b border-slate-200 justify-between">
-                <div className="flex items-center gap-3">
+                <Link to="/" className="flex items-center gap-3 group">
                     <div className="h-12 w-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-300">
                         <TrophyIcon className="h-7 w-7" />
                     </div>
-                    <span className="text-2xl font-black tracking-tight text-slate-900">
-                        SportSphere <span className="text-indigo-600">Pro</span>
+                    <span className="text-2xl font-black tracking-tight text-slate-900 group-hover:text-slate-800 transition-all duration-500">
+                        SportsSphere
                     </span>
-                </div>
+                </Link>
                 {isMobile && (
                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all border border-slate-200">
                         <XMarkIcon className="h-5 w-5" />

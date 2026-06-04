@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { getCoaches } from '../services/coachService';
 import { getAllCourts } from '../services/courtService';
 import { useToast } from '../context/ToastContext';
@@ -48,11 +48,16 @@ const normalizeCourtId = (courtValue) => {
 };
 
 const applyClientFilters = (coachList, activeFilters) => {
+    const selectedArea = activeFilters.area?.trim().toLowerCase();
     const selectedCourt = activeFilters.court?.trim();
     const maxRate = activeFilters.maxRate !== '' ? Number(activeFilters.maxRate) : null;
     const paymentType = activeFilters.paymentType || 'hourly';
 
     return coachList.filter((coach) => {
+        if (selectedArea && coach.user?.area?.trim().toLowerCase() !== selectedArea) {
+            return false;
+        }
+
         if (selectedCourt) {
             const hasCourtMatch =
                 Array.isArray(coach.availability) &&
@@ -328,11 +333,11 @@ const CoachList = () => {
 
             <AnimatePresence mode="wait">
                 {loading ? (
-                    <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <Motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <CardSkeleton count={6} />
-                    </motion.div>
+                    </Motion.div>
                 ) : fetchError ? (
-                    <motion.div
+                    <Motion.div
                         key="error"
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -351,9 +356,9 @@ const CoachList = () => {
                         >
                             Retry
                         </Button>
-                    </motion.div>
+                    </Motion.div>
                 ) : coaches.length > 0 ? (
-                    <motion.div
+                    <Motion.div
                         key="grid"
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -363,7 +368,7 @@ const CoachList = () => {
                             const specs = Array.isArray(coach.specialization) ? coach.specialization : [];
 
                             return (
-                                <motion.article
+                                <Motion.article
                                     key={coach._id}
                                     layout
                                     initial={{ opacity: 0, y: 20 }}
@@ -458,12 +463,12 @@ const CoachList = () => {
                                             </Button>
                                         </Link>
                                     </div>
-                                </motion.article>
+                                </Motion.article>
                             );
                         })}
-                    </motion.div>
+                    </Motion.div>
                 ) : (
-                    <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <Motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <EmptyState
                             icon={SparklesIcon}
                             title="No coaches found"
@@ -471,7 +476,7 @@ const CoachList = () => {
                             actionLabel="Clear filters"
                             action={resetFilters}
                         />
-                    </motion.div>
+                    </Motion.div>
                 )}
             </AnimatePresence>
         </div>
