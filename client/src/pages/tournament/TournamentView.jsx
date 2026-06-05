@@ -25,7 +25,7 @@ export default function TournamentView() {
                 processMatches(matchesData.data);
             } catch (err) {
                 console.error("Failed to load tournament data", err);
-                error("Failed to load tournament bracket data");
+                error("Failed to load tournament draw data");
             } finally {
                 setLoading(false);
             }
@@ -127,7 +127,7 @@ export default function TournamentView() {
                     <ArrowLeftIcon className="h-6 w-6" />
                 </Link>
                 <h1 className="text-2xl font-bold text-gray-900">
-                    {loading ? 'Loading...' : `${tournamentName} - Bracket`}
+                    {loading ? 'Loading...' : `${tournamentName} - Draw`}
                 </h1>
             </div>
 

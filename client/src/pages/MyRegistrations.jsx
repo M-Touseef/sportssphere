@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import tournamentService from '../services/tournamentService';
 import {
@@ -180,7 +180,7 @@ const MyRegistrations = () => {
                     <CardSkeleton />
                 </div>
             ) : registrations.length === 0 ? (
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-center py-16 sm:py-20 rounded-[2rem] border border-amber-100/80 bg-gradient-to-br from-amber-50/80 via-white to-indigo-50/40 shadow-[0_20px_50px_-24px_rgba(30,27,75,0.12)]"
@@ -198,7 +198,7 @@ const MyRegistrations = () => {
                             <ArrowRightIcon className="h-5 w-5 ml-2 inline" />
                         </Button>
                     </Link>
-                </motion.div>
+                </Motion.div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                     <AnimatePresence mode="popLayout">
@@ -209,7 +209,7 @@ const MyRegistrations = () => {
                             const tournamentId = reg.tournament?._id;
 
                             return (
-                                <motion.article
+                                <Motion.article
                                     key={reg._id}
                                     layout
                                     initial={{ opacity: 0, y: 16 }}
@@ -332,13 +332,13 @@ const MyRegistrations = () => {
                                                     to={`/tournaments/${tournamentId}/brackets`}
                                                     className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-indigo-950 text-sm font-bold hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-200/50 transition-all border-b-4 border-amber-700 active:border-b-0"
                                                 >
-                                                    View brackets
+                                                    View draws
                                                     <ChevronRightIcon className="h-4 w-4" />
                                                 </Link>
                                             )
                                         )}
                                     </div>
-                                </motion.article>
+                                </Motion.article>
                             );
                         })}
                     </AnimatePresence>

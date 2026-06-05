@@ -77,14 +77,14 @@ const MyTournaments = () => {
     };
 
     const handleGenerateBrackets = async (tournamentId, category) => {
-        if (!window.confirm(`Generate brackets for ${categoryLabel(category)}? This cannot be undone.`)) return;
+        if (!window.confirm(`Generate draws for ${categoryLabel(category)}? This cannot be undone.`)) return;
         try {
             setGeneratingBrackets(true);
             await tournamentService.generateBrackets(tournamentId, category);
-            alert('Brackets generated successfully!');
+            alert('Draws generated successfully!');
             navigate(`/tournaments/${tournamentId}/brackets`);
         } catch (error) {
-            alert(error.response?.data?.error || 'Failed to generate brackets');
+            alert(error.response?.data?.error || 'Failed to generate draws');
         } finally {
             setGeneratingBrackets(false);
         }
@@ -107,7 +107,7 @@ const MyTournaments = () => {
                     <div>
                         <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-100">Tournament management</p>
                         <h1 className="mt-2 text-3xl font-extrabold">My Tournaments</h1>
-                        <p className="mt-2 max-w-xl text-sm text-white/90">Publish events, track registrations, and prepare brackets for each division.</p>
+                        <p className="mt-2 max-w-xl text-sm text-white/90">Publish events, track registrations, and prepare draws for each division.</p>
                     </div>
                     <Link
                         to="/app/tournaments/create"
@@ -164,7 +164,7 @@ const MyTournaments = () => {
                                 </div>
 
                                 <div>
-                                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-900">Divisions & Brackets</h3>
+                                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-900">Divisions & Draws</h3>
                                     <div className="grid gap-3 md:grid-cols-2">
                                         {tournament.categories.map((cat) => (
                                             <div key={cat.name} className="flex items-center justify-between gap-3 rounded-xl border border-amber-100 bg-gradient-to-r from-slate-50 to-amber-50/50 p-3">
@@ -190,7 +190,7 @@ const MyTournaments = () => {
 
                                 <div className="flex flex-wrap gap-3 border-t border-amber-100 pt-5">
                                     <Link to={`/tournaments/${tournament._id}`} className="rounded-xl bg-indigo-950 px-4 py-2.5 text-sm font-bold text-amber-50 hover:bg-indigo-900">View Details</Link>
-                                    <Link to={`/tournaments/${tournament._id}/brackets`} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">View Brackets</Link>
+                                    <Link to={`/tournaments/${tournament._id}/brackets`} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">View Draws</Link>
                                     {tournament.status === 'draft' && (
                                         <>
                                             <button onClick={() => handlePublish(tournament._id)} className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">Publish</button>

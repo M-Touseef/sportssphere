@@ -52,7 +52,7 @@ const STATUS_LABELS = {
     cancelled: 'Cancelled',
 };
 
-// Internal component to handle bracket data fetching
+// Internal component to handle draw data fetching
 const TournamentBracketWrapper = ({ tournamentId }) => {
     const [rounds, setRounds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -63,7 +63,7 @@ const TournamentBracketWrapper = ({ tournamentId }) => {
                 const matchesData = await tournamentService.getTournamentMatches(tournamentId);
                 processMatches(matchesData.data);
             } catch (err) {
-                console.error("Failed to load bracket data", err);
+                console.error("Failed to load draw data", err);
             } finally {
                 setLoading(false);
             }
@@ -144,7 +144,7 @@ const TournamentBracketWrapper = ({ tournamentId }) => {
         setRounds(sortedRounds);
     };
 
-    if (loading) return <div className="text-center py-10 text-slate-500 font-medium">Loading bracket…</div>;
+    if (loading) return <div className="text-center py-10 text-slate-500 font-medium">Loading draw...</div>;
     if (rounds.length === 0) return <div className="text-center py-10 text-slate-500 font-medium">No matches scheduled yet.</div>;
 
     return <TournamentBracket rounds={rounds} />;
@@ -344,7 +344,7 @@ const TournamentDetails = () => {
     const tabs = [
         { id: 'details', label: 'Overview', icon: InformationCircleIcon },
         { id: 'categories', label: 'Categories', icon: ListBulletIcon },
-        { id: 'brackets', label: 'Brackets', icon: ChartBarIcon },
+        { id: 'draws', label: 'Draws', icon: ChartBarIcon },
     ];
 
     if (canRegister) {
@@ -508,7 +508,7 @@ const TournamentDetails = () => {
                                                 </div>
                                                 <div className="h-px bg-amber-200/60 w-full mb-4" />
                                                 <p className="text-slate-600 font-medium leading-relaxed">
-                                                    Brackets are generated automatically when registration closes and the draw is published.
+                                                    Draws are generated automatically when registration closes and the draw is published.
                                                 </p>
                                             </div>
                                         </section>
@@ -854,9 +854,9 @@ const TournamentDetails = () => {
                                     </Motion.div>
                                 )}
 
-                                {activeTab === 'brackets' && (
+                                {activeTab === 'draws' && (
                                     <Motion.div
-                                        key="brackets"
+                                        key="draws"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                     >
@@ -869,13 +869,13 @@ const TournamentDetails = () => {
                                                 <div className="h-20 w-20 bg-white border border-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm">
                                                     <ChartBarIcon className="h-10 w-10 text-slate-100" />
                                                 </div>
-                                                <h3 className="text-2xl font-extrabold text-indigo-950 tracking-tight">Brackets not published yet</h3>
+                                                <h3 className="text-2xl font-extrabold text-indigo-950 tracking-tight">Draws not published yet</h3>
                                                 <p className="text-slate-500 max-w-sm mx-auto mt-3 font-medium text-lg leading-relaxed">
-                                                    The draw will appear here after registration closes and the organizer publishes brackets.
+                                                    The draw will appear here after registration closes and the organizer publishes draws.
                                                 </p>
                                                 {isOrganizer && tournament.status === 'registration_open' && (
                                                     <div className="mt-8 p-4 bg-amber-50 text-amber-800 rounded-xl text-sm font-medium border border-amber-100">
-                                                        <p><strong>Organizer Note:</strong> You must close registration in "My Tournaments" to generate brackets.</p>
+                                                        <p><strong>Organizer Note:</strong> You must close registration in "My Tournaments" to generate draws.</p>
                                                     </div>
                                                 )}
                                             </div>

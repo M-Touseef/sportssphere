@@ -1,8 +1,9 @@
 const Tournament = require('../models/Tournament');
 const TournamentRegistration = require('../models/TournamentRegistration');
 const Match = require('../models/Match');
+const { validateBadmintonMatchScore } = require('../utils/badmintonScoring');
 
-// @desc    Generate brackets for a tournament category
+// @desc    Generate draws for a tournament category
 // @route   POST /api/tournaments/:id/generate-brackets
 // @access  Private (Organizer)
 exports.generateBrackets = async (req, res) => {
@@ -27,20 +28,20 @@ exports.generateBrackets = async (req, res) => {
         }).sort({ seedNumber: 1, registeredAt: 1 });
 
         if (registrations.length < 2) {
-            return res.status(400).json({ error: 'Not enough participants to generate brackets' });
+            return res.status(400).json({ error: 'Not enough participants to generate draws' });
         }
 
-        // Check if brackets already exist
+        // Check if draws already exist
         const existingMatches = await Match.countDocuments({
             tournament: tournament._id,
             category
         });
 
         if (existingMatches > 0) {
-            return res.status(400).json({ error: 'Brackets already generated for this category' });
+            return res.status(400).json({ error: 'Draws already generated for this category' });
         }
 
-        // Generate single elimination bracket
+        // Generate single elimination draw
         const matches = await generateSingleEliminationBracket(
             tournament._id,
             category,
@@ -235,20 +236,23 @@ exports.submitMatchResult = async (req, res) => {
             return res.status(401).json({ error: 'Not authorized' });
         }
 
-        // Validate scores
-        if (!Array.isArray(participant1Score) || !Array.isArray(participant2Score)) {
-            return res.status(400).json({ error: 'Scores must be arrays' });
+        if (!match.participant1.registration || !match.participant2.registration) {
+            return res.status(400).json({ error: 'Both participants are required before submitting a result' });
+        }
+
+        const scoreResult = validateBadmintonMatchScore(participant1Score, participant2Score);
+        if (scoreResult.error) {
+            return res.status(400).json({ error: scoreResult.error });
         }
 
         // Update match scores
-        match.participant1.score = participant1Score;
-        match.participant2.score = participant2Score;
+        match.participant1.score = scoreResult.participant1Score;
+        match.participant2.score = scoreResult.participant2Score;
 
         // Calculate winner
-        const winnerId = match.calculateWinner();
-        if (!winnerId) {
-            return res.status(400).json({ error: 'Invalid scores - cannot determine winner' });
-        }
+        const winnerId = scoreResult.matchWinner === 'participant1'
+            ? match.participant1.registration
+            : match.participant2.registration;
 
         match.winner = winnerId;
         match.participant1.isWinner = winnerId.toString() === match.participant1.registration.toString();

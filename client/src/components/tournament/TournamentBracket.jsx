@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { getBadmintonGameWinner } from '../../utils/badmintonScoring';
 
 // Mock Component for individual match
 const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, isEditable }) => {
@@ -50,7 +51,13 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
                                 {p1.name || "TBD"}
                             </span>
                         </div>
-                        <SetScores scores={p1.scores} fallbackScore={p1.score} isWinner={p1Won} />
+                        <SetScores
+                            scores={p1.scores}
+                            opponentScores={p2.scores}
+                            fallbackScore={p1.score}
+                            participant="participant1"
+                            isMatchWinner={p1Won}
+                        />
                     </div>
 
                     {/* Player 2 */}
@@ -70,7 +77,13 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
                                 {p2.name || "TBD"}
                             </span>
                         </div>
-                        <SetScores scores={p2.scores} fallbackScore={p2.score} isWinner={p2Won} />
+                        <SetScores
+                            scores={p2.scores}
+                            opponentScores={p1.scores}
+                            fallbackScore={p2.score}
+                            participant="participant2"
+                            isMatchWinner={p2Won}
+                        />
                     </div>
                 </div>
             </div>
@@ -83,7 +96,7 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
     );
 };
 
-const SetScores = ({ scores, fallbackScore, isWinner }) => {
+const SetScores = ({ scores, opponentScores, fallbackScore, participant, isMatchWinner }) => {
     const visibleScores = Array.isArray(scores) ? scores.filter((score) => score !== null && score !== undefined) : [];
 
     if (visibleScores.length === 0) {
@@ -91,7 +104,7 @@ const SetScores = ({ scores, fallbackScore, isWinner }) => {
             return (
                 <span className={clsx(
                     "font-mono font-bold text-lg",
-                    isWinner ? "text-indigo-600" : "text-slate-300"
+                    isMatchWinner ? "text-indigo-600" : "text-slate-300"
                 )}>
                     {fallbackScore}
                 </span>
@@ -102,17 +115,27 @@ const SetScores = ({ scores, fallbackScore, isWinner }) => {
 
     return (
         <div className="flex shrink-0 gap-1">
-            {visibleScores.map((score, index) => (
-                <span
-                    key={index}
-                    className={clsx(
-                        "flex h-7 min-w-7 items-center justify-center rounded px-1.5 font-mono text-xs font-bold",
-                        isWinner ? "bg-indigo-950 text-amber-100" : "bg-slate-100 text-slate-500"
-                    )}
-                >
-                    {score}
-                </span>
-            ))}
+            {visibleScores.map((score, index) => {
+                const gameWinner = getBadmintonGameWinner(
+                    participant === 'participant1' ? score : opponentScores?.[index],
+                    participant === 'participant2' ? score : opponentScores?.[index]
+                );
+                const wonGame = gameWinner === participant;
+
+                return (
+                    <span
+                        key={index}
+                        title={wonGame ? `Won game ${index + 1}` : `Lost game ${index + 1}`}
+                        className={clsx(
+                            "flex h-7 min-w-7 items-center justify-center rounded px-1.5 font-mono text-xs font-bold",
+                            wonGame ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500",
+                            isMatchWinner && !wonGame ? "ring-1 ring-indigo-200" : ""
+                        )}
+                    >
+                        {score}
+                    </span>
+                );
+            })}
         </div>
     );
 };
@@ -120,7 +143,7 @@ const SetScores = ({ scores, fallbackScore, isWinner }) => {
 export default function TournamentBracket({ rounds, onMatchClick, isEditable }) {
     if (!rounds || rounds.length === 0) return (
         <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-            <p className="text-sm font-medium text-slate-500">No bracket data.</p>
+            <p className="text-sm font-medium text-slate-500">No draw data.</p>
         </div>
     );
 

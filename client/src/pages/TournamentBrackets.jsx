@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import tournamentService from '../services/tournamentService';
 import TournamentBracket from '../components/tournament/TournamentBracket';
 import Button from '../components/ui/Button';
+import { getBadmintonGameWinner } from '../utils/badmintonScoring';
 import {
     ArrowLeftIcon,
     TrophyIcon,
@@ -36,7 +37,7 @@ const ROUND_LABELS = {
 };
 
 const TABS = [
-    { id: 'brackets', label: 'Brackets', icon: Squares2X2Icon },
+    { id: 'draws', label: 'Draws', icon: Squares2X2Icon },
     { id: 'matches', label: 'Matches', icon: ListBulletIcon },
     { id: 'leaderboard', label: 'Leaderboard', icon: ChartBarIcon }
 ];
@@ -50,7 +51,7 @@ const TournamentBrackets = () => {
     const [matches, setMatches] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [activeTab, setActiveTab] = useState('brackets');
+    const [activeTab, setActiveTab] = useState('draws');
     const [loading, setLoading] = useState(true);
 
     const [resultModal, setResultModal] = useState({
@@ -151,7 +152,7 @@ const TournamentBrackets = () => {
         }
     };
 
-    const convertMatchesToBracketFormat = () => {
+    const convertMatchesToDrawFormat = () => {
         const roundOrder = ['round_of_64', 'round_of_32', 'round_of_16', 'quarter_final', 'semi_final', 'final'];
         const rounds = {};
 
@@ -188,6 +189,8 @@ const TournamentBrackets = () => {
 
     const isOrganizer = isAuthenticated && user?.role === 'organizer';
     const canSubmitResults = isOrganizer || user?.role === 'admin';
+    const getRegistrationName = (registration, fallback = 'TBD') =>
+        registration ? registration.player?.name || registration.teamName || fallback : fallback;
 
     if (loading) {
         return (
@@ -208,7 +211,7 @@ const TournamentBrackets = () => {
         );
     }
 
-    const bracketData = convertMatchesToBracketFormat();
+    const drawData = convertMatchesToDrawFormat();
     const activeMatch = matches.find((m) => m._id === resultModal.matchId);
 
     return (
@@ -231,7 +234,7 @@ const TournamentBrackets = () => {
                             <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight truncate">
                                 {tournament.name}
                             </h1>
-                            <p className="text-sm text-indigo-200/90 font-medium mt-1">Brackets & results</p>
+                            <p className="text-sm text-indigo-200/90 font-medium mt-1">Draws & results</p>
                         </div>
                     </div>
                 </div>
@@ -259,37 +262,40 @@ const TournamentBrackets = () => {
                 </div>
 
                 <nav className="flex gap-1 p-1 bg-slate-100 rounded-xl">
-                    {TABS.map(({ id, label, icon: Icon }) => (
-                        <button
-                            key={id}
-                            type="button"
-                            onClick={() => setActiveTab(id)}
-                            className={twMerge(
-                                'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-bold transition-colors',
-                                activeTab === id
-                                    ? 'bg-white text-indigo-950 shadow-sm border border-amber-100'
-                                    : 'text-slate-500 hover:text-slate-800'
-                            )}
-                        >
-                            <Icon className="h-4 w-4 shrink-0" />
-                            <span>{label}</span>
-                        </button>
-                    ))}
+                    {TABS.map((tab) => {
+                        const TabIcon = tab.icon;
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setActiveTab(tab.id)}
+                                className={twMerge(
+                                    'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-bold transition-colors',
+                                    activeTab === tab.id
+                                        ? 'bg-white text-indigo-950 shadow-sm border border-amber-100'
+                                        : 'text-slate-500 hover:text-slate-800'
+                                )}
+                            >
+                                <TabIcon className="h-4 w-4 shrink-0" />
+                                <span>{tab.label}</span>
+                            </button>
+                        );
+                    })}
                 </nav>
             </div>
 
             {/* Content */}
             <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                {activeTab === 'brackets' && (
+                {activeTab === 'draws' && (
                     <div className="p-4 sm:p-6">
-                        {bracketData.length > 0 ? (
+                        {drawData.length > 0 ? (
                             <TournamentBracket
-                                rounds={bracketData}
+                                rounds={drawData}
                                 onMatchClick={openResultModal}
                                 isEditable={canSubmitResults}
                             />
                         ) : (
-                            <EmptyPanel message="No brackets yet for this category." />
+                            <EmptyPanel message="No draws yet for this category." />
                         )}
                     </div>
                 )}
@@ -300,8 +306,15 @@ const TournamentBrackets = () => {
                             matches.map((match) => {
                                 const p1 = match.participant1.registration;
                                 const p2 = match.participant2.registration;
+                                const p1Name = getRegistrationName(p1);
+                                const p2Name = getRegistrationName(p2);
                                 const roundLabel =
                                     ROUND_LABELS[match.round] || match.round?.replace(/_/g, ' ');
+                                const winnerName = match.participant1.isWinner
+                                    ? p1Name
+                                    : match.participant2.isWinner
+                                        ? p2Name
+                                        : '';
 
                                 return (
                                     <div
@@ -317,17 +330,27 @@ const TournamentBrackets = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 items-center">
                                             <PlayerLine
-                                                name={p1 ? p1.player?.name || p1.teamName : 'TBD'}
+                                                name={p1Name}
                                                 scores={match.participant1.score}
+                                                opponentScores={match.participant2.score}
+                                                participant="participant1"
                                                 winner={match.participant1.isWinner}
                                             />
                                             <span className="text-center text-xs font-black text-slate-300">VS</span>
                                             <PlayerLine
-                                                name={p2 ? p2.player?.name || p2.teamName : 'TBD'}
+                                                name={p2Name}
                                                 scores={match.participant2.score}
+                                                opponentScores={match.participant1.score}
+                                                participant="participant2"
                                                 winner={match.participant2.isWinner}
                                             />
                                         </div>
+
+                                        {winnerName && (
+                                            <div className="mt-4 inline-flex rounded-full bg-indigo-950 px-3 py-1 text-xs font-bold text-amber-100">
+                                                Overall winner: {winnerName}
+                                            </div>
+                                        )}
 
                                         {canSubmitResults && match.status !== 'completed' && p1 && p2 && (
                                             <div className="mt-4 flex justify-end">
@@ -367,7 +390,7 @@ const TournamentBrackets = () => {
                                             L
                                         </th>
                                         <th className="px-5 py-3 text-center font-bold text-slate-500 uppercase text-[10px] tracking-wider">
-                                            Sets
+                                            Games
                                         </th>
                                         <th className="px-5 py-3 text-center font-bold text-slate-500 uppercase text-[10px] tracking-wider">
                                             Pts
@@ -404,7 +427,7 @@ const TournamentBrackets = () => {
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl border border-amber-100 p-6 sm:p-8 max-w-lg w-full shadow-xl">
                         <h3 className="text-xl font-black text-slate-900 mb-1">Match scores</h3>
-                        <p className="text-sm text-slate-500 mb-6">Enter up to three sets per player.</p>
+                        <p className="text-sm text-slate-500 mb-6">Enter up to three games. A match is best of 3 games to 21.</p>
 
                         <div className="grid grid-cols-2 gap-6 mb-6">
                             <ScoreColumn
@@ -467,7 +490,7 @@ function StatusPill({ status }) {
     );
 }
 
-function PlayerLine({ name, scores, winner }) {
+function PlayerLine({ name, scores, opponentScores, participant, winner }) {
     return (
         <div
             className={twMerge(
@@ -480,17 +503,27 @@ function PlayerLine({ name, scores, winner }) {
             </span>
             <div className="flex gap-1 shrink-0">
                 {scores?.length
-                    ? scores.map((s, i) => (
-                          <span
-                              key={i}
-                              className={twMerge(
-                                  'w-7 h-7 flex items-center justify-center rounded text-xs font-bold',
-                                  winner ? 'bg-indigo-950 text-amber-100' : 'bg-white border border-slate-200 text-slate-600'
-                              )}
-                          >
-                              {s}
-                          </span>
-                      ))
+                    ? scores.map((s, i) => {
+                          const gameWinner = getBadmintonGameWinner(
+                              participant === 'participant1' ? s : opponentScores?.[i],
+                              participant === 'participant2' ? s : opponentScores?.[i]
+                          );
+                          const wonGame = gameWinner === participant;
+
+                          return (
+                              <span
+                                  key={i}
+                                  title={wonGame ? `Won game ${i + 1}` : `Lost game ${i + 1}`}
+                                  className={twMerge(
+                                      'w-7 h-7 flex items-center justify-center rounded text-xs font-bold',
+                                      wonGame ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-200 text-slate-600',
+                                      winner && !wonGame ? 'ring-1 ring-indigo-200' : ''
+                                  )}
+                              >
+                                  {s}
+                              </span>
+                          );
+                      })
                     : null}
             </div>
         </div>
@@ -508,7 +541,7 @@ function ScoreColumn({ label, scores, onChange }) {
                         type="number"
                         min="0"
                         max="30"
-                        placeholder={`Set ${i + 1}`}
+                        placeholder={`Game ${i + 1}`}
                         className="w-full text-center font-bold py-2.5 rounded-lg border border-slate-200 focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none"
                         value={scores[i]}
                         onChange={(e) => onChange(i, e.target.value)}

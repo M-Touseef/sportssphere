@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { validateBadmintonMatchScore } = require('../utils/badmintonScoring');
 
 const matchSchema = new mongoose.Schema({
     tournament: {
@@ -98,28 +99,11 @@ matchSchema.index({ tournament: 1, status: 1 });
 
 // Method to determine winner based on scores
 matchSchema.methods.calculateWinner = function () {
-    if (!this.participant1.score.length || !this.participant2.score.length) {
-        return null;
-    }
-
-    let p1Sets = 0;
-    let p2Sets = 0;
-
-    for (let i = 0; i < Math.max(this.participant1.score.length, this.participant2.score.length); i++) {
-        const p1Score = this.participant1.score[i] || 0;
-        const p2Score = this.participant2.score[i] || 0;
-
-        if (p1Score > p2Score) p1Sets++;
-        else if (p2Score > p1Score) p2Sets++;
-    }
-
-    if (p1Sets > p2Sets) {
-        return this.participant1.registration;
-    } else if (p2Sets > p1Sets) {
-        return this.participant2.registration;
-    }
-
-    return null;
+    const result = validateBadmintonMatchScore(this.participant1.score, this.participant2.score);
+    if (result.error) return null;
+    return result.matchWinner === 'participant1'
+        ? this.participant1.registration
+        : this.participant2.registration;
 };
 
 module.exports = mongoose.model('Match', matchSchema);

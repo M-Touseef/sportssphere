@@ -16,7 +16,7 @@ export const SEGMENT_LABELS = {
     sparring: 'Sparring',
     create: 'Create',
     edit: 'Edit',
-    brackets: 'Brackets',
+    brackets: 'Draws',
     dashboard: 'Dashboard',
     settings: 'Settings',
     registrations: 'Registrations',
