@@ -3,6 +3,7 @@ const TournamentRegistration = require('../models/TournamentRegistration');
 const Match = require('../models/Match');
 const Court = require('../models/Court');
 const { notifyTournamentPublished } = require('../services/emailNotificationService');
+const { LAHORE_CITY, normalizeArea, isLahoreArea } = require('../constants/lahoreAreas');
 
 const TOURNAMENT_GRADES = ['division', 'national', 'international'];
 
@@ -61,7 +62,8 @@ exports.createTournament = async (req, res, next) => {
             contactPhone,
             organizer: req.user.id,
             venue: court.name, // Auto-fill venue name from court
-            city: court.location.city // Auto-fill city from court
+            city: court.location.city || LAHORE_CITY, // Auto-fill city from court
+            area: normalizeArea(court.location?.area || court.location?.city)
         };
 
         const tournament = await Tournament.create(tournamentData);
@@ -80,11 +82,26 @@ exports.createTournament = async (req, res, next) => {
 // @access  Public
 exports.getTournaments = async (req, res, next) => {
     try {
-        const { city, status, category, upcoming } = req.query;
+        const { area, status, category, upcoming } = req.query;
         let query = { isPublished: true };
 
-        if (city) {
-            query.city = { $regex: city, $options: 'i' };
+        if (area) {
+            if (!isLahoreArea(area)) {
+                return res.status(200).json({
+                    success: true,
+                    count: 0,
+                    data: []
+                });
+            }
+
+            const normalizedArea = normalizeArea(area);
+            const courtsInArea = await Court.find({ 'location.area': normalizedArea })
+                .select('_id')
+                .lean();
+            query.$or = [
+                { area: normalizedArea },
+                { court: { $in: courtsInArea.map((court) => court._id) } }
+            ];
         }
 
         if (status) {
@@ -102,6 +119,7 @@ exports.getTournaments = async (req, res, next) => {
 
         const tournaments = await Tournament.find(query)
             .populate('organizer', 'name email')
+            .populate('court', 'name location')
             .sort({ startDate: 1 });
 
         res.status(200).json({

@@ -27,8 +27,32 @@ export const uploadMultipleImages = async (files) => {
     }
 };
 
+/**
+ * Upload one image to the server/Cloudinary
+ * @param {File} file
+ * @returns {Promise<string>} Image URL
+ */
+export const uploadSingleImage = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await axiosInstance.post('/images/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    if (response.data.success) {
+        const url = response.data.data?.url;
+        if (url) return url;
+    }
+
+    throw new Error(response.data.message || 'Upload failed');
+};
+
 const uploadService = {
-    uploadMultipleImages
+    uploadMultipleImages,
+    uploadSingleImage
 };
 
 export default uploadService;

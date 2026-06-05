@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { LAHORE_AREAS } = require('../constants/lahoreAreas');
 
 const tournamentSchema = new mongoose.Schema({
     name: {
@@ -39,6 +40,11 @@ const tournamentSchema = new mongoose.Schema({
     city: {
         type: String,
         required: true
+    },
+    area: {
+        type: String,
+        enum: LAHORE_AREAS,
+        trim: true
     },
     categories: [{
         name: {

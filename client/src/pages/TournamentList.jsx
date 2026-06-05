@@ -16,7 +16,8 @@ import {
     UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { LAHORE_AREAS, LAHORE_CITY } from '../constants/lahoreAreas';
 
 const STATUS_CONFIG = {
     draft: {
@@ -64,10 +65,10 @@ const formatDate = (date) =>
         day: 'numeric',
     });
 
-const DEFAULT_FILTERS = { city: '', status: '', upcoming: 'true' };
+const DEFAULT_FILTERS = { area: '', status: '', upcoming: 'true' };
 
-const normalizeFilters = ({ city = '', status = '', upcoming }) => ({
-    city: typeof city === 'string' ? city.trim() : '',
+const normalizeFilters = ({ area = '', status = '', upcoming }) => ({
+    area: typeof area === 'string' ? area.trim() : '',
     status: status || '',
     upcoming: status ? '' : upcoming === '' ? '' : 'true',
 });
@@ -131,7 +132,7 @@ const TournamentList = () => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const next = normalizeFilters({
-            city: String(formData.get('city') ?? ''),
+            area: String(formData.get('area') ?? ''),
             status: String(formData.get('status') ?? ''),
             upcoming: 'true',
         });
@@ -140,12 +141,12 @@ const TournamentList = () => {
     };
 
     const resetFilters = () => {
-        const cleared = { city: '', status: '', upcoming: '' };
+        const cleared = { area: '', status: '', upcoming: '' };
         setFilters(cleared);
         loadTournaments(cleared);
     };
 
-    const hasActiveFilters = Boolean(filters.city.trim() || filters.status);
+    const hasActiveFilters = Boolean(filters.area.trim() || filters.status);
 
     const statusCounts = useMemo(() => {
         const counts = { open: 0, live: 0, total: tournaments.length };
@@ -158,6 +159,9 @@ const TournamentList = () => {
 
     const getStatusConfig = (status) =>
         STATUS_CONFIG[status] || STATUS_CONFIG.draft;
+
+    const getTournamentArea = (tournament) =>
+        tournament.area || tournament.court?.location?.area || tournament.city || LAHORE_CITY;
 
     return (
         <div className="pb-32">
@@ -213,18 +217,21 @@ const TournamentList = () => {
                         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
                             <div className="md:col-span-5">
                                 <label className="text-[10px] font-bold text-violet-600 uppercase tracking-widest mb-2 block ml-1">
-                                    City
+                                    Lahore area
                                 </label>
                                 <div className="relative">
                                     <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-violet-500 pointer-events-none" />
-                                    <input
-                                        type="text"
-                                        name="city"
-                                        placeholder="Lahore, Karachi, Islamabad…"
-                                        className="w-full h-14 pl-12 pr-4 rounded-2xl border-2 border-violet-100 bg-gradient-to-r from-violet-50/80 to-indigo-50/50 font-semibold text-sm text-slate-800 focus:ring-4 focus:ring-violet-500/15 focus:border-violet-400 outline-none transition-all placeholder:text-slate-400"
-                                        value={filters.city}
+                                    <select
+                                        name="area"
+                                        className="w-full h-14 pl-12 pr-4 rounded-2xl border-2 border-violet-100 bg-gradient-to-r from-violet-50/80 to-indigo-50/50 font-semibold text-sm text-slate-800 focus:ring-4 focus:ring-violet-500/15 focus:border-violet-400 outline-none transition-all"
+                                        value={filters.area}
                                         onChange={handleFilterChange}
-                                    />
+                                    >
+                                        <option value="">All Lahore areas</option>
+                                        {LAHORE_AREAS.map((area) => (
+                                            <option key={area} value={area}>{area}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 
@@ -264,9 +271,9 @@ const TournamentList = () => {
                                 <span className="text-[10px] font-bold text-violet-600 uppercase tracking-widest">
                                     Active filters
                                 </span>
-                                {filters.city?.trim() && (
+                                {filters.area?.trim() && (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-800 px-3 py-1 text-xs font-bold">
-                                        City: {filters.city.trim()}
+                                        Area: {filters.area.trim()}
                                     </span>
                                 )}
                                 {filters.status && (
@@ -293,11 +300,11 @@ const TournamentList = () => {
 
                 <AnimatePresence mode="wait">
                     {loading ? (
-                        <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <Motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <CardSkeleton count={6} />
-                        </motion.div>
+                        </Motion.div>
                     ) : fetchError ? (
-                        <motion.div
+                        <Motion.div
                             key="error"
                             initial={{ opacity: 0, scale: 0.98 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -316,9 +323,9 @@ const TournamentList = () => {
                             >
                                 Retry
                             </Button>
-                        </motion.div>
+                        </Motion.div>
                     ) : tournaments.length > 0 ? (
-                        <motion.div
+                        <Motion.div
                             key="grid"
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -329,7 +336,7 @@ const TournamentList = () => {
                                 const fee = minEntryFee(tournament);
 
                                 return (
-                                    <motion.article
+                                    <Motion.article
                                         key={tournament._id}
                                         layout
                                         initial={{ opacity: 0, y: 20 }}
@@ -393,7 +400,7 @@ const TournamentList = () => {
                                                         <MapPinIcon className="h-4 w-4" />
                                                     </span>
                                                     <span className="line-clamp-1">
-                                                        {tournament.venue}, {tournament.city}
+                                                        {tournament.venue}, {getTournamentArea(tournament)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-3 text-sm font-semibold text-slate-600 rounded-xl bg-amber-50/90 border border-amber-100/90 px-3 py-2.5">
@@ -437,22 +444,22 @@ const TournamentList = () => {
                                                 </Link>
                                             </div>
                                         </div>
-                                    </motion.article>
+                                    </Motion.article>
                                 );
                             })}
-                        </motion.div>
+                        </Motion.div>
                     ) : (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <Motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <div className="rounded-[2.5rem] bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 border-2 border-dashed border-violet-200 p-4">
                                 <EmptyState
                                     icon={TrophyIcon}
                                     title="No tournaments found"
-                                    description="Try another city or status — new events are added regularly."
+                                    description="Try another Lahore area or status - new events are added regularly."
                                     actionLabel="Clear filters"
                                     action={resetFilters}
                                 />
                             </div>
-                        </motion.div>
+                        </Motion.div>
                     )}
                 </AnimatePresence>
             </div>

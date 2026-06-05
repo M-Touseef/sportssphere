@@ -4,8 +4,8 @@ import { API_BASE_URL } from './api';
 /** Build query string — omit empty values so the API applies filters correctly. */
 export const buildTournamentQueryParams = (filters = {}) => {
     const params = new URLSearchParams();
-    const city = typeof filters.city === 'string' ? filters.city.trim() : '';
-    if (city) params.set('city', city);
+    const area = typeof filters.area === 'string' ? filters.area.trim() : '';
+    if (area) params.set('area', area);
     if (filters.status) params.set('status', filters.status);
     if (filters.category) params.set('category', filters.category);
     // Only restrict to future start dates when browsing all statuses (not when filtering by status)

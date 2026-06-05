@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import tournamentService from '../services/tournamentService';
 import courtService from '../services/courtService';
+import uploadService from '../services/uploadService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import {
@@ -16,7 +17,9 @@ import {
     Bars3CenterLeftIcon,
     PlusIcon,
     TrashIcon,
-    InformationCircleIcon
+    InformationCircleIcon,
+    PhotoIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import {
@@ -26,6 +29,9 @@ import {
     validateMobile11Digits
 } from '../shared/constants';
 
+const TOURNAMENT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const TOURNAMENT_IMAGE_MAX_SIZE = 5 * 1024 * 1024;
+
 const CreateTournament = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -33,6 +39,9 @@ const CreateTournament = () => {
     const [loading, setLoading] = useState(false);
     const [myCourts, setMyCourts] = useState([]);
     const [courtsLoading, setCourtsLoading] = useState(true);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState('');
+    const fileInputRef = useRef(null);
 
     const {
         register,
@@ -88,6 +97,40 @@ const CreateTournament = () => {
 
     const selectedCourt = myCourts.find((c) => String(c._id) === String(selectedCourtId));
 
+    useEffect(() => {
+        return () => {
+            if (imagePreview) URL.revokeObjectURL(imagePreview);
+        };
+    }, [imagePreview]);
+
+    const handleImageChange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!TOURNAMENT_IMAGE_TYPES.includes(file.type)) {
+            toastError('Tournament image must be JPG, JPEG, PNG, or WEBP.');
+            event.target.value = '';
+            return;
+        }
+
+        if (file.size > TOURNAMENT_IMAGE_MAX_SIZE) {
+            toastError('Tournament image must be 5MB or smaller.');
+            event.target.value = '';
+            return;
+        }
+
+        if (imagePreview) URL.revokeObjectURL(imagePreview);
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const removeImage = () => {
+        if (imagePreview) URL.revokeObjectURL(imagePreview);
+        setImageFile(null);
+        setImagePreview('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const onSubmit = async (data) => {
         setLoading(true);
         try {
@@ -100,6 +143,11 @@ const CreateTournament = () => {
                 ...data,
                 contactPhone: String(data.contactPhone || '').replace(/\D/g, '')
             };
+
+            if (imageFile) {
+                payload.banner = await uploadService.uploadSingleImage(imageFile);
+            }
+
             await tournamentService.createTournament(payload);
             success('Tournament created successfully. Redirecting to your tournaments.');
             setTimeout(() => navigate('/app/tournaments'), 2000);
@@ -156,6 +204,49 @@ const CreateTournament = () => {
                                 />
                                 {errors.description && <p className="text-[10px] font-black text-destructive uppercase pl-1">{errors.description.message}</p>}
                             </div>
+                        </div>
+
+                        <div className="md:col-span-2 space-y-3">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1 flex items-center gap-2">
+                                <PhotoIcon className="h-4 w-4" aria-hidden />
+                                Tournament Image
+                            </label>
+                            {imagePreview ? (
+                                <div className="relative overflow-hidden rounded-2xl border border-amber-100 bg-slate-950">
+                                    <img
+                                        src={imagePreview}
+                                        alt="Tournament preview"
+                                        className="h-56 w-full object-cover"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={removeImage}
+                                        className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg transition-colors hover:bg-rose-600"
+                                        aria-label="Remove tournament image"
+                                    >
+                                        <XMarkIcon className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/40 px-6 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/50"
+                                >
+                                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-950 text-amber-100 shadow-lg shadow-indigo-950/15">
+                                        <PhotoIcon className="h-6 w-6" />
+                                    </span>
+                                    <span className="text-sm font-bold text-slate-800">Upload tournament image</span>
+                                    <span className="text-xs font-medium text-slate-500">JPG, JPEG, PNG, or WEBP. Max 5MB.</span>
+                                </button>
+                            )}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={handleImageChange}
+                            />
                         </div>
 
                         <div className="md:col-span-2 space-y-2">

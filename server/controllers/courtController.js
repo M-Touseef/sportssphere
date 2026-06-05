@@ -2,7 +2,14 @@ const Court = require('../models/Court');
 const Booking = require('../models/Booking');
 const Tournament = require('../models/Tournament');
 const TournamentRegistration = require('../models/TournamentRegistration');
+const User = require('../models/User');
 const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
+
+const getOrganizerArea = (user) => {
+    if (user.area) return normalizeArea(user.area);
+    if (user.city && user.city !== LAHORE_CITY) return normalizeArea(user.city);
+    return '';
+};
 
 // @desc    Get all courts with filtering
 // @route   GET /api/courts
@@ -64,13 +71,26 @@ exports.getCourt = async (req, res, next) => {
 // @access  Private (Organizer/Admin)
 exports.createCourt = async (req, res, next) => {
     try {
+        const owner = await User.findById(req.user.id).select('area city role');
+        if (!owner) {
+            return res.status(404).json({ error: 'Organizer not found' });
+        }
+
+        const organizerArea = owner.role === 'organizer'
+            ? getOrganizerArea(owner)
+            : normalizeArea(req.body.location?.area || req.body.area || req.body.location?.city);
+
+        if (owner.role === 'organizer' && !organizerArea) {
+            return res.status(400).json({ error: 'Please complete your organizer profile region before creating a court.' });
+        }
+
         const payload = {
             ...req.body,
             owner: req.user.id,
             location: {
                 ...(req.body.location || {}),
                 city: LAHORE_CITY,
-                area: normalizeArea(req.body.location?.area || req.body.area || req.body.location?.city)
+                area: organizerArea
             }
         };
 
@@ -192,12 +212,29 @@ exports.updateCourt = async (req, res, next) => {
 
         const payload = { ...req.body };
         delete payload.owner;
-        if (payload.location) {
-            payload.location = {
-                ...payload.location,
-                city: LAHORE_CITY,
-                area: normalizeArea(payload.location.area || payload.area || payload.location.city || court.location?.area)
-            };
+
+        const requester = await User.findById(req.user.id).select('area city role');
+        if (!requester) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const nextArea = requester.role === 'organizer'
+            ? getOrganizerArea(requester)
+            : normalizeArea(payload.location?.area || payload.area || payload.location?.city || court.location?.area);
+
+        if (requester.role === 'organizer' && !nextArea) {
+            return res.status(400).json({ error: 'Please complete your organizer profile region before updating a court.' });
+        }
+
+        payload.location = {
+            ...(court.location?.toObject?.() || court.location || {}),
+            ...(payload.location || {}),
+            city: LAHORE_CITY,
+            area: nextArea
+        };
+
+        if (payload.area !== undefined) {
+            delete payload.area;
         }
 
         const updated = await Court.findByIdAndUpdate(req.params.id, payload, {

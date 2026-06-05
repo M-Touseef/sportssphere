@@ -5,14 +5,16 @@ import { ArrowLeftIcon, PhotoIcon, XMarkIcon, MapPinIcon, BuildingOffice2Icon } 
 import courtService from '../../services/courtService';
 import uploadService from '../../services/uploadService';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
-import { LAHORE_AREAS, LAHORE_CITY } from '../../constants/lahoreAreas';
+import { LAHORE_CITY } from '../../constants/lahoreAreas';
 
 export default function CreateCourt() {
     const navigate = useNavigate();
     const { courtId } = useParams();
     const isEdit = Boolean(courtId);
     const { success, error } = useToast();
+    const { user } = useAuth();
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
     const [existingImageUrls, setExistingImageUrls] = useState([]);
     const [previews, setPreviews] = useState([]);
@@ -20,6 +22,7 @@ export default function CreateCourt() {
     const [courtLoadError, setCourtLoadError] = useState(false);
     const [loadingCourt, setLoadingCourt] = useState(isEdit);
     const fileInputRef = useRef(null);
+    const assignedArea = user?.area || (user?.city && user.city !== LAHORE_CITY ? user.city : '');
 
     useEffect(() => {
         if (!courtId) {
@@ -37,7 +40,6 @@ export default function CreateCourt() {
                 reset({
                     name: c.name,
                     address: c.location?.address || '',
-                    area: c.location?.area || c.location?.city || '',
                     surfaceType: c.surfaceType,
                     pricePerHour: c.pricePerHour,
                     description: c.description || '',
@@ -74,7 +76,6 @@ export default function CreateCourt() {
                 ...data,
                 location: {
                     address: data.address,
-                    area: data.area,
                     city: LAHORE_CITY
                 },
                 amenities: data.amenities ? data.amenities.split(',').map((i) => i.trim()).filter(Boolean) : [],
@@ -215,7 +216,7 @@ export default function CreateCourt() {
                             <MapPinIcon className="h-5 w-5 text-amber-600" />
                             Location
                         </h2>
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6">
                             <div className="col-span-2">
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Address</label>
                                 <input
@@ -226,18 +227,11 @@ export default function CreateCourt() {
                                 />
                                 {errors.address && <p className="mt-1 text-xs text-rose-500">{errors.address.message}</p>}
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Lahore area</label>
-                                <select
-                                    {...register('area', { required: 'Area is required' })}
-                                    className="block w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 py-3"
-                                >
-                                    <option value="">Select area</option>
-                                    {LAHORE_AREAS.map((area) => (
-                                        <option key={area} value={area}>{area}</option>
-                                    ))}
-                                </select>
-                                {errors.area && <p className="mt-1 text-xs text-rose-500">{errors.area.message}</p>}
+                            <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Assigned Lahore area</p>
+                                <p className="mt-1 text-sm font-semibold text-slate-900">
+                                    {assignedArea ? `${assignedArea}, ${LAHORE_CITY}` : 'Complete your organizer profile to set your area'}
+                                </p>
                             </div>
                         </div>
                     </div>
