@@ -5,6 +5,8 @@ const TournamentRegistration = require('../models/TournamentRegistration');
 const User = require('../models/User');
 const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const getOrganizerArea = (user) => {
     if (user.area) return normalizeArea(user.area);
     if (user.city && user.city !== LAHORE_CITY) return normalizeArea(user.city);
@@ -19,9 +21,11 @@ exports.getCourts = async (req, res, next) => {
         const { city, area, minPrice, maxPrice, surfaceType } = req.query;
         let query = { 'location.city': LAHORE_CITY };
 
-        const areaFilter = area || city;
-        if (areaFilter) {
-            query['location.area'] = { $regex: normalizeArea(areaFilter), $options: 'i' };
+        const areaFilter = String(area || '').trim();
+        const legacyCityFilter = String(city || '').trim();
+        const searchArea = areaFilter || (legacyCityFilter.toLowerCase() !== LAHORE_CITY.toLowerCase() ? legacyCityFilter : '');
+        if (searchArea) {
+            query['location.area'] = { $regex: escapeRegex(searchArea), $options: 'i' };
         }
 
         if (minPrice || maxPrice) {

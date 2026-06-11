@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import courtService from '../services/courtService';
 import { useToast } from '../context/ToastContext';
 import Button from '../components/ui/Button';
@@ -26,15 +26,17 @@ const SURFACE_LABELS = {
 const formatSurface = (type) =>
     SURFACE_LABELS[type] || type?.replace(/_/g, ' ') || 'Standard';
 
+const EMPTY_FILTERS = { area: '', surfaceType: '' };
+
 const CourtList = () => {
     const [courts, setCourts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(false);
-    const { error } = useToast();
-    const [filters, setFilters] = useState({ area: '', surfaceType: '' });
+    const { addToast } = useToast();
+    const [filters, setFilters] = useState(EMPTY_FILTERS);
 
     const fetchCourts = useCallback(
-        async (activeFilters = filters) => {
+        async (activeFilters = EMPTY_FILTERS) => {
             try {
                 setLoading(true);
                 setFetchError(false);
@@ -43,17 +45,17 @@ const CourtList = () => {
             } catch (err) {
                 console.error('Error fetching courts:', err);
                 setFetchError(true);
-                error('Could not load courts. Please check your connection.');
+                addToast('Could not load courts. Please check your connection.', 'error');
             } finally {
                 setLoading(false);
             }
         },
-        [filters, error]
+        [addToast]
     );
 
     useEffect(() => {
         fetchCourts();
-    }, []);
+    }, [fetchCourts]);
 
     const handleFilterChange = (e) => {
         setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -65,7 +67,7 @@ const CourtList = () => {
     };
 
     const resetFilters = () => {
-        const cleared = { area: '', surfaceType: '' };
+        const cleared = { ...EMPTY_FILTERS };
         setFilters(cleared);
         fetchCourts(cleared);
     };
@@ -135,18 +137,22 @@ const CourtList = () => {
                             </label>
                             <div className="relative">
                                 <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-800 pointer-events-none" />
-                                <select
+                                <input
+                                    type="search"
                                     name="area"
                                     id="area"
+                                    list="lahore-area-options"
                                     className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-2xl border border-amber-100 bg-gradient-to-br from-slate-50 to-amber-50/40 font-semibold text-sm text-slate-900 focus:ring-4 focus:ring-amber-200/50 focus:border-amber-300/80 outline-none transition-all placeholder:text-slate-400"
                                     value={filters.area}
                                     onChange={handleFilterChange}
-                                >
-                                    <option value="">All Lahore areas</option>
+                                    placeholder="Type an area name, e.g. Johar Town"
+                                    autoComplete="off"
+                                />
+                                <datalist id="lahore-area-options">
                                     {LAHORE_AREAS.map((area) => (
                                         <option key={area} value={area}>{area}</option>
                                     ))}
-                                </select>
+                                </datalist>
                             </div>
                         </div>
 
@@ -217,11 +223,11 @@ const CourtList = () => {
 
             <AnimatePresence mode="wait">
                 {loading ? (
-                    <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <Motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                         <CardSkeleton count={6} />
-                    </motion.div>
+                    </Motion.div>
                 ) : fetchError ? (
-                    <motion.div
+                    <Motion.div
                         key="error"
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -240,16 +246,16 @@ const CourtList = () => {
                         >
                             Retry
                         </Button>
-                    </motion.div>
+                    </Motion.div>
                 ) : courts.length > 0 ? (
-                    <motion.div
+                    <Motion.div
                         key="grid"
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
                     >
                         {courts.map((court, index) => (
-                            <motion.article
+                            <Motion.article
                                 key={court._id}
                                 layout
                                 initial={{ opacity: 0, y: 20 }}
@@ -320,11 +326,11 @@ const CourtList = () => {
                                         </Link>
                                     </div>
                                 </div>
-                            </motion.article>
+                            </Motion.article>
                         ))}
-                    </motion.div>
+                    </Motion.div>
                 ) : (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <Motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <EmptyState
                             icon={SparklesIcon}
                             title="No courts found"
@@ -332,7 +338,7 @@ const CourtList = () => {
                             actionLabel="Clear filters"
                             action={resetFilters}
                         />
-                    </motion.div>
+                    </Motion.div>
                 )}
             </AnimatePresence>
         </div>
