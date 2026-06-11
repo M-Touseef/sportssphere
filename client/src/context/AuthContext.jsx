@@ -3,51 +3,54 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 
 const AuthContext = createContext(null);
+const TOKEN_KEY = 'token';
+const USER_CACHE_KEY = 'auth_user';
+
+const readCachedUser = () => {
+    try {
+        const raw = localStorage.getItem(USER_CACHE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        localStorage.removeItem(USER_CACHE_KEY);
+        return null;
+    }
+};
+
+const cacheUser = (user) => {
+    try {
+        if (user) {
+            localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+        } else {
+            localStorage.removeItem(USER_CACHE_KEY);
+        }
+    } catch {
+        /* ignore cache write errors */
+    }
+};
 
 export const AuthProvider = ({ children }) => {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const cachedUser = readCachedUser();
+    const [user, setUser] = useState(cachedUser);
+    const [loading, setLoading] = useState(() => Boolean(localStorage.getItem(TOKEN_KEY) && !cachedUser));
     const [error, setError] = useState(null);
 
     useEffect(() => {
         const checkLoggedIn = async () => {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem(TOKEN_KEY);
             if (token) {
                 try {
                     const response = await authService.getCurrentUser();
-                    // authService.getCurrentUser() returns response.data which is the user object wrapped in data property?
-                    // Check authService.js: returns response.data.
-                    // Check authController.js: response.data of getMe is { success: true, data: user }.
-                    // So authService.getCurrentUser() returns { success: true, data: user }.
-                    // Note: authService.getCurrentUser code:
-                    //     const response = await axiosInstance.get(API_ENDPOINTS.USER_PROFILE);
-                    //     return response.data;
-                    // So yes, it returns the body.
-
-                    // So setUser(response.data.data) ??? or setUser(response.data) if the service unwrraps it?
-                    // authService returns response.data.
-                    // Backend returns { success: true, data: user }.
-                    // So response.data in authService is { success: true, data: user }.
-                    // So we need response.data.data. Or response.data if authService unwraps it.
-
-                    // Wait, let's look at `login` in AuthContext above.
-                    // const response = await authService.login(credentials);
-                    // setUser(response.user);
-                    // authService.login returns response.data.
-                    // Backend login returns { success: true, token, user: {...} }.
-                    // So response.user is correct there.
-
-                    // authService.getCurrentUser returns response.data from backend { success: true, data: user }.
-                    // So response.data is the user object in the response body? No.
-                    // If authService returns response.data (the body), then we access .data on it.
-                    // So setUser(response.data).
                     setUser(response.data);
+                    cacheUser(response.data);
                 } catch (err) {
                     console.error('Error fetching user:', err);
-                    localStorage.removeItem('token');
+                    localStorage.removeItem(TOKEN_KEY);
+                    localStorage.removeItem(USER_CACHE_KEY);
                     setUser(null);
                 }
+            } else {
+                cacheUser(null);
             }
             setLoading(false);
         };
@@ -61,6 +64,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authService.login(credentials);
             setUser(response.user);
+            cacheUser(response.user);
             setLoading(false);
             return response;
         } catch (err) {
@@ -77,6 +81,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authService.register(userData);
             setUser(response.user);
+            cacheUser(response.user);
             setLoading(false);
             return response;
         } catch (err) {
@@ -90,6 +95,7 @@ export const AuthProvider = ({ children }) => {
     const logout = useCallback(() => {
         authService.logout();
         setUser(null);
+        cacheUser(null);
         navigate('/', { replace: true });
     }, [navigate]);
 
@@ -98,6 +104,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authService.updateProfile(userData);
             setUser(response.data);
+            cacheUser(response.data);
             setLoading(false);
             return response;
         } catch (err) {
@@ -111,6 +118,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authService.updateProfilePicture(file);
             setUser(response.user);
+            cacheUser(response.user);
             setLoading(false);
             return response;
         } catch (err) {
@@ -124,6 +132,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authService.completeProfile(userData);
             setUser(response.user);
+            cacheUser(response.user);
             setLoading(false);
             return response;
         } catch (err) {
@@ -137,6 +146,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authService.selectRole(roleData);
             setUser(response.user);
+            cacheUser(response.user);
             setLoading(false);
             return response;
         } catch (err) {
