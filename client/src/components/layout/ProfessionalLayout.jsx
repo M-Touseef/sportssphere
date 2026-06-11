@@ -1,112 +1,22 @@
 import React, { useState, Fragment } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Dialog, Transition } from '@headlessui/react';
 import {
-    HomeIcon,
-    UserCircleIcon,
-    CalendarIcon,
-    InboxIcon,
-    ArrowLeftOnRectangleIcon,
-    UserGroupIcon,
     TrophyIcon,
-    IdentificationIcon,
-    AcademicCapIcon,
-    XMarkIcon,
-    CalendarDaysIcon,
-    ClipboardDocumentListIcon,
-    MapPinIcon
 } from '@heroicons/react/24/outline';
 import DashboardHeader from './DashboardHeader';
+import Sidebar from './Sidebar';
+import { buildProfessionalNavigation } from './navigationConfig';
 
 const ProfessionalLayout = () => {
     const { user, logout } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const location = useLocation();
 
-    const navigation = [
-        { name: 'Dashboard', href: '/pro/dashboard', icon: HomeIcon },
-        { name: 'My Profile', href: '/pro/profile', icon: UserCircleIcon },
-        { name: 'Sparring Availability', href: '/pro/availability', icon: CalendarDaysIcon },
-        { name: 'Tournaments', href: '/tournaments', icon: TrophyIcon },
-        { name: 'My Tournaments', href: '/pro/registrations', icon: UserGroupIcon },
-        { name: 'Find Coaches', href: '/coaches', icon: AcademicCapIcon },
-        { name: 'Coaching Sessions', href: '/pro/sessions', icon: ClipboardDocumentListIcon },
-        { name: 'Court Bookings', href: '/pro/bookings', icon: MapPinIcon },
-        { name: 'Matching Requests', href: '/pro/requests', icon: InboxIcon },
-    ];
-
-    const handleLogout = () => {
-        logout();
-    };
-
-    const SidebarContent = ({ isMobile = false }) => (
-        <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-b from-slate-50 via-white to-slate-50 border-r border-slate-200/60 shadow-[10px_0_60px_-20px_rgba(0,0,0,0.12)]">
-            <div className="flex items-center h-24 flex-shrink-0 px-8 border-b border-slate-200 justify-between">
-                <Link to="/" className="flex items-center gap-3 group">
-                    <div className="h-12 w-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-300">
-                        <TrophyIcon className="h-7 w-7" />
-                    </div>
-                    <span className="text-2xl font-black tracking-tight text-slate-900 group-hover:text-slate-800 transition-all duration-500">
-                        SportsSphere
-                    </span>
-                </Link>
-                {isMobile && (
-                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all border border-slate-200">
-                        <XMarkIcon className="h-5 w-5" />
-                    </button>
-                )}
-            </div>
-            <div className="flex-1 flex flex-col overflow-y-auto p-6">
-                <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-slate-400 mb-6 flex items-center gap-3">
-                    Menu
-                    <div className="h-px flex-1 bg-gradient-to-r from-slate-300 to-transparent" />
-                </div>
-                <nav className="flex-1 space-y-2">
-                    {navigation.map((item) => {
-                        const isActive = location.pathname === item.href;
-                        return (
-                            <Link
-                                key={item.name}
-                                to={item.href}
-                                onClick={() => isMobile && setSidebarOpen(false)}
-                                className={`group flex items-center gap-x-4 px-4 py-4 text-[13px] font-bold rounded-2xl transition-all duration-300 ${isActive
-                                    ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-xl shadow-slate-300'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 hover:shadow-md'
-                                    }`}
-                            >
-                                <item.icon
-                                    className={`h-5 w-5 shrink-0 transition-all duration-300 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-700 group-hover:-translate-y-0.5'
-                                        }`}
-                                    aria-hidden="true"
-                                />
-                                {item.name}
-                                {isActive && (
-                                    <div className="ml-auto h-2 w-2 rounded-full bg-white/90" />
-                                )}
-                            </Link>
-                        );
-                    })}
-                </nav>
-                <div className="pt-8 border-t border-slate-200 mt-8">
-                    <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-slate-400 mb-6 flex items-center gap-3">
-                        Account
-                        <div className="h-px flex-1 bg-gradient-to-r from-slate-300 to-transparent" />
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-x-4 px-4 py-4 text-[13px] font-bold text-red-600 rounded-2xl hover:bg-red-50 hover:shadow-md transition-all"
-                    >
-                        <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-                        Sign Out
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+    const navigation = buildProfessionalNavigation();
 
     return (
-        <div className="min-h-screen bg-slate-50/10 flex">
+        <div className="min-h-screen bg-slate-50/60">
             {/* Mobile Sidebar Overlay */}
             <Transition.Root show={sidebarOpen} as={Fragment}>
                 <Dialog as="div" className="relative z-[100] lg:hidden" onClose={setSidebarOpen}>
@@ -133,21 +43,32 @@ const ProfessionalLayout = () => {
                             leaveTo="-translate-x-full"
                         >
                             <Dialog.Panel className="relative flex w-full max-w-xs flex-1">
-                                <SidebarContent isMobile={true} />
+                                <Sidebar
+                                    user={user}
+                                    logout={logout}
+                                    onCloseMobile={() => setSidebarOpen(false)}
+                                    isMobile={true}
+                                    navigation={navigation}
+                                    brandTitle="Pro Portal"
+                                    brandEyebrow="Competitive lane"
+                                    brandDescription="Stay match-ready with fast access to sparring, tournaments, sessions, and court time."
+                                    brandIcon={TrophyIcon}
+                                    brandVariant="professional"
+                                />
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>
                 </Dialog>
             </Transition.Root>
 
-            {/* Static Desktop Sidebar */}
-            <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-                <SidebarContent />
-            </aside>
-
-            {/* Main content */}
-            <div className="flex flex-col flex-1 lg:pl-72 transition-all duration-300">
-                <DashboardHeader user={user} logout={logout} setSidebarOpen={setSidebarOpen} />
+            <div className="flex min-h-screen flex-col">
+                <DashboardHeader
+                    user={user}
+                    logout={logout}
+                    setSidebarOpen={setSidebarOpen}
+                    navigation={navigation}
+                    navigationContext="professional"
+                />
                 <main className="flex-1 py-10 px-6 sm:px-8 lg:px-10">
                     <Outlet />
                 </main>

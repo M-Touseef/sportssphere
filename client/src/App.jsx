@@ -1,66 +1,69 @@
 import { ToastProvider } from './context/ToastContext';
-import { BrowserRouter, Routes, Route, Outlet, useLocation, Navigate } from 'react-router-dom'
-import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Outlet, useLocation, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
 import axiosInstance from './services/axiosInstance';
-import TournamentView from './pages/tournament/TournamentView'
-import ChatWindow from './components/chat/ChatWindow'
-import Navbar from './components/layout/Navbar'
-import DashboardLayout from './components/layout/DashboardLayout'
-import PlayerDashboard from './pages/dashboard/PlayerDashboard'
-import CoachDashboard from './pages/dashboard/CoachDashboard'
-import OrganizerDashboard from './pages/dashboard/OrganizerDashboard'
-import AdminDashboard from './pages/AdminDashboard'
-import { AuthProvider, useAuth } from './context/AuthContext'
-import ProtectedRoute from './components/auth/ProtectedRoute'
-import PageTransition from './components/ui/PageTransition'
-import { AnimatePresence } from 'framer-motion'
+import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import PageTransition from './components/ui/PageTransition';
+import { SocketProvider } from './context/SocketContext';
 
-// Page Components
-import CourtList from './pages/CourtList';
-import CourtDetails from './pages/CourtDetails';
-import Home from './pages/Home';
-import CoachList from './pages/CoachList';
-import TournamentList from './pages/TournamentList';
-import TournamentDetails from './pages/TournamentDetails';
-import TournamentBrackets from './pages/TournamentBrackets';
-import CreateTournament from './pages/CreateTournament';
-import MyTournaments from './pages/MyTournaments';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import CoachProfile from './pages/CoachProfile';
-import Profile from './pages/Profile';
-import MySessions from './pages/MySessions';
-import MyRegistrations from './pages/MyRegistrations';
+const ChatWindow = lazy(() => import('./components/chat/ChatWindow'));
+const Navbar = lazy(() => import('./components/layout/Navbar'));
+const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
+const CoachLayout = lazy(() => import('./components/layout/CoachLayout'));
+const ProfessionalLayout = lazy(() => import('./components/layout/ProfessionalLayout'));
+const PlayerDashboard = lazy(() => import('./pages/dashboard/PlayerDashboard'));
+const CoachDashboard = lazy(() => import('./pages/dashboard/CoachDashboard'));
+const OrganizerDashboard = lazy(() => import('./pages/dashboard/OrganizerDashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const CourtList = lazy(() => import('./pages/CourtList'));
+const CourtDetails = lazy(() => import('./pages/CourtDetails'));
+const Home = lazy(() => import('./pages/Home'));
+const CoachList = lazy(() => import('./pages/CoachList'));
+const TournamentList = lazy(() => import('./pages/TournamentList'));
+const TournamentDetails = lazy(() => import('./pages/TournamentDetails'));
+const TournamentBrackets = lazy(() => import('./pages/TournamentBrackets'));
+const CreateTournament = lazy(() => import('./pages/CreateTournament'));
+const MyTournaments = lazy(() => import('./pages/MyTournaments'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const CoachProfile = lazy(() => import('./pages/CoachProfile'));
+const Profile = lazy(() => import('./pages/Profile'));
+const MySessions = lazy(() => import('./pages/MySessions'));
+const MyRegistrations = lazy(() => import('./pages/MyRegistrations'));
+const Chatbot = lazy(() => import('./pages/Chatbot'));
+const VerificationStatus = lazy(() => import('./pages/VerificationStatus'));
+const PendingVerification = lazy(() => import('./pages/PendingVerification'));
+const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
+const RoleSelection = lazy(() => import('./pages/RoleSelection'));
+const PaymentReturn = lazy(() => import('./pages/PaymentReturn'));
+const TermsOfService = lazy(() => import('./pages/legal/TermsOfService'));
+const SupportCenter = lazy(() => import('./pages/legal/SupportCenter'));
+const CoachProfileEditor = lazy(() => import('./pages/coach/CoachProfileEditor'));
+const CoachSchedule = lazy(() => import('./pages/coach/CoachSchedule'));
+const CoachBookingRequests = lazy(() => import('./pages/coach/CoachBookingRequests'));
+const ProfessionalDashboard = lazy(() => import('./pages/professional/ProfessionalDashboard'));
+const ProfessionalProfile = lazy(() => import('./pages/professional/ProfessionalProfile'));
+const AvailabilityManager = lazy(() => import('./pages/professional/AvailabilityManager'));
+const BookingRequests = lazy(() => import('./pages/professional/BookingRequests'));
+const FindProfessional = lazy(() => import('./pages/sparring/FindProfessional'));
+const MyBookings = lazy(() => import('./pages/MyBookings'));
+const MySparringRequests = lazy(() => import('./pages/sparring/MySparringRequestsV2'));
+const OrganizerCourts = lazy(() => import('./pages/organizer/OrganizerCourts'));
+const CreateCourt = lazy(() => import('./pages/organizer/CreateCourt'));
+const OrganizerCourtDetails = lazy(() => import('./pages/organizer/OrganizerCourtDetails'));
 
-import Chatbot from './pages/Chatbot';
-import VerificationStatus from './pages/VerificationStatus';
-import PendingVerification from './pages/PendingVerification';
-import ProfileSetup from './pages/ProfileSetup';
-import RoleSelection from './pages/RoleSelection';
-import PaymentReturn from './pages/PaymentReturn';
-import TermsOfService from './pages/legal/TermsOfService';
-import SupportCenter from './pages/legal/SupportCenter';
+const RouteFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center">
+    <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" aria-label="Loading" />
+  </div>
+);
 
-// Coach Pages
-import CoachLayout from './components/layout/CoachLayout';
-import CoachProfileEditor from './pages/coach/CoachProfileEditor';
-import CoachSchedule from './pages/coach/CoachSchedule';
-import CoachBookingRequests from './pages/coach/CoachBookingRequests';
-
-// Professional Player Pages
-import ProfessionalLayout from './components/layout/ProfessionalLayout';
-import ProfessionalDashboard from './pages/professional/ProfessionalDashboard';
-import ProfessionalProfile from './pages/professional/ProfessionalProfile';
-import AvailabilityManager from './pages/professional/AvailabilityManager';
-import BookingRequests from './pages/professional/BookingRequests';
-
-// Sparring System (Unified)
-import FindProfessional from './pages/sparring/FindProfessional';
-import MyBookings from './pages/MyBookings';
-import MySparringRequests from './pages/sparring/MySparringRequestsV2';
-import OrganizerCourts from './pages/organizer/OrganizerCourts';
-import CreateCourt from './pages/organizer/CreateCourt';
-import OrganizerCourtDetails from './pages/organizer/OrganizerCourtDetails';
+const LazyPage = ({ children }) => (
+  <Suspense fallback={<RouteFallback />}>
+    <PageTransition>{children}</PageTransition>
+  </Suspense>
+);
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -69,15 +72,12 @@ const AnimatedRoutes = () => {
   const DashboardHome = () => {
     if (!user) return null;
 
-    // Step 1: Check if role is assigned
     if (!user.role) return <Navigate to="/role-selection" replace />;
 
-    // Step 2: Check if profile is complete (for roles that need it)
     if (!user.isProfileComplete && (user.role === 'coach' || user.role === 'organizer' || (user.role === 'player' && user.skillLevel === 'professional'))) {
       return <Navigate to="/profile-setup" replace />;
     }
 
-    // Step 3: Check status for restricted access
     if (user.status === 'waiting_for_approval' || user.status === 'pending') {
       if (user.role !== 'admin') return <Navigate to="/pending-verification" replace />;
     }
@@ -86,12 +86,10 @@ const AnimatedRoutes = () => {
       return <Navigate to="/pending-verification" replace />;
     }
 
-    // Step 4: Route to appropriate dashboard
     if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
     if (user.role === 'organizer') return <OrganizerDashboard />;
     if (user.role === 'coach') return <Navigate to="/coach/dashboard" replace />;
 
-    // Player Role check
     if (user.role === 'player') {
       if (user.skillLevel === 'professional') {
         return <Navigate to="/pro/dashboard" replace />;
@@ -100,21 +98,21 @@ const AnimatedRoutes = () => {
     }
 
     return <PlayerDashboard />;
-  }
+  };
 
   const SparringHome = () => {
     if (user?.skillLevel === 'professional') {
       return <Navigate to="/pro/dashboard" replace />;
     }
     return <FindProfessional />;
-  }
+  };
 
   const ProRedirect = ({ children, to }) => {
     if (user?.skillLevel === 'professional') {
       return <Navigate to={to} replace />;
     }
     return children;
-  }
+  };
 
   const ContextualLayout = () => {
     if (!user) return <PublicLayout />;
@@ -122,131 +120,124 @@ const AnimatedRoutes = () => {
     if (user.role === 'player' && user.skillLevel === 'professional') return <ProfessionalLayout />;
     if (user.role === 'admin' || user.role === 'organizer' || user.role === 'player') return <DashboardLayout />;
     return <PublicLayout />;
-  }
+  };
 
   return (
-    <AnimatePresence mode="wait">
+    <Suspense fallback={<RouteFallback />}>
       <Routes location={location} key={location.pathname}>
-        {/* ============================================================ */}
-        {/* PUBLIC ROUTES (No Auth Required) */}
-        {/* ============================================================ */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-          <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-          <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
-          <Route path="/pending-verification" element={<PageTransition><PendingVerification /></PageTransition>} />
-          {/* JazzCash return URL — no auth required, browser redirect from JazzCash */}
+          <Route path="/" element={<LazyPage><Home /></LazyPage>} />
+          <Route path="/login" element={<LazyPage><Login /></LazyPage>} />
+          <Route path="/register" element={<LazyPage><Register /></LazyPage>} />
+          <Route path="/pending-verification" element={<LazyPage><PendingVerification /></LazyPage>} />
           <Route path="/payment/return" element={<PaymentReturn />} />
-          <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
-          <Route path="/support" element={<PageTransition><SupportCenter /></PageTransition>} />
+          <Route path="/terms" element={<LazyPage><TermsOfService /></LazyPage>} />
+          <Route path="/support" element={<LazyPage><SupportCenter /></LazyPage>} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/role-selection" element={<PageTransition><RoleSelection /></PageTransition>} />
-          <Route path="/profile-setup" element={<PageTransition><ProfileSetup /></PageTransition>} />
+          <Route path="/role-selection" element={<LazyPage><RoleSelection /></LazyPage>} />
+          <Route path="/profile-setup" element={<LazyPage><ProfileSetup /></LazyPage>} />
         </Route>
 
-        {/* ============================================================ */}
-        {/* AUTHENTICATED BROWSING (Sign-in Required) */}
-        {/* ============================================================ */}
         <Route element={<ProtectedRoute />}>
           <Route element={<ContextualLayout />}>
-            <Route path="/tournaments" element={<PageTransition><TournamentList /></PageTransition>} />
-            <Route path="/tournaments/:id" element={<PageTransition><TournamentDetails /></PageTransition>} />
-            <Route path="/tournaments/:id/brackets" element={<PageTransition><TournamentBrackets /></PageTransition>} />
-            <Route path="/coaches" element={<PageTransition><CoachList /></PageTransition>} />
-            <Route path="/coaches/:id" element={<PageTransition><CoachProfile /></PageTransition>} />
-            <Route path="/courts" element={<PageTransition><CourtList /></PageTransition>} />
-            <Route path="/courts/:id" element={<PageTransition><CourtDetails /></PageTransition>} />
+            <Route path="/tournaments" element={<LazyPage><TournamentList /></LazyPage>} />
+            <Route path="/tournaments/:id" element={<LazyPage><TournamentDetails /></LazyPage>} />
+            <Route path="/tournaments/:id/brackets" element={<LazyPage><TournamentBrackets /></LazyPage>} />
+            <Route path="/coaches" element={<LazyPage><CoachList /></LazyPage>} />
+            <Route path="/coaches/:id" element={<LazyPage><CoachProfile /></LazyPage>} />
+            <Route path="/courts" element={<LazyPage><CourtList /></LazyPage>} />
+            <Route path="/courts/:id" element={<LazyPage><CourtDetails /></LazyPage>} />
           </Route>
         </Route>
 
-        {/* ============================================================ */}
-        {/* PUBLIC TOOLS */}
-        {/* ============================================================ */}
         <Route element={<ContextualLayout />}>
-          <Route path="/chatbot" element={<PageTransition><Chatbot /></PageTransition>} />
+          <Route path="/chatbot" element={<LazyPage><Chatbot /></LazyPage>} />
         </Route>
 
-        {/* ============================================================ */}
-        {/* AUTHENTICATED APP ROUTES (/app/*) */}
-        {/* ============================================================ */}
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
-            {/* Main Dashboard */}
-            <Route path="/app" element={<PageTransition><DashboardHome /></PageTransition>} />
-            <Route path="/app/profile" element={user?.role === 'admin' ? <Navigate to="/admin/dashboard" replace /> : user?.role === 'player' && user?.skillLevel === 'professional' ? <Navigate to="/pro/profile" replace /> : <PageTransition><Profile /></PageTransition>} />
-            <Route path="/app/verification" element={<PageTransition><VerificationStatus /></PageTransition>} />
-            <Route path="/app/bookings" element={user?.role === 'organizer' ? <Navigate to="/app" replace /> : <PageTransition><ProRedirect to="/pro/bookings"><MyBookings /></ProRedirect></PageTransition>} />
-            <Route path="/app/sessions" element={<PageTransition><ProRedirect to="/pro/sessions"><MySessions /></ProRedirect></PageTransition>} />
-            <Route path="/app/settings" element={user?.role === 'admin' ? <Navigate to="/admin/dashboard" replace /> : <PageTransition><div className="p-4">User Settings</div></PageTransition>} />
+            <Route path="/app" element={<LazyPage><DashboardHome /></LazyPage>} />
+            <Route
+              path="/app/profile"
+              element={
+                user?.role === 'admin'
+                  ? <Navigate to="/admin/dashboard" replace />
+                  : user?.role === 'player' && user?.skillLevel === 'professional'
+                    ? <Navigate to="/pro/profile" replace />
+                    : <LazyPage><Profile /></LazyPage>
+              }
+            />
+            <Route path="/app/verification" element={<LazyPage><VerificationStatus /></LazyPage>} />
+            <Route
+              path="/app/bookings"
+              element={
+                user?.role === 'organizer'
+                  ? <Navigate to="/app" replace />
+                  : <LazyPage><ProRedirect to="/pro/bookings"><MyBookings /></ProRedirect></LazyPage>
+              }
+            />
+            <Route path="/app/sessions" element={<LazyPage><ProRedirect to="/pro/sessions"><MySessions /></ProRedirect></LazyPage>} />
+            <Route
+              path="/app/settings"
+              element={
+                user?.role === 'admin'
+                  ? <Navigate to="/admin/dashboard" replace />
+                  : <LazyPage><div className="p-4">User Settings</div></LazyPage>
+              }
+            />
 
-            {/* Player Sparring Routes */}
             <Route element={<ProtectedRoute allowedRoles={['player']} />}>
-              <Route path="/app/sparring" element={<PageTransition><SparringHome /></PageTransition>} />
-              <Route path="/app/sparring/requests" element={<PageTransition><MySparringRequests /></PageTransition>} />
-              <Route path="/app/registrations" element={<PageTransition><ProRedirect to="/pro/registrations"><MyRegistrations /></ProRedirect></PageTransition>} />
+              <Route path="/app/sparring" element={<LazyPage><SparringHome /></LazyPage>} />
+              <Route path="/app/sparring/requests" element={<LazyPage><MySparringRequests /></LazyPage>} />
+              <Route path="/app/registrations" element={<LazyPage><ProRedirect to="/pro/registrations"><MyRegistrations /></ProRedirect></LazyPage>} />
             </Route>
 
-            {/* Tournament Management */}
             <Route element={<ProtectedRoute allowedRoles={['admin', 'organizer']} />}>
-              <Route path="/app/tournaments" element={<PageTransition><MyTournaments /></PageTransition>} />
-              <Route path="/app/tournaments/create" element={<PageTransition><CreateTournament /></PageTransition>} />
+              <Route path="/app/tournaments" element={<LazyPage><MyTournaments /></LazyPage>} />
+              <Route path="/app/tournaments/create" element={<LazyPage><CreateTournament /></LazyPage>} />
             </Route>
 
-            {/* Organizer Routes */}
             <Route element={<ProtectedRoute allowedRoles={['organizer']} />}>
-              <Route path="/org/courts" element={<PageTransition><OrganizerCourts /></PageTransition>} />
+              <Route path="/org/courts" element={<LazyPage><OrganizerCourts /></LazyPage>} />
               <Route path="/org/coaching-requests" element={<Navigate to="/org/courts" replace />} />
-              <Route path="/org/courts/create" element={<PageTransition><CreateCourt /></PageTransition>} />
-              <Route path="/org/courts/:courtId/details" element={<PageTransition><OrganizerCourtDetails /></PageTransition>} />
-              <Route path="/org/courts/:courtId/edit" element={<PageTransition><CreateCourt /></PageTransition>} />
+              <Route path="/org/courts/create" element={<LazyPage><CreateCourt /></LazyPage>} />
+              <Route path="/org/courts/:courtId/details" element={<LazyPage><OrganizerCourtDetails /></LazyPage>} />
+              <Route path="/org/courts/:courtId/edit" element={<LazyPage><CreateCourt /></LazyPage>} />
             </Route>
           </Route>
 
-          {/* ============================================================ */}
-          {/* ADMIN PORTAL (/admin/*) */}
-          {/* ============================================================ */}
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route element={<DashboardLayout />}>
-              <Route path="/admin/dashboard" element={<PageTransition><AdminDashboard /></PageTransition>} />
+              <Route path="/admin/dashboard" element={<LazyPage><AdminDashboard /></LazyPage>} />
             </Route>
           </Route>
 
-          {/* ============================================================ */}
-          {/* COACH PORTAL (/coach/*) */}
-          {/* ============================================================ */}
           <Route element={<ProtectedRoute allowedRoles={['coach']} />}>
             <Route path="/coach" element={<CoachLayout />}>
-              <Route path="dashboard" element={<PageTransition><CoachDashboard /></PageTransition>} />
-              <Route path="profile" element={<PageTransition><CoachProfileEditor /></PageTransition>} />
-              <Route path="schedule" element={<PageTransition><CoachSchedule /></PageTransition>} />
+              <Route path="dashboard" element={<LazyPage><CoachDashboard /></LazyPage>} />
+              <Route path="profile" element={<LazyPage><CoachProfileEditor /></LazyPage>} />
+              <Route path="schedule" element={<LazyPage><CoachSchedule /></LazyPage>} />
               <Route path="court-bookings" element={<Navigate to="/coach/schedule?tab=courts" replace />} />
               <Route path="availability" element={<Navigate to="/coach/schedule?tab=weekly" replace />} />
-              <Route path="requests" element={<PageTransition><CoachBookingRequests /></PageTransition>} />
+              <Route path="requests" element={<LazyPage><CoachBookingRequests /></LazyPage>} />
             </Route>
           </Route>
 
-          {/* ============================================================ */}
-          {/* PROFESSIONAL PLAYER PORTAL (/pro/*) */}
-          {/* ============================================================ */}
           <Route element={<ProtectedRoute allowedRoles={['player']} allowedSkillLevels={['professional']} />}>
             <Route path="/pro" element={<ProfessionalLayout />}>
-              <Route path="dashboard" element={<PageTransition><ProfessionalDashboard /></PageTransition>} />
-              <Route path="profile" element={<PageTransition><ProfessionalProfile /></PageTransition>} />
-              <Route path="availability" element={<PageTransition><AvailabilityManager /></PageTransition>} />
-              <Route path="requests" element={<PageTransition><BookingRequests /></PageTransition>} />
-              <Route path="registrations" element={<PageTransition><MyRegistrations /></PageTransition>} />
-              <Route path="bookings" element={<PageTransition><MyBookings /></PageTransition>} />
-              <Route path="sessions" element={<PageTransition><MySessions /></PageTransition>} />
+              <Route path="dashboard" element={<LazyPage><ProfessionalDashboard /></LazyPage>} />
+              <Route path="profile" element={<LazyPage><ProfessionalProfile /></LazyPage>} />
+              <Route path="availability" element={<LazyPage><AvailabilityManager /></LazyPage>} />
+              <Route path="requests" element={<LazyPage><BookingRequests /></LazyPage>} />
+              <Route path="registrations" element={<LazyPage><MyRegistrations /></LazyPage>} />
+              <Route path="bookings" element={<LazyPage><MyBookings /></LazyPage>} />
+              <Route path="sessions" element={<LazyPage><MySessions /></LazyPage>} />
             </Route>
           </Route>
-
         </Route>
 
-        {/* ============================================================ */}
-        {/* LEGACY REDIRECTS (for bookmarks/old links) */}
-        {/* ============================================================ */}
         <Route path="/dashboard" element={<Navigate to="/app" replace />} />
         <Route path="/bookings" element={<Navigate to="/app/bookings" replace />} />
         <Route path="/my-sessions" element={<Navigate to="/app/sessions" replace />} />
@@ -262,28 +253,26 @@ const AnimatedRoutes = () => {
         <Route path="/courts/create" element={<Navigate to="/org/courts/create" replace />} />
         <Route path="/tournaments/create" element={<Navigate to="/app/tournaments/create" replace />} />
       </Routes>
-    </AnimatePresence>
+    </Suspense>
   );
-}
+};
 
 const PublicLayout = () => (
   <div className="min-h-screen bg-white selection:bg-indigo-100 selection:text-indigo-700">
-    <Navbar />
+    <Suspense fallback={<RouteFallback />}>
+      <Navbar />
+    </Suspense>
     <main className="relative z-0">
       <Outlet />
     </main>
   </div>
-)
-
-import { SocketProvider } from './context/SocketContext';
-
-// ... (existing imports)
+);
 
 function App() {
   useEffect(() => {
     axiosInstance.get('/ping')
-      .then(res => console.log('Backend connection status:', res.data))
-      .catch(err => console.error('Backend connection error:', err));
+      .then((res) => console.log('Backend connection status:', res.data))
+      .catch((err) => console.error('Backend connection error:', err));
   }, []);
 
   useEffect(() => {
@@ -303,12 +292,14 @@ function App() {
         <AuthProvider>
           <SocketProvider>
             <AnimatedRoutes />
-            <ChatWindow />
+            <Suspense fallback={null}>
+              <ChatWindow />
+            </Suspense>
           </SocketProvider>
         </AuthProvider>
       </BrowserRouter>
     </ToastProvider>
-  )
+  );
 }
 
-export default App
+export default App;

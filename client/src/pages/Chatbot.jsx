@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import chatService from '../services/chatService';
 import Button from '../components/ui/Button';
@@ -11,19 +10,19 @@ import {
     XMarkIcon,
     SparklesIcon,
     ChatBubbleBottomCenterTextIcon,
-    ClockIcon,
     EllipsisHorizontalIcon
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const MotionAside = motion.aside;
+const MotionDiv = motion.div;
+
 const Chatbot = () => {
-    const { user } = useAuth();
     const [conversations, setConversations] = useState([]);
     const [activeConversation, setActiveConversation] = useState(null);
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
-    const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false); // Keeps track of API request status
     const [isTyping, setIsTyping] = useState(false); // Tracks AI typing status from socket
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -120,15 +119,12 @@ const Chatbot = () => {
 
     const loadConversation = async (id) => {
         try {
-            setLoading(true);
             const data = await chatService.getConversation(id);
             setActiveConversation(data.data);
             setMessages(data.data.messages || []);
             setIsTyping(false); // Reset typing state on switch
         } catch (error) {
             console.error('Error loading conversation:', error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -168,18 +164,24 @@ const Chatbot = () => {
 
             const data = await chatService.sendMessage(activeConversation._id, inputMessage);
 
-            // Update the optimistic message with the real one from server
+            // Update the optimistic user message and append the HTTP assistant reply.
+            // Socket events are still useful for sync; _id checks keep duplicates out.
             setMessages(prev => {
+                let nextMessages = prev;
                 const index = prev.findIndex(m => m === userMsg);
                 if (index !== -1) {
-                    const newMessages = [...prev];
-                    newMessages[index] = data.data.userMessage;
-                    return newMessages;
+                    nextMessages = [...prev];
+                    nextMessages[index] = data.data.userMessage;
                 }
-                return prev;
+
+                const aiMessage = data.data.aiMessage;
+                if (aiMessage?._id && nextMessages.some(m => m._id === aiMessage._id)) {
+                    return nextMessages;
+                }
+
+                return aiMessage ? [...nextMessages, aiMessage] : nextMessages;
             });
 
-            // Note: We do NOT append data.data.aiMessage anymore because it comes via socket
             await fetchConversations();
         } catch (error) {
             console.error('Error sending message:', error);
@@ -234,7 +236,7 @@ const Chatbot = () => {
             {/* Context Sidebar */}
             <AnimatePresence>
                 {sidebarOpen && (
-                    <motion.aside
+                    <MotionAside
                         initial={{ x: -300, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -300, opacity: 0 }}
@@ -296,7 +298,7 @@ const Chatbot = () => {
                                 </div>
                             ))}
                         </nav>
-                    </motion.aside>
+                    </MotionAside>
                 )}
             </AnimatePresence>
 
@@ -377,7 +379,7 @@ const Chatbot = () => {
                     ) : (
                         <div className="max-w-4xl mx-auto space-y-8 pb-10">
                             {messages.map((msg, idx) => (
-                                <motion.div
+                                <MotionDiv
                                     key={idx}
                                     initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -425,11 +427,11 @@ const Chatbot = () => {
                                             </span>
                                         </div>
                                     </div>
-                                </motion.div>
+                                </MotionDiv>
                             ))}
 
                             {(isTyping || sending) && (
-                                <motion.div
+                                <MotionDiv
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className="flex gap-4"
@@ -439,24 +441,24 @@ const Chatbot = () => {
                                     </div>
                                     <div className="bg-white border border-slate-100 px-6 py-4 rounded-2xl rounded-tl-none shadow-sm flex items-center">
                                         <div className="flex gap-1.5">
-                                            <motion.div
+                                            <MotionDiv
                                                 animate={{ scale: [1, 1.2, 1], opacity: [0.4, 1, 0.4] }}
                                                 transition={{ repeat: Infinity, duration: 1 }}
                                                 className="h-1.5 w-1.5 rounded-full bg-indigo-600"
                                             />
-                                            <motion.div
+                                            <MotionDiv
                                                 animate={{ scale: [1, 1.2, 1], opacity: [0.4, 1, 0.4] }}
                                                 transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
                                                 className="h-1.5 w-1.5 rounded-full bg-indigo-600"
                                             />
-                                            <motion.div
+                                            <MotionDiv
                                                 animate={{ scale: [1, 1.2, 1], opacity: [0.4, 1, 0.4] }}
                                                 transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
                                                 className="h-1.5 w-1.5 rounded-full bg-indigo-600"
                                             />
                                         </div>
                                     </div>
-                                </motion.div>
+                                </MotionDiv>
                             )}
                             <div ref={messagesEndRef} />
                         </div>

@@ -5,16 +5,8 @@ import {
     BellIcon,
     UserIcon,
     ArrowRightOnRectangleIcon,
-    HomeIcon,
-    MapPinIcon,
-    AcademicCapIcon,
     TrophyIcon,
-    CalendarIcon,
-    InboxIcon,
-    Cog6ToothIcon,
-    FireIcon,
-    CreditCardIcon,
-    ChartBarIcon,
+    ChevronDownIcon
 } from '@heroicons/react/24/outline'
 import { Link, useLocation } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
@@ -22,250 +14,373 @@ import Tooltip from '../ui/Tooltip'
 import UserAvatar from '../ui/UserAvatar'
 import { useNotifications } from '../../hooks/useNotifications'
 import { getNotificationHref } from '../../utils/notificationLinks'
-import { getPageTitleFromPath, getPageIconKeyFromPath } from '../../utils/routeLabels'
+import {
+    buildDefaultNavigation,
+    buildHeaderMenuGroups,
+    getPlayerProfileHref
+} from './navigationConfig'
 
-const PAGE_ICONS = {
-    dashboard: HomeIcon,
-    venue: MapPinIcon,
-    coach: AcademicCapIcon,
-    tournament: TrophyIcon,
-    organizer: FireIcon,
-    admin: ChartBarIcon,
-    schedule: CalendarIcon,
-    pro: TrophyIcon,
-    profile: UserIcon,
-    payment: CreditCardIcon,
-    requests: InboxIcon,
-    settings: Cog6ToothIcon,
-};
+const isActiveItem = (pathname, item) => {
+    if (typeof item.match === 'function') {
+        return item.match(pathname)
+    }
 
-const DashboardHeader = ({ user, logout, setSidebarOpen }) => {
+    if (item.href === '/tournaments') {
+        return pathname.startsWith('/tournaments')
+    }
+
+    if (item.href === '/app') {
+        return pathname === '/app'
+    }
+
+    return pathname === item.href || pathname.startsWith(`${item.href}/`)
+}
+
+const DesktopNavDropdown = ({ group, pathname }) => {
+    const hasActiveChild = group.items.some((item) => isActiveItem(pathname, item))
+
+    return (
+        <Menu as="div" className="relative">
+            <Menu.Button className={twMerge(
+                'group inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-black transition-all',
+                hasActiveChild
+                    ? 'bg-slate-950 text-white shadow-[0_12px_24px_-14px_rgba(15,23,42,0.9)]'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+            )}>
+                <span>{group.title}</span>
+                <ChevronDownIcon className={twMerge(
+                    'h-4 w-4 transition-transform duration-200',
+                    hasActiveChild ? 'text-white/80' : 'text-slate-400 group-hover:text-slate-700'
+                )} />
+            </Menu.Button>
+
+            <Transition
+                as={Fragment}
+                enter="transition ease-out duration-200"
+                enterFrom="transform opacity-0 -translate-y-2"
+                enterTo="transform opacity-100 translate-y-0"
+                leave="transition ease-in duration-120"
+                leaveFrom="transform opacity-100 translate-y-0"
+                leaveTo="transform opacity-0 -translate-y-2"
+            >
+                <Menu.Items className="absolute left-1/2 z-50 mt-4 w-[44rem] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/95 p-3 shadow-[0_28px_80px_-32px_rgba(15,23,42,0.45)] backdrop-blur-xl focus:outline-none">
+                    <div className="grid gap-3 md:grid-cols-[15rem_minmax(0,1fr)]">
+                        <div className="rounded-[1.5rem] bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.96),_rgba(241,245,249,0.92)_60%,_rgba(226,232,240,0.85))] p-5">
+                            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">
+                                {group.kicker}
+                            </p>
+                            <h3 className="mt-3 text-xl font-black tracking-tight text-slate-950">
+                                {group.title}
+                            </h3>
+                            <p className="mt-3 text-[13px] leading-6 text-slate-500">
+                                {group.description}
+                            </p>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {group.items.map((item) => {
+                                const isActive = isActiveItem(pathname, item)
+                                const Icon = item.icon
+
+                                return (
+                                    <Menu.Item key={item.name}>
+                                        {({ active }) => (
+                                            <Link
+                                                to={item.href}
+                                                className={twMerge(
+                                                    'group relative overflow-hidden rounded-[1.5rem] border p-4 transition-all',
+                                                    isActive
+                                                        ? 'border-slate-900 bg-slate-950 text-white shadow-[0_18px_30px_-18px_rgba(15,23,42,0.8)]'
+                                                        : active
+                                                            ? 'border-slate-300 bg-slate-50 text-slate-950'
+                                                            : 'border-slate-200/80 bg-white text-slate-800'
+                                                )}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={twMerge(
+                                                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border',
+                                                        isActive
+                                                            ? 'border-white/10 bg-white/10 text-white'
+                                                            : 'border-slate-200 bg-slate-50 text-slate-500'
+                                                    )}>
+                                                        <Icon className="h-5 w-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[13px] font-black leading-none">{item.name}</p>
+                                                        {item.description && (
+                                                            <p className={twMerge(
+                                                                'mt-2 text-[11px] leading-5',
+                                                                isActive ? 'text-white/72' : 'text-slate-500'
+                                                            )}>
+                                                                {item.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        )}
+                                    </Menu.Item>
+                                )
+                            })}
+                        </div>
+                    </div>
+                </Menu.Items>
+            </Transition>
+        </Menu>
+    )
+}
+
+const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationContext }) => {
     const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications()
     const location = useLocation()
-    const currentSection = getPageTitleFromPath(location.pathname)
-    const PageIcon = PAGE_ICONS[getPageIconKeyFromPath(location.pathname)] || HomeIcon
+    const pathname = location.pathname
+    const navItems = navigation || buildDefaultNavigation(user)
+    const { directItems, grouped } = buildHeaderMenuGroups(navItems, user, navigationContext)
     const userRoleLabel = user?.role === 'player'
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
-        : user?.role;
-    const profileHref = user?.role === 'player' && user?.skillLevel === 'professional'
-        ? '/pro/profile'
-        : '/profile';
+        : user?.role
+    const profileHref = getPlayerProfileHref(user)
     const userNavigation = [
         ...(user?.role === 'admin'
             ? []
             : [{ name: 'My Profile', href: profileHref, icon: UserIcon }]),
         { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon },
-    ];
+    ]
 
     return (
-        <header className="sticky top-0 z-40 h-[4.25rem] bg-white/95 backdrop-blur-md border-b border-amber-100/80 shadow-sm shadow-indigo-950/5 px-6 sm:px-8 lg:px-10 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1">
-                <button
-                    type="button"
-                    className="lg:hidden p-2.5 text-slate-400 hover:text-slate-900 bg-white border border-slate-100 rounded-xl transition-all shadow-sm"
-                    onClick={() => setSidebarOpen(true)}
-                >
-                    <Bars3Icon className="h-5 w-5" />
-                </button>
-
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <div
-                        className="hidden sm:flex h-10 w-10 shrink-0 rounded-xl bg-indigo-950 text-amber-200 items-center justify-center border border-indigo-800"
-                        aria-hidden
+        <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/78 backdrop-blur-xl shadow-[0_18px_45px_-34px_rgba(15,23,42,0.5)]">
+            <div className="mx-auto flex min-h-[5.4rem] max-w-[92rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+                <div className="flex min-w-0 items-center gap-3 lg:gap-8">
+                    <button
+                        type="button"
+                        className="rounded-2xl border border-slate-200 bg-white/90 p-2.5 text-slate-500 shadow-sm transition-all hover:text-slate-950 lg:hidden"
+                        onClick={() => setSidebarOpen(true)}
                     >
-                        <PageIcon className="h-5 w-5" strokeWidth={2} />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800/80 hidden sm:block">
-                            SportsSphere
-                        </p>
-                        <h2 className="text-sm sm:text-base font-black text-indigo-950 truncate leading-tight">
-                            {currentSection}
-                        </h2>
-                    </div>
+                        <Bars3Icon className="h-5 w-5" />
+                    </button>
+
+                    <Link to="/" className="group flex min-w-0 items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1.15rem] bg-gradient-to-br from-slate-950 via-slate-800 to-slate-700 text-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.75)]">
+                            <TrophyIcon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">
+                                Main menu
+                            </p>
+                            <p className="truncate text-base font-black tracking-tight text-slate-950">
+                                SportsSphere
+                            </p>
+                        </div>
+                    </Link>
+
+                    <nav className="hidden items-center gap-2 lg:flex">
+                        {directItems.map((item) => {
+                            const isActive = isActiveItem(pathname, item)
+                            return (
+                                <Link
+                                    key={item.name}
+                                    to={item.href}
+                                    className={twMerge(
+                                        'rounded-full px-3 py-2 text-[13px] font-black transition-all',
+                                        isActive
+                                            ? 'bg-slate-950 text-white shadow-[0_12px_24px_-14px_rgba(15,23,42,0.9)]'
+                                            : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                                    )}
+                                >
+                                    {item.name}
+                                </Link>
+                            )
+                        })}
+
+                        {grouped.map((group) => (
+                            <DesktopNavDropdown key={group.key} group={group} pathname={pathname} />
+                        ))}
+                    </nav>
                 </div>
-            </div>
 
-            <div className="flex items-center gap-4">
-                <Menu as="div" className="relative">
-                    <Tooltip content="Notifications" position="bottom">
-                        <Menu.Button className="h-11 w-11 flex items-center justify-center text-indigo-900/60 hover:text-indigo-950 bg-white border border-amber-100 rounded-xl transition-all relative shadow-sm outline-none">
-                            <BellIcon className="h-5 w-5" />
-                            {unreadCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-0.5 flex items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white border-2 border-white leading-none">
-                                    {unreadCount > 99 ? '99+' : unreadCount}
-                                </span>
-                            )}
-                        </Menu.Button>
-                    </Tooltip>
-
-                    <Transition
-                        as={Fragment}
-                        enter="transition ease-out duration-200"
-                        enterFrom="transform opacity-0 scale-95"
-                        enterTo="transform opacity-100 scale-100"
-                        leave="transition ease-in duration-75"
-                        leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
-                    >
-                        <Menu.Items className="absolute right-0 z-50 mt-3 w-80 origin-top-right rounded-2xl bg-white border border-slate-100 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12)] focus:outline-none overflow-hidden">
-                            <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-white">
-                                <p className="text-sm font-bold text-slate-900">Notifications</p>
-                                {hasUnread && (
-                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                                        New
+                <div className="flex items-center gap-3">
+                    <Menu as="div" className="relative">
+                        <Tooltip content="Notifications" position="bottom">
+                            <Menu.Button className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white/90 text-slate-600 shadow-sm outline-none transition-all hover:text-slate-950">
+                                <BellIcon className="h-5 w-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-0.5 text-[10px] font-bold leading-none text-white">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
                                     </span>
                                 )}
-                            </div>
-                            <div className="max-h-[280px] overflow-y-auto bg-white">
-                                {notifications.length === 0 ? (
-                                    <div className="px-4 py-6 text-center text-xs text-slate-400">
-                                        You’re all caught up. No notifications.
-                                    </div>
-                                ) : (
-                                    notifications.map((item) => {
-                                        const pendingReview =
-                                            item.meta?.kind === 'pending_verification' && user?.role === 'admin';
-                                        const href = getNotificationHref(item);
-                                        const rowClass = (active) =>
-                                            twMerge(
-                                                'w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 transition-colors flex gap-3',
-                                                active ? 'bg-slate-50' : 'bg-white'
-                                            );
-                                        const inner = () => (
-                                            <>
-                                                <div
-                                                    className={twMerge(
-                                                        'h-2 w-2 mt-1.5 rounded-full flex-shrink-0',
-                                                        !item.isRead ? 'bg-rose-500' : 'bg-slate-200'
-                                                    )}
-                                                />
-                                                <div>
-                                                    <p
-                                                        className={twMerge(
-                                                            'text-xs font-bold',
-                                                            !item.isRead ? 'text-slate-900' : 'text-slate-500'
-                                                        )}
-                                                    >
-                                                        {item.title}
-                                                    </p>
-                                                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed bg-transparent">
-                                                        {item.message}
-                                                    </p>
-                                                    {item.createdAt && (
-                                                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium">
-                                                            {new Date(item.createdAt).toLocaleString()}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </>
-                                        );
-                                        return (
-                                            <Menu.Item key={item._id}>
-                                                {({ active }) =>
-                                                    pendingReview || href ? (
-                                                        <Link
-                                                            to={href || '/admin/dashboard?tab=verification'}
-                                                            onClick={() => {
-                                                                if (!item.isRead) markNotificationRead(item._id);
-                                                            }}
-                                                            className={rowClass(active)}
-                                                        >
-                                                            {inner(active)}
-                                                        </Link>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => !item.isRead && markNotificationRead(item._id)}
-                                                            className={rowClass(active)}
-                                                        >
-                                                            {inner(active)}
-                                                        </button>
-                                                    )
-                                                }
-                                            </Menu.Item>
-                                        );
-                                    })
-                                )}
-                            </div>
-                            {notifications.length > 0 && hasUnread && (
-                                <div className="p-2 border-t border-slate-50 bg-slate-50/50">
-                                    <button
-                                        onClick={markAllRead}
-                                        className="w-full py-1.5 text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-widest"
-                                    >
-                                        Mark all as read
-                                    </button>
-                                </div>
-                            )}
-                        </Menu.Items>
-                    </Transition>
-                </Menu>
+                            </Menu.Button>
+                        </Tooltip>
 
-                <div className="h-8 w-px bg-slate-100 mx-1" />
-
-                <Menu as="div" className="relative">
-                    <Menu.Button className="flex items-center gap-3 p-1 group">
-                        <div className="hidden lg:flex flex-col items-end mr-1 text-right">
-                            <span className="text-[13px] font-extrabold text-slate-900 leading-none">{user?.name}</span>
-                            <span className="text-[10px] font-semibold text-slate-500 mt-1.5 tracking-wide max-w-[11rem] truncate" title={userRoleLabel}>{userRoleLabel}</span>
-                        </div>
-                        <UserAvatar
-                            user={user}
-                            className="h-11 w-11 rounded-xl border border-indigo-800 text-sm transition-colors group-hover:bg-indigo-900"
-                            fallbackClassName="text-sm"
-                        />
-                    </Menu.Button>
-
-                    <Transition
-                        as={Fragment}
-                        enter="transition ease-out duration-200"
-                        enterFrom="transform opacity-0 scale-95"
-                        enterTo="transform opacity-100 scale-100"
-                        leave="transition ease-in duration-75"
-                        leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
-                    >
-                        <Menu.Items className="absolute right-0 z-50 mt-4 w-64 origin-top-right rounded-3xl bg-white border border-slate-100 p-2.5 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] focus:outline-none">
-                            <div className="px-4 py-3 border-b border-slate-50 mb-2">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Logged in as</p>
-                                <p className="text-sm font-black text-slate-900 truncate">{user?.email}</p>
-                            </div>
-                            {userNavigation.map((item) => (
-                                <Menu.Item key={item.name}>
-                                    {({ active }) => (
-                                        item.onClick ? (
-                                            <button
-                                                onClick={item.onClick}
-                                                className={twMerge(
-                                                    "flex w-full items-center gap-3.5 px-4 py-3 text-[13px] font-bold rounded-2xl transition-all",
-                                                    active ? "bg-rose-50 text-rose-600" : "text-slate-500"
-                                                )}
-                                            >
-                                                <item.icon className="h-5 w-5" />
-                                                {item.name}
-                                            </button>
-                                        ) : (
-                                            <Link
-                                                to={item.href}
-                                                className={twMerge(
-                                                    "flex items-center gap-3.5 px-4 py-3 text-[13px] font-bold rounded-2xl transition-all",
-                                                    active ? "bg-indigo-50 text-indigo-600" : "text-slate-500"
-                                                )}
-                                            >
-                                                <item.icon className="h-5 w-5" />
-                                                {item.name}
-                                            </Link>
-                                        )
+                        <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-200"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                        >
+                            <Menu.Items className="absolute right-0 z-50 mt-3 w-80 origin-top-right overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12)] focus:outline-none">
+                                <div className="flex items-center justify-between border-b border-slate-50 bg-white px-4 py-3">
+                                    <p className="text-sm font-bold text-slate-900">Notifications</p>
+                                    {hasUnread && (
+                                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600">
+                                            New
+                                        </span>
                                     )}
-                                </Menu.Item>
-                            ))}
-                        </Menu.Items>
-                    </Transition>
-                </Menu>
+                                </div>
+                                <div className="max-h-[280px] overflow-y-auto bg-white">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-6 text-center text-xs text-slate-400">
+                                            You're all caught up. No notifications.
+                                        </div>
+                                    ) : (
+                                        notifications.map((item) => {
+                                            const pendingReview =
+                                                item.meta?.kind === 'pending_verification' && user?.role === 'admin'
+                                            const href = getNotificationHref(item)
+                                            const rowClass = (active) =>
+                                                twMerge(
+                                                    'flex w-full gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors last:border-0',
+                                                    active ? 'bg-slate-50' : 'bg-white'
+                                                )
+                                            const inner = () => (
+                                                <>
+                                                    <div
+                                                        className={twMerge(
+                                                            'mt-1.5 h-2 w-2 flex-shrink-0 rounded-full',
+                                                            !item.isRead ? 'bg-rose-500' : 'bg-slate-200'
+                                                        )}
+                                                    />
+                                                    <div>
+                                                        <p
+                                                            className={twMerge(
+                                                                'text-xs font-bold',
+                                                                !item.isRead ? 'text-slate-900' : 'text-slate-500'
+                                                            )}
+                                                        >
+                                                            {item.title}
+                                                        </p>
+                                                        <p className="mt-0.5 bg-transparent text-[11px] leading-relaxed text-slate-500">
+                                                            {item.message}
+                                                        </p>
+                                                        {item.createdAt && (
+                                                            <p className="mt-1.5 text-[10px] font-medium text-slate-400">
+                                                                {new Date(item.createdAt).toLocaleString()}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )
+                                            return (
+                                                <Menu.Item key={item._id}>
+                                                    {({ active }) =>
+                                                        pendingReview || href ? (
+                                                            <Link
+                                                                to={href || '/admin/dashboard?tab=verification'}
+                                                                onClick={() => {
+                                                                    if (!item.isRead) markNotificationRead(item._id)
+                                                                }}
+                                                                className={rowClass(active)}
+                                                            >
+                                                                {inner()}
+                                                            </Link>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => !item.isRead && markNotificationRead(item._id)}
+                                                                className={rowClass(active)}
+                                                            >
+                                                                {inner()}
+                                                            </button>
+                                                        )
+                                                    }
+                                                </Menu.Item>
+                                            )
+                                        })
+                                    )}
+                                </div>
+                                {notifications.length > 0 && hasUnread && (
+                                    <div className="border-t border-slate-50 bg-slate-50/50 p-2">
+                                        <button
+                                            onClick={markAllRead}
+                                            className="w-full py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 transition-colors hover:text-indigo-600"
+                                        >
+                                            Mark all as read
+                                        </button>
+                                    </div>
+                                )}
+                            </Menu.Items>
+                        </Transition>
+                    </Menu>
+
+                    <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+
+                    <Menu as="div" className="relative">
+                        <Menu.Button className="group flex items-center gap-3 rounded-full border border-slate-200 bg-white/90 p-1.5 pr-3 shadow-sm transition-all hover:border-slate-300">
+                            <div className="hidden text-right lg:block">
+                                <span className="block text-[13px] font-extrabold leading-none text-slate-950">{user?.name}</span>
+                                <span className="mt-1.5 block max-w-[11rem] truncate text-[10px] font-semibold tracking-wide text-slate-500" title={userRoleLabel}>
+                                    {userRoleLabel}
+                                </span>
+                            </div>
+                            <UserAvatar
+                                user={user}
+                                className="h-10 w-10 rounded-2xl border border-slate-200 bg-white text-sm transition-colors group-hover:border-slate-300"
+                                fallbackClassName="text-sm"
+                            />
+                        </Menu.Button>
+
+                        <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-200"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                        >
+                            <Menu.Items className="absolute right-0 z-50 mt-4 w-64 origin-top-right rounded-3xl border border-slate-100 bg-white p-2.5 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] focus:outline-none">
+                                <div className="mb-2 border-b border-slate-50 px-4 py-3">
+                                    <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Logged in as</p>
+                                    <p className="truncate text-sm font-black text-slate-900">{user?.email}</p>
+                                </div>
+                                {userNavigation.map((item) => (
+                                    <Menu.Item key={item.name}>
+                                        {({ active }) => (
+                                            item.onClick ? (
+                                                <button
+                                                    onClick={item.onClick}
+                                                    className={twMerge(
+                                                        'flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-[13px] font-bold transition-all',
+                                                        active ? 'bg-rose-50 text-rose-600' : 'text-slate-500'
+                                                    )}
+                                                >
+                                                    <item.icon className="h-5 w-5" />
+                                                    {item.name}
+                                                </button>
+                                            ) : (
+                                                <Link
+                                                    to={item.href}
+                                                    className={twMerge(
+                                                        'flex items-center gap-3.5 rounded-2xl px-4 py-3 text-[13px] font-bold transition-all',
+                                                        active ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500'
+                                                    )}
+                                                >
+                                                    <item.icon className="h-5 w-5" />
+                                                    {item.name}
+                                                </Link>
+                                            )
+                                        )}
+                                    </Menu.Item>
+                                ))}
+                            </Menu.Items>
+                        </Transition>
+                    </Menu>
+                </div>
             </div>
         </header>
-    );
-};
+    )
+}
 
-export default DashboardHeader;
+export default DashboardHeader

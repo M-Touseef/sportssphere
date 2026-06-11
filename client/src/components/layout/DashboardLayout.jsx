@@ -1,17 +1,16 @@
 import { Fragment, useState } from 'react'
-import { Dialog, Transition, Menu } from '@headlessui/react'
-import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
-import Sidebar from './Sidebar'
-import DashboardHeader from './DashboardHeader'
+import { Dialog, Transition } from '@headlessui/react'
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import Sidebar from './Sidebar'
+import DashboardHeader from './DashboardHeader'
+
 export default function DashboardLayout() {
     const { user, logout } = useAuth()
     const [sidebarOpen, setSidebarOpen] = useState(false)
 
     return (
-        <div className="min-h-screen bg-slate-50/10 text-slate-900 flex">
-            {/* Mobile Sidebar Overlay */}
+        <div className="min-h-screen bg-slate-50/60 text-slate-900">
             <Transition.Root show={sidebarOpen} as={Fragment}>
                 <Dialog as="div" className="relative z-[100] lg:hidden" onClose={setSidebarOpen}>
                     <Transition.Child
@@ -37,47 +36,46 @@ export default function DashboardLayout() {
                             leaveTo="-translate-x-full"
                         >
                             <Dialog.Panel className="relative flex w-full max-w-xs flex-1">
-                                <Sidebar user={user} logout={logout} onCloseMobile={() => setSidebarOpen(false)} isMobile={true} />
+                                <Sidebar
+                                    user={user}
+                                    logout={logout}
+                                    onCloseMobile={() => setSidebarOpen(false)}
+                                    isMobile={true}
+                                />
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>
                 </Dialog>
             </Transition.Root>
 
-            {/* Static Desktop Sidebar */}
-            <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-                <Sidebar user={user} logout={logout} />
-            </aside>
-
-            {/* Main Content Area */}
-            <div className="lg:pl-72 flex flex-col min-h-screen grow">
+            <div className="flex min-h-screen flex-col">
                 <DashboardHeader user={user} logout={logout} setSidebarOpen={setSidebarOpen} />
 
-                <main className="flex-1 py-6 sm:py-10 overflow-x-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10">
+                <main className="flex-1 overflow-x-hidden py-6 sm:py-10">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-10">
                         <div className="animate-enter">
                             <Outlet />
                         </div>
                     </div>
                 </main>
 
-                <footer className="mt-auto border-t border-amber-200/60 bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 px-4 py-5 sm:px-8 lg:px-10">
+                <footer className="mt-auto border-t border-slate-200 bg-slate-950 px-4 py-5 sm:px-8 lg:px-10">
                     <div className="mx-auto max-w-7xl">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="text-center sm:text-left text-sm text-indigo-200/90 font-medium">
-                                © 2026 <span className="font-bold text-amber-100">SportSphere</span>. All rights reserved.
+                            <p className="text-center text-sm font-medium text-slate-300 sm:text-left">
+                                (c) 2026 <span className="font-bold text-white">SportSphere</span>. All rights reserved.
                             </p>
-                            <div className="flex items-center justify-center sm:justify-end gap-3">
+                            <div className="flex items-center justify-center gap-3 sm:justify-end">
                                 <Link
                                     to="/privacy"
-                                    className="text-sm font-bold text-amber-200/90 hover:text-amber-100 transition-colors"
+                                    className="text-sm font-bold text-slate-300 transition-colors hover:text-white"
                                 >
                                     Privacy
                                 </Link>
                                 <span className="h-4 w-px bg-white/15" aria-hidden />
                                 <Link
                                     to="/support"
-                                    className="text-sm font-bold text-amber-200/90 hover:text-amber-100 transition-colors"
+                                    className="text-sm font-bold text-slate-300 transition-colors hover:text-white"
                                 >
                                     Support
                                 </Link>

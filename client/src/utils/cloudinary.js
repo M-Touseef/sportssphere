@@ -40,3 +40,33 @@ export const getPublicIdFromUrl = (url) => {
         return null;
     }
 };
+
+/**
+ * Build a transformed Cloudinary delivery URL from an existing secure URL.
+ * Uses auto format/quality and a fill crop so small UI avatars don't download
+ * the full original asset.
+ * @param {string} url
+ * @param {Object} options
+ * @param {number} options.width
+ * @param {number} [options.height]
+ * @returns {string|null}
+ */
+export const getOptimizedCloudinaryUrl = (url, { width, height } = {}) => {
+    if (!url || !url.includes('cloudinary.com') || !width) return url || null;
+
+    try {
+        const uploadMarker = '/image/upload/';
+        const markerIndex = url.indexOf(uploadMarker);
+        if (markerIndex === -1) return url;
+
+        const prefix = url.slice(0, markerIndex + uploadMarker.length);
+        const suffix = url.slice(markerIndex + uploadMarker.length);
+        const finalHeight = height || width;
+        const transform = `f_auto,q_auto,c_fill,g_face,w_${width},h_${finalHeight}`;
+
+        return `${prefix}${transform}/${suffix}`;
+    } catch (err) {
+        console.error('Error building optimized Cloudinary URL:', err);
+        return url;
+    }
+};

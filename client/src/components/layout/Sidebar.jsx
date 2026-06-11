@@ -1,228 +1,236 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
-    HomeIcon,
-    CalendarIcon,
-    UsersIcon,
     TrophyIcon,
-    ChartBarIcon,
     XMarkIcon,
-    MapPinIcon,
-    SparklesIcon,
-    DevicePhoneMobileIcon,
-    IdentificationIcon,
-    FireIcon,
-    AcademicCapIcon,
-    ClockIcon,
-    BuildingOffice2Icon,
-    UserGroupIcon,
-    CalendarDaysIcon,
-    ClipboardDocumentListIcon,
-    ShieldCheckIcon,
-    SquaresPlusIcon,
-    UserCircleIcon,
-    ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
-import { motion as Motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { twMerge } from 'tailwind-merge'
+import { buildDefaultNavigation, buildDefaultSecondaryNav } from './navigationConfig'
 
-export default function Sidebar({ user, logout, onCloseMobile, isMobile = false }) {
+const MotionDiv = motion.div
+
+const getBrandPalette = (brandVariant) => {
+    switch (brandVariant) {
+        case 'coach':
+            return {
+                badge: 'from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-emerald-200/80',
+                accent: 'from-emerald-400 via-teal-400 to-cyan-400',
+                glow: 'from-emerald-500/20 via-teal-400/10 to-transparent',
+                label: 'text-emerald-700',
+            }
+        case 'professional':
+            return {
+                badge: 'from-orange-400 via-amber-400 to-yellow-300 text-slate-950 shadow-orange-200/70',
+                accent: 'from-orange-400 via-amber-400 to-yellow-300',
+                glow: 'from-orange-400/20 via-amber-300/10 to-transparent',
+                label: 'text-orange-700',
+            }
+        default:
+            return {
+                badge: 'from-slate-900 via-slate-800 to-slate-700 text-white shadow-slate-300/80',
+                accent: 'from-slate-900 via-slate-700 to-slate-500',
+                glow: 'from-slate-900/10 via-slate-400/10 to-transparent',
+                label: 'text-slate-600',
+            }
+    }
+}
+
+const Sidebar = ({
+    user,
+    logout,
+    onCloseMobile,
+    isMobile = false,
+    navigation,
+    secondaryNav,
+    brandTitle = 'SportSphere',
+    brandEyebrow = 'Workspace',
+    brandDescription = 'Your courts, tournaments, sessions, and team activity in one place.',
+    brandHref = '/',
+    brandIcon: BrandIcon = TrophyIcon,
+    brandVariant = 'default',
+}) => {
     const location = useLocation()
+    const palette = getBrandPalette(brandVariant)
+    const mainNav = navigation || buildDefaultNavigation(user)
+    const accountNav = secondaryNav || buildDefaultSecondaryNav(user, logout)
+    const BrandMark = BrandIcon
     const userRoleLabel = user?.role === 'player'
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
-        : user?.role;
+        : user?.role
 
-    let navigation = [
-        {
-            name: user?.role === 'admin' ? 'Admin Dashboard' : 'Dashboard',
-            href: user?.role === 'admin' ? '/admin/dashboard' : '/app',
-            icon: user?.role === 'admin' ? ChartBarIcon : HomeIcon
-        },
-    ];
-
-    // Role-specific Navigation
-    if (user?.role === 'admin') {
-        // No extra admin dashboard link needed as it's merged into the main dashboard link
-    } else if (user?.role === 'organizer') {
-        navigation.push({ name: 'My Tournaments', href: '/app/tournaments', icon: TrophyIcon });
-        navigation.push({ name: 'Create Tournament', href: '/app/tournaments/create', icon: SquaresPlusIcon });
-        navigation.push({ name: 'My Courts', href: '/org/courts', icon: BuildingOffice2Icon });
-    } else if (user?.role === 'player') {
-        navigation.push({ name: 'Book a Court', href: '/courts', icon: MapPinIcon });
-        navigation.push({ name: 'Find Mentors', href: '/coaches', icon: AcademicCapIcon });
-        navigation.push({ name: 'Tournaments', href: '/tournaments', icon: TrophyIcon });
-        navigation.push({ name: 'My Schedule', href: '/app/bookings', icon: CalendarDaysIcon });
-        navigation.push({ name: 'Coaching Sessions', href: '/app/sessions', icon: ClipboardDocumentListIcon });
-
-        if (user.skillLevel === 'professional') {
-            navigation.push({ name: 'Sparring Invites', href: '/app/sparring/requests', icon: CalendarIcon });
-            navigation.push({ name: 'My Registrations', href: '/pro/registrations', icon: FireIcon });
-        } else {
-            navigation.push({ name: 'Find Players', href: '/app/sparring', icon: UserGroupIcon });
-            navigation.push({ name: 'Sparring Invites', href: '/app/sparring/requests', icon: CalendarIcon });
-            navigation.push({ name: 'My Registrations', href: '/app/registrations', icon: FireIcon });
+    const isActiveItem = (item) => {
+        if (typeof item.match === 'function') {
+            return item.match(location.pathname)
         }
-    } else if (user?.role === 'coach') {
-        // Coaches should primarily use /coach dashboard, but providing links here just in case they land on Main Dashboard
-        navigation.push({ name: 'Requests', href: '/coach/requests', icon: UserGroupIcon });
-        navigation.push({ name: 'Schedule & Courts', href: '/coach/schedule', icon: CalendarDaysIcon });
+
+        if (item.href === '/tournaments') {
+            return location.pathname.startsWith('/tournaments')
+        }
+
+        if (item.href === '/app') {
+            return location.pathname === '/app'
+        }
+
+        return location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
     }
 
-    const secondaryNav = [
-        ...(user?.role === 'admin'
-            ? []
-            : [{ name: 'Profile', href: user?.role === 'player' && user?.skillLevel === 'professional' ? '/pro/profile' : '/app/profile', icon: UserCircleIcon }]),
-        { name: 'Logout', onClick: logout, icon: ArrowRightOnRectangleIcon }
-    ];
+    const renderItem = (item, kind = 'link') => {
+        const isActive = kind === 'link' ? isActiveItem(item) : false
+        const Icon = item.icon
+        const baseClasses = twMerge(
+            'group relative flex w-full items-start gap-3 overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all duration-300',
+            isActive
+                ? 'border-slate-900/80 bg-slate-950 text-white shadow-[0_18px_36px_-16px_rgba(15,23,42,0.75)]'
+                : 'border-white/80 bg-white/70 text-slate-700 shadow-[0_10px_28px_-22px_rgba(15,23,42,0.35)] hover:border-slate-200 hover:bg-white hover:text-slate-950'
+        )
+
+        const content = (
+            <>
+                <div className={twMerge(
+                    'relative z-10 mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-all duration-300',
+                    isActive
+                        ? 'border-white/10 bg-white/10 text-white'
+                        : 'border-slate-200 bg-slate-50 text-slate-500 group-hover:border-slate-300 group-hover:text-slate-900'
+                )}>
+                    <Icon className="h-5 w-5" />
+                </div>
+                <div className="relative z-10 min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                        <span className="truncate text-[13px] font-black tracking-[0.01em]">{item.name}</span>
+                        {isActive && <span className="h-1.5 w-1.5 rounded-full bg-white/80" />}
+                    </div>
+                    {item.description && (
+                        <p className={twMerge(
+                            'mt-1 text-[11px] leading-5',
+                            isActive ? 'text-white/72' : 'text-slate-500'
+                        )}>
+                            {item.description}
+                        </p>
+                    )}
+                    <div className={twMerge(
+                        'mt-3 h-px origin-left bg-gradient-to-r transition-transform duration-300',
+                        isActive
+                            ? 'scale-100 from-white/60 via-white/20 to-transparent'
+                            : 'scale-0 from-slate-400/70 via-slate-200 to-transparent group-hover:scale-100'
+                    )} />
+                </div>
+                <div className={twMerge(
+                    'absolute inset-x-0 top-0 h-full bg-gradient-to-br opacity-0 transition-opacity duration-300',
+                    isActive
+                        ? 'opacity-100 from-white/[0.08] via-transparent to-transparent'
+                        : 'group-hover:opacity-100 from-slate-100/40 via-transparent to-transparent'
+                )} />
+            </>
+        )
+
+        if (item.onClick) {
+            return (
+                <button
+                    type="button"
+                    onClick={() => {
+                        onCloseMobile?.()
+                        item.onClick()
+                    }}
+                    className={baseClasses}
+                >
+                    {content}
+                </button>
+            )
+        }
+
+        return (
+            <Link to={item.href} onClick={onCloseMobile} className={baseClasses}>
+                {content}
+            </Link>
+        )
+    }
 
     return (
-        <div className="flex h-full grow flex-col gap-y-10 overflow-y-auto border-r border-slate-200/60 bg-gradient-to-b from-slate-50 via-white to-slate-50 px-6 sm:px-8 pb-10 shadow-[10px_0_60px_-20px_rgba(0,0,0,0.12)]">
-            <div className="flex h-24 shrink-0 items-center justify-between">
-                <Link to="/" className="flex items-center gap-3.5 group">
-                    <Motion.div
-                        whileHover={{ rotate: 10, scale: 1.06 }}
-                        className="h-12 w-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-300 transition-transform duration-500"
-                    >
-                        <TrophyIcon className="h-7 w-7" />
-                    </Motion.div>
-                    <span className="text-2xl font-black tracking-tight leading-none text-slate-900 group-hover:text-slate-800 transition-all duration-500">
-                        SportsSphere
-                    </span>
+        <div className="relative flex h-full grow flex-col overflow-hidden border-r border-slate-200/70 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.95),_rgba(248,250,252,0.98)_38%,_rgba(241,245,249,0.98)_100%)]">
+            <div className={twMerge('pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-br', palette.glow)} />
+
+            <div className="relative flex items-center justify-between border-b border-slate-200/70 px-6 pb-5 pt-6 sm:px-8">
+                <Link to={brandHref} className="group min-w-0" onClick={onCloseMobile}>
+                    <div className="flex items-center gap-3">
+                        <MotionDiv
+                            whileHover={{ rotate: 5, scale: 1.03 }}
+                            className={twMerge(
+                                'flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-gradient-to-br shadow-[0_18px_36px_-18px_rgba(15,23,42,0.7)]',
+                                palette.badge
+                            )}
+                        >
+                            <BrandMark className="h-7 w-7" />
+                        </MotionDiv>
+                        <div className="min-w-0">
+                            <p className={twMerge('text-[10px] font-black uppercase tracking-[0.28em]', palette.label)}>
+                                {brandEyebrow}
+                            </p>
+                            <h2 className="truncate text-xl font-black tracking-tight text-slate-950">{brandTitle}</h2>
+                        </div>
+                    </div>
+                    <p className="mt-3 max-w-xs text-[12px] leading-5 text-slate-500">
+                        {brandDescription}
+                    </p>
                 </Link>
                 {isMobile && (
-                    <button onClick={onCloseMobile} className="lg:hidden p-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all border border-slate-200">
+                    <button
+                        onClick={onCloseMobile}
+                        className="ml-4 rounded-2xl border border-slate-200 bg-white/80 p-2.5 text-slate-500 transition-colors hover:text-slate-950"
+                    >
                         <XMarkIcon className="h-5 w-5" />
                     </button>
                 )}
             </div>
 
-            <nav className="flex flex-1 flex-col">
-                <ul role="list" className="flex flex-1 flex-col gap-y-12">
-                    <li>
-                        <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-slate-400 mb-6 flex items-center gap-3">
-                            Main Menu
-                            <div className="h-px flex-1 bg-gradient-to-r from-slate-300 to-transparent" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                        </div>
-                        <ul role="list" className="space-y-2">
-                            {navigation.map((item) => {
-                                const isActive =
-                                    location.pathname === item.href ||
-                                    (item.href === '/tournaments' && location.pathname.startsWith('/tournaments'));
-                                return (
-                                    <li key={item.name}>
-                                        <Motion.div whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>
-                                            <Link
-                                                to={item.href}
-                                                onClick={onCloseMobile}
-                                                className={twMerge(
-                                                    "group flex gap-x-4 rounded-2xl p-4 text-[13px] font-bold leading-none transition-all duration-300 relative",
-                                                    isActive
-                                                        ? "bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-xl shadow-slate-300"
-                                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 hover:shadow-md"
-                                                )}
-                                            >
-                                                <item.icon className={twMerge(
-                                                    "h-5 w-5 shrink-0 transition-all duration-300",
-                                                    isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700 group-hover:-translate-y-0.5"
-                                                )} />
-                                                {item.name}
-                                                {isActive && (
-                                                    <>
-                                                        <Motion.div
-                                                            layoutId="sidebar-active"
-                                                            className="absolute -left-8 top-1/2 -translate-y-1/2 h-8 w-1.5 bg-slate-800 rounded-r-full"
-                                                        />
-                                                        <Motion.div
-                                                            initial={{ opacity: 0.3 }}
-                                                            animate={{ opacity: 0.85 }}
-                                                            transition={{ repeat: Infinity, repeatType: 'reverse', duration: 1.1 }}
-                                                            className="absolute right-4 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-white/90"
-                                                        />
-                                                    </>
-                                                )}
-                                            </Link>
-                                        </Motion.div>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </li>
+            <div className="relative flex flex-1 flex-col overflow-y-auto px-5 pb-6 pt-6 sm:px-6">
+                <div className="mb-4 flex items-center gap-3 px-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">Main menu</span>
+                    <div className={twMerge('h-px flex-1 bg-gradient-to-r', palette.accent)} />
+                </div>
 
-                    <li>
-                        <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-slate-400 mb-6 flex items-center gap-3">
-                            Account
-                            <div className="h-px flex-1 bg-gradient-to-r from-slate-300 to-transparent" />
-                        </div>
-                        <ul role="list" className="space-y-2">
-                            {secondaryNav.map((item) => {
-                                const isActive = location.pathname === item.href;
-                                return (
-                                    <li key={item.name}>
-                                        {item.onClick ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    onCloseMobile?.();
-                                                    item.onClick();
-                                                }}
-                                                className="group flex w-full gap-x-4 rounded-2xl p-4 text-[13px] font-bold leading-none text-slate-500 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900 hover:shadow-md"
-                                            >
-                                                <item.icon className="h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-700" />
-                                                {item.name}
-                                            </button>
-                                        ) : (
-                                            <Link
-                                                to={item.href}
-                                                onClick={onCloseMobile}
-                                                className={twMerge(
-                                                    "group flex gap-x-4 rounded-2xl p-4 text-[13px] font-bold leading-none transition-all duration-300",
-                                                    isActive
-                                                        ? "bg-slate-800 text-white shadow-xl shadow-slate-300"
-                                                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:shadow-md"
-                                                )}
-                                            >
-                                                <item.icon className={twMerge(
-                                                    "h-5 w-5 shrink-0 transition-colors",
-                                                    isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
-                                                )} />
-                                                {item.name}
-                                            </Link>
-                                        )}
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </li>
+                <nav className="space-y-3">
+                    {mainNav.map((item) => (
+                        <div key={item.name}>{renderItem(item)}</div>
+                    ))}
+                </nav>
 
-                    <li className="mt-auto pt-8 border-t border-slate-200">
-                        {user?.role === 'admin' ? (
-                            <div className="flex items-center gap-x-4 p-4 rounded-3xl bg-slate-100 border border-slate-200">
-                                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-900 font-black shadow-inner border border-white">
-                                    {user?.name?.[0]?.toUpperCase() || 'U'}
-                                </div>
-                                <div className="flex flex-col min-w-0">
-                                    <span className="text-[13px] font-black text-slate-900 truncate">{user?.name}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">
-                                        {userRoleLabel}
-                                    </span>
-                                </div>
+                <div className="mt-8 mb-4 flex items-center gap-3 px-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">Account</span>
+                    <div className="h-px flex-1 bg-gradient-to-r from-slate-300 to-transparent" />
+                </div>
+
+                <div className="space-y-3">
+                    {accountNav.map((item) => (
+                        <div key={item.name}>{renderItem(item, item.onClick ? 'action' : 'link')}</div>
+                    ))}
+                </div>
+
+                <div className="mt-auto pt-8">
+                    <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/80 p-4 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
+                        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-slate-100/90 via-white to-slate-100/70" />
+                        <div className="relative flex items-center gap-4">
+                            <div className={twMerge(
+                                'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br font-black shadow-inner',
+                                brandVariant === 'professional'
+                                    ? 'from-orange-200 to-amber-100 text-orange-900'
+                                    : brandVariant === 'coach'
+                                        ? 'from-emerald-100 to-cyan-100 text-emerald-900'
+                                        : 'from-slate-200 to-slate-100 text-slate-900'
+                            )}>
+                                {user?.name?.[0]?.toUpperCase() || 'U'}
                             </div>
-                        ) : (
-                            <Link to={user?.role === 'player' && user?.skillLevel === 'professional' ? '/pro/profile' : '/app/profile'} className="flex items-center gap-x-4 p-4 rounded-3xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 transition-all group">
-                                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-900 font-black shadow-inner border border-white group-hover:scale-110 group-hover:from-slate-800 group-hover:to-slate-900 group-hover:text-white transition-all duration-500">
-                                    {user?.name?.[0]?.toUpperCase() || 'U'}
-                                </div>
-                                <div className="flex flex-col min-w-0">
-                                    <span className="text-[13px] font-black text-slate-900 truncate leading-none mb-2">{user?.name}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">
-                                        {userRoleLabel}
-                                    </span>
-                                </div>
-                            </Link>
-                        )}
-                    </li>
-                </ul>
-            </nav>
+                            <div className="min-w-0">
+                                <p className="truncate text-[13px] font-black text-slate-950">{user?.name}</p>
+                                <p className="truncate text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                                    {userRoleLabel || 'Member'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
+
+export default Sidebar

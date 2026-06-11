@@ -13,11 +13,14 @@ import axiosInstance from '../../services/axiosInstance';
 import { motion, AnimatePresence } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 
+const MotionButton = motion.button;
+const MotionDiv = motion.div;
+
 const MessageBubble = ({ message }) => {
     const isUser = message.sender === 'user';
 
     return (
-        <motion.div
+        <MotionDiv
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             className={twMerge(
@@ -50,12 +53,12 @@ const MessageBubble = ({ message }) => {
                     {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 };
 
 const TypingIndicator = () => (
-    <motion.div
+    <MotionDiv
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex gap-3 mb-6"
@@ -65,24 +68,24 @@ const TypingIndicator = () => (
         </div>
         <div className="bg-muted/50 p-4 rounded-2xl rounded-tl-none border border-border/50">
             <div className="flex gap-1.5">
-                <motion.div
+                <MotionDiv
                     animate={{ y: [0, -4, 0] }}
                     transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
                     className="h-1.5 w-1.5 rounded-full bg-primary/40"
                 />
-                <motion.div
+                <MotionDiv
                     animate={{ y: [0, -4, 0] }}
                     transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
                     className="h-1.5 w-1.5 rounded-full bg-primary/40"
                 />
-                <motion.div
+                <MotionDiv
                     animate={{ y: [0, -4, 0] }}
                     transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
                     className="h-1.5 w-1.5 rounded-full bg-primary/40"
                 />
             </div>
         </div>
-    </motion.div>
+    </MotionDiv>
 );
 
 export default function ChatWindow() {
@@ -177,8 +180,7 @@ export default function ChatWindow() {
         <div className="fixed bottom-8 right-8 z-[9999]">
             <AnimatePresence>
                 {!isOpen && (
-                    <motion.button
-                        layoutId="chat-button"
+                    <MotionButton
                         initial={{ scale: 0, rotate: -45 }}
                         animate={{ scale: 1, rotate: 0 }}
                         exit={{ scale: 0, rotate: 45 }}
@@ -187,12 +189,11 @@ export default function ChatWindow() {
                     >
                         <SparklesIcon className="h-8 w-8" />
                         <div className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full border-2 border-background animate-pulse" />
-                    </motion.button>
+                    </MotionButton>
                 )}
 
                 {isOpen && (
-                    <motion.div
-                        layoutId="chat-button"
+                    <MotionDiv
                         initial={{ opacity: 0, y: 50, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -258,7 +259,7 @@ export default function ChatWindow() {
                                 SportSphere AI Support
                             </p>
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
         </div>
