@@ -25,7 +25,7 @@ exports.getCourts = async (req, res, next) => {
         const legacyCityFilter = String(city || '').trim();
         const searchArea = areaFilter || (legacyCityFilter.toLowerCase() !== LAHORE_CITY.toLowerCase() ? legacyCityFilter : '');
         if (searchArea) {
-            query['location.area'] = { $regex: escapeRegex(searchArea), $options: 'i' };
+            query['location.area'] = { $regex: `^${escapeRegex(searchArea)}`, $options: 'i' };
         }
 
         if (minPrice || maxPrice) {

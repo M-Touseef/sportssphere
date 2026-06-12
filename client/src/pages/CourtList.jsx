@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import courtService from '../services/courtService';
@@ -34,42 +34,44 @@ const CourtList = () => {
     const [fetchError, setFetchError] = useState(false);
     const { addToast } = useToast();
     const [filters, setFilters] = useState(EMPTY_FILTERS);
+    const requestSequence = useRef(0);
 
     const fetchCourts = useCallback(
         async (activeFilters = EMPTY_FILTERS) => {
+            const requestId = ++requestSequence.current;
             try {
                 setLoading(true);
                 setFetchError(false);
                 const data = await courtService.getCourts(activeFilters);
+                if (requestId !== requestSequence.current) return;
                 setCourts(Array.isArray(data?.data) ? data.data : []);
             } catch (err) {
+                if (requestId !== requestSequence.current) return;
                 console.error('Error fetching courts:', err);
                 setFetchError(true);
                 addToast('Could not load courts. Please check your connection.', 'error');
             } finally {
-                setLoading(false);
+                if (requestId === requestSequence.current) setLoading(false);
             }
         },
         [addToast]
     );
 
     useEffect(() => {
-        fetchCourts();
-    }, [fetchCourts]);
+        requestSequence.current += 1;
+        const timeoutId = setTimeout(() => {
+            fetchCourts(filters);
+        }, filters.area.trim() ? 250 : 0);
+
+        return () => clearTimeout(timeoutId);
+    }, [fetchCourts, filters]);
 
     const handleFilterChange = (e) => {
         setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        fetchCourts(filters);
-    };
-
     const resetFilters = () => {
-        const cleared = { ...EMPTY_FILTERS };
-        setFilters(cleared);
-        fetchCourts(cleared);
+        setFilters({ ...EMPTY_FILTERS });
     };
 
     const hasActiveFilters = Boolean(filters.area.trim() || filters.surfaceType);
@@ -127,8 +129,8 @@ const CourtList = () => {
             {/* Filters */}
             <div className="relative -mt-4 sm:-mt-6 mb-10 sm:mb-14 z-10">
                 <div className="rounded-3xl sm:rounded-[2rem] bg-white/95 backdrop-blur-xl border border-amber-100/90 shadow-[0_20px_50px_-20px_rgba(30,27,75,0.15)] p-6 sm:p-8">
-                    <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
-                        <div className="md:col-span-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 items-end">
+                        <div>
                             <label
                                 htmlFor="area"
                                 className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1"
@@ -136,7 +138,7 @@ const CourtList = () => {
                                 Lahore area
                             </label>
                             <div className="relative">
-                                <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-800 pointer-events-none" />
+                                <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-800 pointer-events-none" />
                                 <input
                                     type="search"
                                     name="area"
@@ -154,9 +156,12 @@ const CourtList = () => {
                                     ))}
                                 </datalist>
                             </div>
+                            <p className="mt-2 ml-1 text-xs font-semibold text-slate-500">
+                                Results update automatically as you type.
+                            </p>
                         </div>
 
-                        <div className="md:col-span-5">
+                        <div>
                             <label
                                 htmlFor="surfaceType"
                                 className="text-[10px] font-bold text-amber-800/80 uppercase tracking-widest mb-2 block ml-1"
@@ -178,18 +183,7 @@ const CourtList = () => {
                             </select>
                         </div>
 
-                        <div className="md:col-span-3">
-                            <Button
-                                type="submit"
-                                fullWidth
-                                size="lg"
-                                className="min-h-[3rem] sm:min-h-[3.25rem] rounded-2xl font-bold text-base bg-indigo-950 hover:bg-indigo-900 text-amber-50 shadow-lg shadow-indigo-900/25 border-b-4 border-indigo-800 active:border-b-0 gap-2"
-                            >
-                                <MagnifyingGlassIcon className="h-5 w-5" />
-                                Search courts
-                            </Button>
-                        </div>
-                    </form>
+                    </div>
 
                     {hasActiveFilters && !loading && (
                         <div className="mt-5 flex flex-wrap items-center gap-2">
