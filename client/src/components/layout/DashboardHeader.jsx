@@ -190,12 +190,14 @@ const DesktopNavDropdown = ({ group, pathname }) => {
     )
 }
 
-const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationContext }) => {
+const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationContext, flattenNavigation = false }) => {
     const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications()
     const location = useLocation()
     const pathname = location.pathname
     const navItems = navigation || buildDefaultNavigation(user)
-    const { directItems, grouped } = buildHeaderMenuGroups(navItems, user, navigationContext)
+    const menuGroups = buildHeaderMenuGroups(navItems, user, navigationContext)
+    const directItems = flattenNavigation ? navItems : menuGroups.directItems
+    const grouped = flattenNavigation ? [] : menuGroups.grouped
     const userRoleLabel = user?.role === 'player'
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
         : user?.role

@@ -64,6 +64,7 @@ const CoachLayout = () => {
                     setSidebarOpen={setSidebarOpen}
                     navigation={navigation}
                     navigationContext="coach"
+                    flattenNavigation
                 />
                 <main className="flex-1 py-10 px-6 sm:px-8 lg:px-10">
                     <Outlet />
