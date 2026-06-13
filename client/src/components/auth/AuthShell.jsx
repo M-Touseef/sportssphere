@@ -23,9 +23,9 @@ const AuthShell = ({
     cardBadge,
     footer,
 }) => (
-    <div className="min-h-[calc(100vh-5.75rem)] bg-[#f4f9fc] text-slate-950 selection:bg-sky-200 selection:text-brand-navy">
-        <div className="grid min-h-[calc(100vh-5.75rem)] lg:grid-cols-[minmax(0,1.08fr)_minmax(30rem,0.92fr)]">
-            <aside className="relative hidden min-h-[calc(100vh-5.75rem)] overflow-hidden bg-brand-navy-deep lg:flex">
+    <div className="min-h-[calc(100vh-4.5rem)] bg-[#f4f9fc] text-slate-950 selection:bg-sky-200 selection:text-brand-navy">
+        <div className="grid min-h-[calc(100vh-4.5rem)] lg:grid-cols-[minmax(0,1.08fr)_minmax(30rem,0.92fr)]">
+            <aside className="relative hidden min-h-[calc(100vh-4.5rem)] overflow-hidden bg-brand-navy-deep lg:flex">
                 <img
                     src="/images/homepage/hero-badminton.jpg"
                     alt=""
@@ -77,7 +77,7 @@ const AuthShell = ({
                 </div>
             </aside>
 
-            <main className="relative flex min-h-[calc(100vh-5.75rem)] items-center justify-center overflow-hidden px-5 py-10 sm:px-8 lg:px-10">
+            <main className="relative flex min-h-[calc(100vh-4.5rem)] items-center justify-center overflow-hidden px-5 py-10 sm:px-8 lg:px-10">
                 <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-sky-200/45 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-lime-100/55 blur-3xl" />
 

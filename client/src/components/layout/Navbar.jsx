@@ -22,11 +22,24 @@ const navigation = [
     { name: 'AI Assistant', href: '/chatbot' },
 ];
 
+const authPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+
 const Navbar = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
     const isHomePage = location.pathname === '/';
+    const isAuthPage = authPaths.includes(location.pathname);
     const { notifications, hasUnread, unreadCount, markAllRead, markNotificationRead } = useNotifications();
+
+    if (isAuthPage) {
+        return (
+            <header className="sticky top-0 z-[100] border-b border-sky-100 bg-white/95 px-5 backdrop-blur-xl">
+                <nav className="mx-auto flex h-[72px] max-w-[92rem] items-center" aria-label="Authentication navigation">
+                    <BrandLogo compact showTagline={false} />
+                </nav>
+            </header>
+        );
+    }
 
     return (
         <Disclosure

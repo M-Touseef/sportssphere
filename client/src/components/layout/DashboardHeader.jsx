@@ -36,21 +36,78 @@ const isActiveItem = (pathname, item) => {
     return pathname === item.href || pathname.startsWith(`${item.href}/`)
 }
 
+const dropdownPalettes = {
+    sky: {
+        buttonActive: 'border-sky-500 bg-sky-500 text-white shadow-[0_12px_24px_-14px_rgba(14,165,233,0.9)]',
+        buttonIdle: 'border-sky-200 bg-sky-50 text-sky-800 hover:border-sky-300 hover:bg-sky-100',
+        chevronIdle: 'text-sky-500 group-hover:text-sky-700',
+        menu: 'border-sky-100 bg-[#f8fcff]',
+        intro: 'bg-gradient-to-br from-brand-navy via-sky-900 to-sky-700',
+        kicker: 'text-sky-200',
+        description: 'text-sky-100/75',
+        itemActive: 'border-sky-500 bg-sky-500 text-white shadow-[0_18px_30px_-18px_rgba(14,165,233,0.85)]',
+        itemHover: 'border-sky-200 bg-sky-50 text-brand-navy',
+        itemIdle: 'border-sky-100 bg-white text-brand-navy',
+        iconActive: 'border-white/20 bg-white/15 text-white',
+        iconIdle: 'border-sky-100 bg-sky-50 text-sky-700',
+    },
+    lime: {
+        buttonActive: 'border-lime-500 bg-lime-500 text-brand-navy shadow-[0_12px_24px_-14px_rgba(132,204,22,0.9)]',
+        buttonIdle: 'border-lime-200 bg-lime-50 text-lime-800 hover:border-lime-300 hover:bg-lime-100',
+        chevronIdle: 'text-lime-600 group-hover:text-lime-800',
+        menu: 'border-lime-100 bg-[#fbfef6]',
+        intro: 'bg-gradient-to-br from-brand-navy-deep via-brand-navy to-lime-800',
+        kicker: 'text-lime-300',
+        description: 'text-lime-50/75',
+        itemActive: 'border-lime-500 bg-lime-500 text-brand-navy shadow-[0_18px_30px_-18px_rgba(132,204,22,0.8)]',
+        itemHover: 'border-lime-200 bg-lime-50 text-brand-navy',
+        itemIdle: 'border-lime-100 bg-white text-brand-navy',
+        iconActive: 'border-brand-navy/10 bg-brand-navy/10 text-brand-navy',
+        iconIdle: 'border-lime-100 bg-lime-50 text-lime-700',
+    },
+    navy: {
+        buttonActive: 'border-brand-navy bg-brand-navy text-white shadow-[0_12px_24px_-14px_rgba(3,20,47,0.9)]',
+        buttonIdle: 'border-slate-200 bg-slate-100 text-brand-navy hover:border-sky-200 hover:bg-sky-50',
+        chevronIdle: 'text-slate-500 group-hover:text-brand-navy',
+        menu: 'border-sky-100 bg-[#f7fafc]',
+        intro: 'bg-gradient-to-br from-brand-navy-deep via-brand-navy to-sky-800',
+        kicker: 'text-lime-300',
+        description: 'text-sky-100/70',
+        itemActive: 'border-brand-navy bg-brand-navy text-white shadow-[0_18px_30px_-18px_rgba(3,20,47,0.85)]',
+        itemHover: 'border-sky-200 bg-sky-50 text-brand-navy',
+        itemIdle: 'border-slate-200 bg-white text-brand-navy',
+        iconActive: 'border-white/20 bg-white/15 text-white',
+        iconIdle: 'border-sky-100 bg-sky-50 text-brand-navy',
+    },
+}
+
+const groupPalette = {
+    training: dropdownPalettes.sky,
+    operations: dropdownPalettes.sky,
+    events: dropdownPalettes.sky,
+    coaching: dropdownPalettes.lime,
+    community: dropdownPalettes.lime,
+    venues: dropdownPalettes.lime,
+    competition: dropdownPalettes.navy,
+    system: dropdownPalettes.navy,
+}
+
 const DesktopNavDropdown = ({ group, pathname }) => {
     const hasActiveChild = group.items.some((item) => isActiveItem(pathname, item))
+    const palette = groupPalette[group.key] || dropdownPalettes.sky
 
     return (
         <Menu as="div" className="relative">
             <Menu.Button className={twMerge(
-                'group inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-black transition-all',
+                'group inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-[13px] font-black transition-all',
                 hasActiveChild
-                    ? 'bg-brand-navy text-white shadow-[0_12px_24px_-14px_rgba(3,20,47,0.9)]'
-                    : 'text-slate-600 hover:bg-sky-50 hover:text-brand-navy'
+                    ? palette.buttonActive
+                    : palette.buttonIdle
             )}>
                 <span>{group.title}</span>
                 <ChevronDownIcon className={twMerge(
                     'h-4 w-4 transition-transform duration-200',
-                    hasActiveChild ? 'text-white/80' : 'text-slate-400 group-hover:text-slate-700'
+                    hasActiveChild ? 'text-current opacity-80' : palette.chevronIdle
                 )} />
             </Menu.Button>
 
@@ -63,16 +120,19 @@ const DesktopNavDropdown = ({ group, pathname }) => {
                 leaveFrom="transform opacity-100 translate-y-0"
                 leaveTo="transform opacity-0 -translate-y-2"
             >
-                <Menu.Items className="absolute left-1/2 z-50 mt-4 w-[44rem] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/95 p-3 shadow-[0_28px_80px_-32px_rgba(15,23,42,0.45)] backdrop-blur-xl focus:outline-none">
+                <Menu.Items className={twMerge(
+                    'absolute left-1/2 z-50 mt-4 w-[44rem] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[2rem] border p-3 shadow-[0_28px_80px_-32px_rgba(3,20,47,0.45)] backdrop-blur-xl focus:outline-none',
+                    palette.menu
+                )}>
                     <div className="grid gap-3 md:grid-cols-[15rem_minmax(0,1fr)]">
-                        <div className="rounded-[1.5rem] bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.96),_rgba(241,245,249,0.92)_60%,_rgba(226,232,240,0.85))] p-5">
-                            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">
+                        <div className={twMerge('rounded-[1.5rem] p-5 text-white', palette.intro)}>
+                            <p className={twMerge('text-[10px] font-black uppercase tracking-[0.28em]', palette.kicker)}>
                                 {group.kicker}
                             </p>
-                            <h3 className="mt-3 text-xl font-black tracking-tight text-brand-navy">
+                            <h3 className="mt-3 text-xl font-black tracking-tight text-white">
                                 {group.title}
                             </h3>
-                            <p className="mt-3 text-[13px] leading-6 text-slate-500">
+                            <p className={twMerge('mt-3 text-[13px] leading-6', palette.description)}>
                                 {group.description}
                             </p>
                         </div>
@@ -90,18 +150,18 @@ const DesktopNavDropdown = ({ group, pathname }) => {
                                                 className={twMerge(
                                                     'group relative overflow-hidden rounded-[1.5rem] border p-4 transition-all',
                                                     isActive
-                                                        ? 'border-brand-navy bg-brand-navy text-white shadow-[0_18px_30px_-18px_rgba(3,20,47,0.8)]'
+                                                        ? palette.itemActive
                                                         : active
-                                                            ? 'border-slate-300 bg-slate-50 text-slate-950'
-                                                            : 'border-slate-200/80 bg-white text-slate-800'
+                                                            ? palette.itemHover
+                                                            : palette.itemIdle
                                                 )}
                                             >
                                                 <div className="flex items-start gap-3">
                                                     <div className={twMerge(
                                                         'flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border',
                                                         isActive
-                                                            ? 'border-white/10 bg-white/10 text-white'
-                                                            : 'border-slate-200 bg-slate-50 text-slate-500'
+                                                            ? palette.iconActive
+                                                            : palette.iconIdle
                                                     )}>
                                                         <Icon className="h-5 w-5" />
                                                     </div>
@@ -110,7 +170,7 @@ const DesktopNavDropdown = ({ group, pathname }) => {
                                                         {item.description && (
                                                             <p className={twMerge(
                                                                 'mt-2 text-[11px] leading-5',
-                                                                isActive ? 'text-white/72' : 'text-slate-500'
+                                                                isActive ? 'text-current opacity-75' : 'text-slate-500'
                                                             )}>
                                                                 {item.description}
                                                             </p>
@@ -208,11 +268,11 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
                             leaveFrom="transform opacity-100 scale-100"
                             leaveTo="transform opacity-0 scale-95"
                         >
-                            <Menu.Items className="absolute right-0 z-50 mt-3 w-80 origin-top-right overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12)] focus:outline-none">
-                                <div className="flex items-center justify-between border-b border-slate-50 bg-white px-4 py-3">
-                                    <p className="text-sm font-bold text-slate-900">Notifications</p>
+                            <Menu.Items className="absolute right-0 z-50 mt-3 w-80 origin-top-right overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-[0_24px_55px_-20px_rgba(3,20,47,0.35)] focus:outline-none">
+                                <div className="flex items-center justify-between bg-gradient-to-r from-brand-navy-deep to-brand-navy px-4 py-4">
+                                    <p className="text-sm font-black text-white">Notifications</p>
                                     {hasUnread && (
-                                        <span className="rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-bold text-lime-800">
+                                        <span className="rounded-full bg-lime-400 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-brand-navy">
                                             New
                                         </span>
                                     )}
@@ -230,21 +290,21 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
                                             const rowClass = (active) =>
                                                 twMerge(
                                                     'flex w-full gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors last:border-0',
-                                                    active ? 'bg-slate-50' : 'bg-white'
+                                                    active ? 'bg-sky-50' : 'bg-white'
                                                 )
                                             const inner = () => (
                                                 <>
                                                     <div
                                                         className={twMerge(
                                                             'mt-1.5 h-2 w-2 flex-shrink-0 rounded-full',
-                                                            !item.isRead ? 'bg-rose-500' : 'bg-slate-200'
+                                                            !item.isRead ? 'bg-brand-sky' : 'bg-slate-200'
                                                         )}
                                                     />
                                                     <div>
                                                         <p
                                                             className={twMerge(
                                                                 'text-xs font-bold',
-                                                                !item.isRead ? 'text-slate-900' : 'text-slate-500'
+                                                                !item.isRead ? 'text-brand-navy' : 'text-slate-500'
                                                             )}
                                                         >
                                                             {item.title}
@@ -289,10 +349,10 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
                                     )}
                                 </div>
                                 {notifications.length > 0 && hasUnread && (
-                                    <div className="border-t border-slate-50 bg-slate-50/50 p-2">
+                                    <div className="border-t border-sky-100 bg-sky-50/70 p-2">
                                         <button
                                             onClick={markAllRead}
-                                            className="w-full py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 transition-colors hover:text-sky-700"
+                                            className="w-full rounded-xl py-2 text-[10px] font-black uppercase tracking-widest text-sky-700 transition-colors hover:bg-white hover:text-brand-navy"
                                         >
                                             Mark all as read
                                         </button>
@@ -317,6 +377,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
                                 className="h-9 w-9 rounded-full border border-sky-100 bg-white text-sm transition-colors group-hover:border-sky-200"
                                 fallbackClassName="text-sm"
                             />
+                            <ChevronDownIcon className="hidden h-4 w-4 text-sky-600 transition-transform group-data-[headlessui-state=open]:rotate-180 sm:block" />
                         </Menu.Button>
 
                         <Transition
@@ -328,10 +389,10 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
                             leaveFrom="transform opacity-100 scale-100"
                             leaveTo="transform opacity-0 scale-95"
                         >
-                            <Menu.Items className="absolute right-0 z-50 mt-4 w-64 origin-top-right rounded-3xl border border-slate-100 bg-white p-2.5 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] focus:outline-none">
-                                <div className="mb-2 border-b border-slate-50 px-4 py-3">
-                                    <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">Logged in as</p>
-                                    <p className="truncate text-sm font-black text-slate-900">{user?.email}</p>
+                            <Menu.Items className="absolute right-0 z-50 mt-4 w-64 origin-top-right rounded-3xl border border-sky-100 bg-white p-2.5 shadow-[0_24px_55px_-20px_rgba(3,20,47,0.35)] focus:outline-none">
+                                <div className="mb-2 rounded-2xl bg-gradient-to-br from-brand-navy-deep via-brand-navy to-sky-800 px-4 py-4">
+                                    <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-sky-200">Logged in as</p>
+                                    <p className="truncate text-sm font-black text-white">{user?.email}</p>
                                 </div>
                                 {userNavigation.map((item) => (
                                     <Menu.Item key={item.name}>
@@ -341,7 +402,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
                                                     onClick={item.onClick}
                                                     className={twMerge(
                                                         'flex w-full items-center gap-3.5 rounded-2xl px-4 py-3 text-[13px] font-bold transition-all',
-                                                        active ? 'bg-rose-50 text-rose-600' : 'text-slate-500'
+                                                        active ? 'bg-rose-50 text-rose-700' : 'text-rose-600'
                                                     )}
                                                 >
                                                     <item.icon className="h-5 w-5" />
@@ -352,7 +413,7 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
                                                     to={item.href}
                                                     className={twMerge(
                                                         'flex items-center gap-3.5 rounded-2xl px-4 py-3 text-[13px] font-bold transition-all',
-                                                        active ? 'bg-sky-50 text-sky-700' : 'text-slate-500'
+                                                        active ? 'bg-sky-50 text-sky-700' : 'text-brand-navy'
                                                     )}
                                                 >
                                                     <item.icon className="h-5 w-5" />
