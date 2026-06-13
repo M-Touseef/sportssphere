@@ -9,6 +9,16 @@ const authService = {
         return response.data;
     },
 
+    forgotPassword: async (email) => {
+        const response = await axiosInstance.post(API_ENDPOINTS.FORGOT_PASSWORD, { email });
+        return response.data;
+    },
+
+    resetPassword: async (resetData) => {
+        const response = await axiosInstance.post(API_ENDPOINTS.RESET_PASSWORD, resetData);
+        return response.data;
+    },
+
     // Register user
     register: async (userData) => {
         const response = await axiosInstance.post(API_ENDPOINTS.REGISTER, userData);

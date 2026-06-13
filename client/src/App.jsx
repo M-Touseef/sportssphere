@@ -27,6 +27,7 @@ const CreateTournament = lazy(() => import('./pages/CreateTournament'));
 const MyTournaments = lazy(() => import('./pages/MyTournaments'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const CoachProfile = lazy(() => import('./pages/CoachProfile'));
 const Profile = lazy(() => import('./pages/Profile'));
 const MySessions = lazy(() => import('./pages/MySessions'));
@@ -129,6 +130,8 @@ const AnimatedRoutes = () => {
           <Route path="/" element={<LazyPage><Home /></LazyPage>} />
           <Route path="/login" element={<LazyPage><Login /></LazyPage>} />
           <Route path="/register" element={<LazyPage><Register /></LazyPage>} />
+          <Route path="/forgot-password" element={<LazyPage><ForgotPassword /></LazyPage>} />
+          <Route path="/reset-password" element={<LazyPage><ForgotPassword /></LazyPage>} />
           <Route path="/pending-verification" element={<LazyPage><PendingVerification /></LazyPage>} />
           <Route path="/payment/return" element={<PaymentReturn />} />
           <Route path="/terms" element={<LazyPage><TermsOfService /></LazyPage>} />
@@ -257,16 +260,23 @@ const AnimatedRoutes = () => {
   );
 };
 
-const PublicLayout = () => (
-  <div className="min-h-screen bg-white selection:bg-indigo-100 selection:text-indigo-700">
-    <Suspense fallback={<RouteFallback />}>
-      <Navbar />
-    </Suspense>
-    <main className="relative z-0">
-      <Outlet />
-    </main>
-  </div>
-);
+const PublicLayout = () => {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
+  return (
+    <div className="min-h-screen bg-white selection:bg-indigo-100 selection:text-indigo-700">
+      {!isHomePage && (
+        <Suspense fallback={<RouteFallback />}>
+          <Navbar />
+        </Suspense>
+      )}
+      <main className="relative z-0">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
 
 function App() {
   useEffect(() => {

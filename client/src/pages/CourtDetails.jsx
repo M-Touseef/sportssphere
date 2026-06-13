@@ -20,6 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import ProSelectionList from '../components/booking/ProSelectionList';
+import NormalPlayerBookingFlow from '../components/booking/NormalPlayerBookingFlow';
 
 const SURFACE_LABELS = {
     synthetic: 'Mat / Synthetic',
@@ -102,6 +103,11 @@ const CourtDetails = () => {
     const [paymentMockMode, setPaymentMockMode] = useState(true);
     const [showVenueInfo, setShowVenueInfo] = useState(false);
     const isOrganizerAccount = user?.role === 'organizer';
+    const isProfessionalPlayer =
+        user?.role === 'player' && user?.skillLevel === 'professional';
+    const usesNormalBookingFlow =
+        !isAuthenticated ||
+        (user?.role === 'player' && user?.skillLevel === 'non-professional');
 
     const fetchCourtDetails = useCallback(async () => {
         try {
@@ -129,8 +135,8 @@ const CourtDetails = () => {
     }, [fetchCourtDetails]);
 
     useEffect(() => {
-        if (court && !isOrganizerAccount) fetchAvailability();
-    }, [court, fetchAvailability, isOrganizerAccount]);
+        if (court && !isOrganizerAccount && !usesNormalBookingFlow) fetchAvailability();
+    }, [court, fetchAvailability, isOrganizerAccount, usesNormalBookingFlow]);
 
     useEffect(() => {
         if (isOrganizerAccount || step !== 3 || bookingMode !== 'court') return;
@@ -138,9 +144,6 @@ const CourtDetails = () => {
             .then((cfg) => setPaymentMockMode(Boolean(cfg?.mockMode)))
             .catch(() => setPaymentMockMode(true));
     }, [step, bookingMode, isOrganizerAccount]);
-
-    const isProfessionalPlayer =
-        user?.role === 'player' && user?.skillLevel === 'professional';
 
     const wizardSteps = isProfessionalPlayer ? STEPS_PROFESSIONAL : STEPS_PLAYER;
 
@@ -151,7 +154,7 @@ const CourtDetails = () => {
         : step;
 
     useEffect(() => {
-        if (isProfessionalPlayer) return;
+        if (usesNormalBookingFlow || isProfessionalPlayer) return;
         if (!location.state?.preSelectedPro || slots.length === 0) return;
         const { date, time } = location.state;
         if (date && date !== selectedDate) setSelectedDate(date);
@@ -161,7 +164,7 @@ const CourtDetails = () => {
             setBookingMode('pro');
             setStep(3);
         }
-    }, [location.state, slots, selectedDate, isProfessionalPlayer]);
+    }, [location.state, slots, selectedDate, isProfessionalPlayer, usesNormalBookingFlow]);
 
     const resetFlow = () => {
         setStep(1);
@@ -399,34 +402,8 @@ const CourtDetails = () => {
             </div>
 
             {/* Booking wizard */}
-            {isOrganizerAccount ? (
-                <section className="mb-8 overflow-hidden rounded-[1.75rem] border-2 border-indigo-100 bg-gradient-to-br from-indigo-50 to-amber-50 shadow-lg">
-                    <div className="p-6 sm:p-8">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-950 text-amber-200 shadow-lg">
-                            <BuildingOffice2Icon className="h-7 w-7" />
-                        </div>
-                        <h2 className="mt-5 text-2xl font-black text-indigo-950">Court owner workspace</h2>
-                        <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-slate-600">
-                            You already manage your own courts, so you do not need to reserve or pay for a court booking. Use My Courts to update listings, or create a tournament at one of your venues.
-                        </p>
-                        <div className="mt-6 flex flex-wrap gap-3">
-                            <Link
-                                to="/org/courts"
-                                className="inline-flex items-center justify-center rounded-xl bg-indigo-950 px-5 py-3 text-sm font-bold text-amber-50 transition-colors hover:bg-indigo-900"
-                            >
-                                Manage My Courts
-                            </Link>
-                            {isCourtOwner && (
-                                <Link
-                                    to="/app/tournaments/create"
-                                    className="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-white px-5 py-3 text-sm font-bold text-indigo-950 transition-colors hover:bg-amber-50"
-                                >
-                                    Create Tournament
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </section>
+            {usesNormalBookingFlow ? (
+                <NormalPlayerBookingFlow court={court} courtId={id} />
             ) : (
             <section className="rounded-[1.75rem] border-2 border-amber-200/80 bg-white shadow-lg overflow-hidden mb-8">
                 <div className="px-5 sm:px-8 py-5 border-b border-amber-50 bg-amber-50/40">

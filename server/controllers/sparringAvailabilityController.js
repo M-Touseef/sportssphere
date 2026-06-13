@@ -5,6 +5,7 @@ const Booking = require('../models/Booking');
 const Court = require('../models/Court');
 const CoachProfile = require('../models/CoachProfile');
 const ProfessionalProfile = require('../models/ProfessionalProfile');
+const Match = require('../models/Match');
 const { createNotification } = require('./notificationController');
 const { RESPONSE_DEADLINE_MS } = require('../constants/responseDeadlines');
 const { normalizeToHour } = require('../utils/timeUtils');
@@ -15,6 +16,15 @@ const {
 } = require('../services/emailNotificationService');
 
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+const formatLocalDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getDateKey = (value) => formatLocalDate(new Date(value));
 
 const resolveUserId = (userRef) => {
     if (!userRef) return null;
@@ -301,11 +311,136 @@ exports.toggleAvailability = async (req, res) => {
 // @access  Public
 exports.getAvailableProsForSlot = async (req, res) => {
     try {
-        const { date, startTime, city, area } = req.query;
+        const { date, startTime, city, area, courtId } = req.query;
         const areaFilter = area || city;
 
-        if (!date || !startTime) {
-            return res.status(400).json({ error: 'Please provide date and startTime' });
+        if (!startTime) {
+            return res.status(400).json({ error: 'Please provide startTime' });
+        }
+
+        if (!date) {
+            if (!courtId) {
+                return res.status(400).json({ error: 'Please provide courtId for slot-first availability' });
+            }
+
+            const court = await Court.findById(courtId).select('name location');
+            if (!court) {
+                return res.status(404).json({ error: 'Court not found' });
+            }
+
+            const profiles = await ProfessionalProfile.find({
+                isActive: true,
+                availability: {
+                    $elemMatch: {
+                        startTime,
+                        isActive: true
+                    }
+                }
+            }).populate('user', 'name email city area skillLevel rank profilePicture');
+
+            const matchingProfiles = profiles.filter((profile) => {
+                if (!profile.user) return false;
+                if (areaFilter && profile.user.area?.toLowerCase() !== normalizeArea(areaFilter).toLowerCase()) {
+                    return false;
+                }
+                return profile.availability.some((slot) =>
+                    slot.isActive &&
+                    slot.startTime === startTime &&
+                    (!slot.court || String(slot.court) === String(courtId))
+                );
+            });
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const rangeEnd = new Date(today);
+            rangeEnd.setDate(rangeEnd.getDate() + 35);
+            rangeEnd.setHours(23, 59, 59, 999);
+            const proIds = matchingProfiles.map((profile) => profile.user._id);
+
+            const [bookings, matches, reservedSparringSlots] = await Promise.all([
+                Booking.find({
+                    date: { $gte: today, $lte: rangeEnd },
+                    startTime,
+                    status: { $nin: ['cancelled'] },
+                    $or: [
+                        { court: courtId },
+                        { proPlayer: { $in: proIds } }
+                    ]
+                }).select('court proPlayer date'),
+                Match.find({
+                    court: court.name,
+                    scheduledTime: { $gte: today, $lte: rangeEnd },
+                    status: { $nin: ['cancelled'] }
+                }).select('scheduledTime'),
+                SparringAvailability.find({
+                    court: courtId,
+                    date: { $gte: today, $lte: rangeEnd },
+                    startTime,
+                    status: { $in: ['PENDING', 'BOOKED'] }
+                }).select('date')
+            ]);
+
+            const courtBusyDates = new Set();
+            const proBusyDates = new Map();
+
+            bookings.forEach((booking) => {
+                const dateKey = getDateKey(booking.date);
+                if (String(booking.court) === String(courtId)) courtBusyDates.add(dateKey);
+                if (booking.proPlayer) {
+                    const proId = String(booking.proPlayer);
+                    if (!proBusyDates.has(proId)) proBusyDates.set(proId, new Set());
+                    proBusyDates.get(proId).add(dateKey);
+                }
+            });
+
+            matches.forEach((match) => {
+                const matchTime = new Date(match.scheduledTime);
+                const matchStart = `${String(matchTime.getHours()).padStart(2, '0')}:00`;
+                if (matchStart === startTime) courtBusyDates.add(getDateKey(matchTime));
+            });
+
+            reservedSparringSlots.forEach((slot) => courtBusyDates.add(getDateKey(slot.date)));
+
+            const now = new Date();
+            const availablePros = matchingProfiles.flatMap((profile) => {
+                const recurringSlots = profile.availability.filter((slot) =>
+                    slot.isActive &&
+                    slot.startTime === startTime &&
+                    (!slot.court || String(slot.court) === String(courtId))
+                );
+
+                for (let offset = 0; offset <= 35; offset += 1) {
+                    const candidate = new Date(today);
+                    candidate.setDate(candidate.getDate() + offset);
+                    const dateKey = formatLocalDate(candidate);
+                    const slot = recurringSlots.find((item) => item.day === WEEKDAYS[candidate.getDay()]);
+                    if (!slot) continue;
+
+                    const [hour, minute] = startTime.split(':').map(Number);
+                    const candidateStart = new Date(candidate);
+                    candidateStart.setHours(hour, minute || 0, 0, 0);
+                    if (candidateStart <= now) continue;
+                    if (courtBusyDates.has(dateKey)) continue;
+                    if (proBusyDates.get(String(profile.user._id))?.has(dateKey)) continue;
+
+                    return [{
+                        player: profile.user,
+                        profileId: profile._id,
+                        slot,
+                        date: dateKey,
+                        matchFee: profile.matchFee,
+                        isRecurring: true
+                    }];
+                }
+
+                return [];
+            });
+
+            return res.status(200).json({
+                success: true,
+                count: availablePros.length,
+                data: availablePros
+            });
         }
 
         const queryDate = new Date(date);

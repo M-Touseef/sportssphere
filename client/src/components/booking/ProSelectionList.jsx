@@ -1,135 +1,225 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import sparringService from '../../services/sparringService';
-import { StarIcon, MapPinIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import {
+    CalendarDaysIcon,
+    CheckCircleIcon,
+    MapPinIcon,
+    SparklesIcon,
+    StarIcon
+} from '@heroicons/react/24/outline';
 import Button from '../ui/Button';
 import UserAvatar from '../ui/UserAvatar';
 
-export default function ProSelectionList({ date, startTime, area, city, onSelect, onCancel, preSelectedPro }) {
+const formatAvailableDate = (date) => {
+    if (!date) return '';
+    return new Date(`${date}T12:00:00`).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+    });
+};
+
+export default function ProSelectionList({
+    date = '',
+    startTime,
+    area,
+    city,
+    courtId = '',
+    onSelect,
+    onCancel,
+    preSelectedPro,
+    selecting = false,
+    compact = false,
+    actionLabel = 'Send request'
+}) {
     const [pros, setPros] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState(false);
     const [selectedProId, setSelectedProId] = useState(null);
+    const requestSequence = useRef(0);
 
     useEffect(() => {
-        if (preSelectedPro && pros.length > 0) {
-            const found = pros.find(p => p.player._id === preSelectedPro._id);
-            if (found) {
-                setSelectedProId(found.player._id);
-            }
+        if (!startTime) {
+            requestSequence.current += 1;
+            return;
         }
-    }, [preSelectedPro, pros]);
 
-    useEffect(() => {
-        fetchPros();
-    }, [date, startTime, area, city]);
-
-    const fetchPros = async () => {
-        try {
+        const requestId = ++requestSequence.current;
+        Promise.resolve().then(() => {
+            if (requestId !== requestSequence.current) return null;
             setLoading(true);
-            const data = await sparringService.getAvailableProsForSlot(date, startTime, '', area || city);
-            setPros(data.data);
-        } catch (error) {
-            console.error('Error fetching available pros:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+            setLoadError(false);
+            setSelectedProId(null);
+            return sparringService.getAvailableProsForSlot({
+                date,
+                startTime,
+                area: area || city,
+                courtId
+            });
+        }).then((data) => {
+            if (!data) return;
+            if (requestId !== requestSequence.current) return;
+            const nextPros = Array.isArray(data?.data) ? data.data : [];
+            setPros(nextPros);
+
+            if (preSelectedPro) {
+                const found = nextPros.find((item) => item.player._id === preSelectedPro._id);
+                if (found) setSelectedProId(found.player._id);
+            }
+        }).catch((error) => {
+            if (requestId !== requestSequence.current) return;
+            console.error('Error fetching available professionals:', error);
+            setLoadError(true);
+            setPros([]);
+        }).finally(() => {
+            if (requestId === requestSequence.current) setLoading(false);
+        });
+
+        return () => {
+            requestSequence.current += 1;
+        };
+    }, [area, city, courtId, date, preSelectedPro, startTime]);
+
+    if (!startTime) {
+        return (
+            <div className="flex min-h-72 flex-col items-center justify-center rounded-3xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-950 text-amber-200">
+                    <SparklesIcon className="h-7 w-7" />
+                </div>
+                <h3 className="mt-4 text-lg font-black text-indigo-950">Choose a time slot</h3>
+                <p className="mt-2 max-w-sm text-sm font-medium leading-relaxed text-slate-500">
+                    Available professionals and their next matching dates will appear here instantly.
+                </p>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <div className="h-10 w-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Scanning Grid for Professionals...</p>
+            <div className="flex min-h-72 flex-col items-center justify-center rounded-3xl border border-indigo-100 bg-white">
+                <div className="h-11 w-11 animate-spin rounded-full border-4 border-indigo-100 border-t-indigo-700" />
+                <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-indigo-800">
+                    Finding available professionals
+                </p>
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="min-h-72 rounded-3xl border border-rose-200 bg-rose-50 px-6 py-12 text-center">
+                <h3 className="text-lg font-black text-rose-900">Availability could not be loaded</h3>
+                <p className="mt-2 text-sm font-medium text-rose-700">Select the slot again or try another time.</p>
             </div>
         );
     }
 
     if (pros.length === 0) {
         return (
-            <div className="text-center py-12 px-6 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                <p className="text-base font-bold text-slate-500 mb-6">No professional players available for this specific sector and interval.</p>
-                <div className="flex justify-center gap-4">
-                    <Button size="sm" onClick={() => onSelect(null)}>Book Court Only</Button>
-                    <Button variant="outline" size="sm" onClick={onCancel}>Select Different Slot</Button>
-                </div>
+            <div className="flex min-h-72 flex-col items-center justify-center rounded-3xl border border-dashed border-amber-200 bg-amber-50/60 px-6 text-center">
+                <CalendarDaysIcon className="h-10 w-10 text-amber-700" />
+                <h3 className="mt-4 text-lg font-black text-slate-900">No professionals for this time</h3>
+                <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
+                    Try another slot. The list refreshes automatically whenever the time changes.
+                </p>
             </div>
         );
     }
 
+    const selected = pros.find((item) => item.player._id === selectedProId);
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Available Professionals</h3>
-                <span className="text-xs sm:text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-widest">{pros.length} Identified</span>
+        <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-700">Live availability</p>
+                    <h3 className="mt-1 text-xl font-black text-slate-950">Choose your professional</h3>
+                </div>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-800">
+                    {pros.length} available
+                </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-                {pros.map((item) => (
-                    <div
-                        key={item.player._id}
-                        onClick={() => setSelectedProId(item.player._id)}
-                        className={`group relative p-5 rounded-2xl border transition-all cursor-pointer ${selectedProId === item.player._id
-                            ? 'bg-indigo-600 border-indigo-600 shadow-xl shadow-indigo-100'
-                            : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-lg'
+            <div className={compact ? 'grid max-h-[30rem] gap-3 overflow-y-auto pr-1' : 'grid gap-4'}>
+                {pros.map((item) => {
+                    const isSelected = selectedProId === item.player._id;
+                    return (
+                        <button
+                            key={item.player._id}
+                            type="button"
+                            onClick={() => setSelectedProId(item.player._id)}
+                            className={`w-full rounded-2xl border p-4 text-left transition-all duration-200 ${
+                                isSelected
+                                    ? 'border-indigo-950 bg-indigo-950 text-white shadow-xl shadow-indigo-950/20'
+                                    : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-lg'
                             }`}
-                    >
-                        <div className="flex items-center gap-5">
-                            <UserAvatar
-                                user={item.player}
-                                className={`h-14 w-14 rounded-xl shadow-sm ${selectedProId === item.player._id ? 'bg-white/20 text-white ring-1 ring-white/30' : 'bg-slate-50 text-slate-400 ring-1 ring-slate-100'
+                        >
+                            <div className="flex items-start gap-4">
+                                <UserAvatar
+                                    user={item.player}
+                                    className={`h-14 w-14 shrink-0 rounded-2xl ring-1 ${
+                                        isSelected ? 'bg-white/10 text-white ring-white/20' : 'bg-slate-50 text-slate-500 ring-slate-200'
                                     }`}
-                                fallbackClassName={selectedProId === item.player._id ? 'text-white' : 'text-slate-500'}
-                            />
-                            <div className="flex-1 min-w-0">
-                                <h4 className={`text-base font-black tracking-tight leading-tight mb-0.5 break-words line-clamp-2 ${selectedProId === item.player._id ? 'text-white' : 'text-slate-900'}`}>
-                                    {item.player.name}
-                                </h4>
-                                <div className="flex items-center gap-3 mt-1">
-                                    <div className="flex items-center gap-1">
-                                        <StarIcon className={`h-3 w-3 fill-current ${selectedProId === item.player._id ? 'text-white' : 'text-amber-400'}`} />
-                                        <span className={`text-sm font-bold uppercase tracking-widest ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`}>
-                                            {item.player.skillLevel || 'Pro'}
-                                        </span>
+                                    fallbackClassName={isSelected ? 'text-white' : 'text-slate-500'}
+                                />
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h4 className={`font-black leading-tight ${isSelected ? 'text-white' : 'text-slate-950'}`}>
+                                                {item.player.name}
+                                            </h4>
+                                            <div className="mt-1 flex items-center gap-1.5">
+                                                <StarIcon className="h-4 w-4 fill-amber-400 text-amber-400" />
+                                                <span className={`text-xs font-bold capitalize ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                                    {item.player.rank || item.player.skillLevel || 'Professional'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {isSelected && <CheckCircleIcon className="h-6 w-6 shrink-0 text-amber-300" />}
                                     </div>
-                                    <span className={`h-1 w-1 rounded-full ${selectedProId === item.player._id ? 'bg-indigo-300' : 'bg-slate-200'}`} />
-                                    <div className="flex items-center gap-1">
-                                        <MapPinIcon className={`h-3 w-3 ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`} />
-                                        <span className={`text-sm font-bold uppercase tracking-widest ${selectedProId === item.player._id ? 'text-indigo-100' : 'text-slate-400'}`}>
+
+                                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                        <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${isSelected ? 'text-indigo-100' : 'text-slate-600'}`}>
+                                            <CalendarDaysIcon className="h-4 w-4" />
+                                            {formatAvailableDate(item.date || date)}
+                                        </span>
+                                        <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${isSelected ? 'text-indigo-100' : 'text-slate-600'}`}>
+                                            <MapPinIcon className="h-4 w-4" />
                                             {item.player.area || item.player.city || 'Lahore'}
                                         </span>
                                     </div>
+
+                                    <p className={`mt-3 text-sm font-black ${isSelected ? 'text-amber-200' : 'text-indigo-950'}`}>
+                                        Rs.{Number(item.matchFee || 0).toLocaleString()} professional fee
+                                    </p>
                                 </div>
                             </div>
-                            {selectedProId === item.player._id && (
-                                <CheckCircleIcon className="h-6 w-6 text-white" />
-                            )}
-                        </div>
-                    </div>
-                ))}
+                        </button>
+                    );
+                })}
             </div>
 
-            <div className="flex flex-col gap-2 pt-4 border-t border-slate-50">
-                <div className="grid grid-cols-2 gap-2">
-                    <Button
-                        variant="ghost"
-                        className="h-14 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 border border-slate-200"
-                        onClick={() => onSelect(null)}
-                    >
-                        Book Court Only
-                    </Button>
-                    <Button
-                        size="lg"
-                        disabled={!selectedProId}
-                        className="h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100"
-                        onClick={() => {
-                            const selected = pros.find(p => p.player._id === selectedProId);
-                            onSelect(selected);
-                        }}
-                    >
-                        Request Session
-                    </Button>
-                </div>
-                <Button variant="outline" className="h-11 text-xs sm:text-sm font-bold border-slate-200" onClick={onCancel}>Cancel</Button>
-            </div>
+            <Button
+                type="button"
+                onClick={() => selected && onSelect(selected)}
+                disabled={!selected || selecting}
+                isLoading={selecting}
+                fullWidth
+                className="h-14 rounded-2xl bg-emerald-600 text-base font-black text-white shadow-lg shadow-emerald-900/15 hover:bg-emerald-700"
+            >
+                {actionLabel}
+            </Button>
+            {onCancel && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    fullWidth
+                    className="h-11 rounded-xl border-slate-200 font-bold text-slate-700"
+                >
+                    Back
+                </Button>
+            )}
         </div>
     );
 }

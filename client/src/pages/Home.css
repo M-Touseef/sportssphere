@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+.sports-home {
+  min-width: 320px;
+  overflow-x: hidden;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: Inter, sans-serif;
+}
+
+.sports-home *,
+.sports-home *::before,
+.sports-home *::after {
+  box-sizing: border-box;
+}
+
+.sports-home button,
+.sports-home a,
+.sports-home input {
+  font: inherit;
+}
+
+.sports-home button,
+.sports-home a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sports-home .font-display {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.sports-home .glass {
+  border: 1px solid rgb(255 255 255 / 22%);
+  background: rgb(255 255 255 / 12%);
+  backdrop-filter: blur(14px);
+}
+
+.sports-home .glass-dark {
+  border: 1px solid rgb(255 255 255 / 8%);
+  background: rgb(0 0 0 / 18%);
+  backdrop-filter: blur(12px);
+}
+
+.sports-home .site-nav {
+  border: 1px solid rgb(255 255 255 / 72%);
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 18px 55px rgb(3 18 43 / 22%);
+  backdrop-filter: blur(20px);
+}
+
+.sports-home .hero-overlay {
+  background:
+    linear-gradient(90deg, rgb(3 18 43 / 96%) 0%, rgb(3 18 43 / 80%) 42%, rgb(3 18 43 / 28%) 72%, rgb(3 18 43 / 48%) 100%),
+    linear-gradient(0deg, rgb(3 18 43 / 74%) 0%, transparent 42%);
+}
+
+.sports-home .hero-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 3.5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 3.5%) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to right, black, transparent 72%);
+}
+
+.sports-home .hero-card {
+  border: 1px solid rgb(255 255 255 / 22%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 18%), rgb(255 255 255 / 8%));
+  box-shadow: 0 24px 70px rgb(1 10 28 / 36%);
+  backdrop-filter: blur(20px);
+}
+
+.sports-home .feature-card {
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.sports-home .feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 10%);
+}
+
+@keyframes homepage-ping-slow {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(1.5);
+  }
+}
+
+.sports-home .ping-slow {
+  animation: homepage-ping-slow 2s ease-in-out infinite;
+}
+
+@media (max-width: 767px) {
+  .sports-home .hero-photo {
+    object-position: 64% center;
+    opacity: 0.58;
+  }
+
+  .sports-home .hero-overlay {
+    background: linear-gradient(0deg, rgb(3 18 43 / 98%) 0%, rgb(3 18 43 / 80%) 64%, rgb(3 18 43 / 56%) 100%);
+  }
+}

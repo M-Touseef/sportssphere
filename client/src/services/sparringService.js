@@ -39,8 +39,13 @@ const sparringService = {
         return response.data;
     },
 
-    getAvailableProsForSlot: async (date, startTime, endTime, area) => {
-        const params = new URLSearchParams({ date, startTime, endTime, area }).toString();
+    getAvailableProsForSlot: async ({ date = '', startTime, endTime = '', area = '', courtId = '' }) => {
+        const params = new URLSearchParams();
+        if (date) params.set('date', date);
+        if (startTime) params.set('startTime', startTime);
+        if (endTime) params.set('endTime', endTime);
+        if (area) params.set('area', area);
+        if (courtId) params.set('courtId', courtId);
         const response = await axiosInstance.get(`${API_BASE_URL}/sparring/available-pros?${params}`);
         return response.data;
     },

@@ -1,11 +1,12 @@
 const User = require('../models/User');
 const EmailVerification = require('../models/EmailVerification');
+const PasswordResetCode = require('../models/PasswordResetCode');
 const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { uploadToCloudinary } = require('../utils/cloudinary');
-const { sendVerificationCodeEmail } = require('../utils/mailer');
+const { sendVerificationCodeEmail, sendAppEmail } = require('../utils/mailer');
 const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
 // Generate JWT Token (include verified so middleware and routes stay aligned with DB)
@@ -90,6 +91,27 @@ const hashVerificationCode = (email, code) => {
 const generateVerificationCode = () => {
     return String(crypto.randomInt(100000, 1000000));
 };
+
+const passwordResetResponse = {
+    success: true,
+    message: 'If an account exists for this email, a reset code has been sent.',
+    expiresInMinutes: 10
+};
+
+const sendPasswordResetCodeEmail = ({ to, code }) => sendAppEmail({
+    to,
+    subject: 'SportsSphere password reset code',
+    text: `Your SportsSphere password reset code is ${code}. This code expires in 10 minutes. If you did not request this, you can ignore this email.`,
+    html: `
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+            <h2 style="margin: 0 0 12px;">Reset your SportsSphere password</h2>
+            <p>Use this code to set a new password:</p>
+            <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; margin: 20px 0;">${code}</p>
+            <p>This code expires in 10 minutes.</p>
+            <p style="color: #6b7280; font-size: 13px;">If you did not request this, you can ignore this email.</p>
+        </div>
+    `
+});
 
 const verifyRegistrationCode = async (email, code) => {
     const normalizedEmail = normalizeEmail(email);
@@ -214,6 +236,108 @@ exports.requestRegistrationCode = async (req, res, next) => {
                 error: 'Email service is unreachable. Please try again shortly or contact support.'
             });
         }
+        next(error);
+    }
+};
+
+// @desc    Send a password reset code
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res, next) => {
+    try {
+        const normalizedEmail = normalizeEmail(req.body.email);
+        const user = await User.findOne({ email: normalizedEmail }).select('_id');
+
+        // Always return the same response so this endpoint cannot enumerate accounts.
+        if (!user) {
+            return res.status(200).json(passwordResetResponse);
+        }
+
+        const existingReset = await PasswordResetCode.findOne({ email: normalizedEmail });
+        if (existingReset && Date.now() - existingReset.lastSentAt.getTime() < 60000) {
+            return res.status(200).json(passwordResetResponse);
+        }
+
+        const code = generateVerificationCode();
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
+
+        await PasswordResetCode.findOneAndUpdate(
+            { email: normalizedEmail },
+            {
+                email: normalizedEmail,
+                codeHash: hashVerificationCode(normalizedEmail, code),
+                expiresAt,
+                lastSentAt: now,
+                attempts: 0
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        try {
+            await sendPasswordResetCodeEmail({ to: normalizedEmail, code });
+        } catch (mailError) {
+            await PasswordResetCode.deleteOne({ email: normalizedEmail });
+            throw mailError;
+        }
+
+        return res.status(200).json(passwordResetResponse);
+    } catch (error) {
+        if (error.message === 'Mail service is not configured') {
+            return res.status(500).json({ error: 'Password reset email is not configured on the server.' });
+        }
+        if (['ETIMEDOUT', 'ESOCKET', 'ECONNECTION'].includes(error.code) || error.message === 'Connection timeout') {
+            return res.status(503).json({ error: 'Email service is unreachable. Please try again shortly.' });
+        }
+        next(error);
+    }
+};
+
+// @desc    Verify a reset code and set a new password
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res, next) => {
+    try {
+        const normalizedEmail = normalizeEmail(req.body.email);
+        const reset = await PasswordResetCode.findOne({ email: normalizedEmail });
+
+        if (!reset) {
+            return res.status(400).json({ error: 'Invalid or expired reset code.' });
+        }
+
+        if (reset.expiresAt <= new Date()) {
+            await PasswordResetCode.deleteOne({ _id: reset._id });
+            return res.status(400).json({ error: 'Reset code expired. Please request a new code.' });
+        }
+
+        if (reset.attempts >= 5) {
+            await PasswordResetCode.deleteOne({ _id: reset._id });
+            return res.status(429).json({ error: 'Too many incorrect attempts. Please request a new code.' });
+        }
+
+        const submittedHash = hashVerificationCode(normalizedEmail, req.body.code);
+        if (submittedHash !== reset.codeHash) {
+            reset.attempts += 1;
+            await reset.save();
+            return res.status(400).json({ error: 'Invalid or expired reset code.' });
+        }
+
+        const user = await User.findOne({ email: normalizedEmail });
+        if (!user) {
+            await PasswordResetCode.deleteOne({ _id: reset._id });
+            return res.status(400).json({ error: 'Invalid or expired reset code.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        await User.updateOne({ _id: user._id }, { $set: { password: hashedPassword } });
+        await PasswordResetCode.deleteOne({ _id: reset._id });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Password reset successfully. You can now sign in.'
+        });
+    } catch (error) {
         next(error);
     }
 };

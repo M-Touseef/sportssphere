@@ -25,7 +25,14 @@ exports.createBooking = async (req, res, next) => {
             });
         }
 
-        const { courtId, date, startTime: rawStart, endTime: rawEnd, proPlayerId, slotId } = req.body;
+        const {
+            courtId,
+            date,
+            startTime: rawStart,
+            endTime: rawEnd,
+            proPlayerId,
+            slotId
+        } = req.body;
         const startTime = normalizeToHour(rawStart);
         const endTime = normalizeToHour(rawEnd);
         console.log('Booking request received:', { courtId, date, startTime, endTime, proPlayerId, slotId });
@@ -67,10 +74,11 @@ exports.createBooking = async (req, res, next) => {
                 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
                 const dayOfWeek = days[bookingDate.getDay()];
 
-                const hasRecurringSlot = proProfile.availability.some(slot =>
-                    slot.day === dayOfWeek &&
-                    slot.startTime === startTime
-                );
+                const hasRecurringSlot = proProfile.availability.some((slot) => {
+                    if (slot.day !== dayOfWeek || slot.startTime !== startTime) return false;
+                    if (isCoach) return String(slot.court) === String(courtId);
+                    return slot.isActive && (!slot.court || String(slot.court) === String(courtId));
+                });
 
                 if (!hasRecurringSlot) {
                     return res.status(400).json({ error: 'Selected professional is not available for this recurring slot' });
@@ -213,7 +221,9 @@ exports.createBooking = async (req, res, next) => {
         res.status(201).json({
             success: true,
             data: booking,
-            message: proPlayerId ? 'Request sent to professional player' : 'Booking created. Please complete payment to confirm.'
+            message: proPlayerId
+                ? 'Request sent to professional player'
+                : 'Booking created. Please complete payment to confirm.'
         });
     } catch (error) {
         console.error('Create Booking Error:', error);

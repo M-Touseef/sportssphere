@@ -12,6 +12,8 @@ export const API_ENDPOINTS = {
     // Auth
     LOGIN: `${API_BASE_URL}/auth/login`,
     REQUEST_REGISTRATION_CODE: `${API_BASE_URL}/auth/request-registration-code`,
+    FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     REGISTER: `${API_BASE_URL}/auth/register`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
 

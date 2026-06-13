@@ -38,6 +38,18 @@ exports.loginValidation = [
     validate
 ];
 
+exports.forgotPasswordValidation = [
+    check('email', 'Please include a valid email').isEmail(),
+    validate
+];
+
+exports.resetPasswordValidation = [
+    check('email', 'Please include a valid email').isEmail(),
+    check('code', 'Reset code must contain 6 digits').isLength({ min: 6, max: 6 }).isNumeric(),
+    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
+    validate
+];
+
 // Profile update validation rules
 exports.updateProfileValidation = [
     check('name', 'Name is required').optional().not().isEmpty(),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     CalendarIcon,
     ClockIcon,
@@ -10,9 +10,9 @@ import { acceptRequest, rejectRequest } from '../../services/professionalService
 import sessionService from '../../services/sessionService';
 import UserAvatar from '../ui/UserAvatar';
 
-const formatDeadline = (deadline) => {
+const formatDeadline = (deadline, now) => {
     if (!deadline) return null;
-    const ms = new Date(deadline) - new Date();
+    const ms = new Date(deadline) - now;
     if (ms <= 0) return 'Expired';
     const mins = Math.floor(ms / 60000);
     const secs = Math.floor((ms % 60000) / 1000);
@@ -21,6 +21,14 @@ const formatDeadline = (deadline) => {
 
 const RequestCard = ({ request, onStatusChange }) => {
     const [processing, setProcessing] = useState(false);
+    const [now, setNow] = useState(() => new Date());
+
+    useEffect(() => {
+        if (request.status !== 'PENDING_RESPONSE' || !request.responseDeadline) return undefined;
+
+        const timer = window.setInterval(() => setNow(new Date()), 1000);
+        return () => window.clearInterval(timer);
+    }, [request.responseDeadline, request.status]);
 
     const handleAction = async (action) => {
         if (!window.confirm(`Are you sure you want to ${action} this request?`)) return;
@@ -36,12 +44,7 @@ const RequestCard = ({ request, onStatusChange }) => {
                 response = await apiCall(request._id);
             }
 
-            // sessionService returns "data" property usually, or just response object?
-            // sessionService methods return "response.data".
-            // professionalService methods (acceptRequest) also return response.data? Let's assume consistent wrapper
-            // or check if response.success is present.
-
-            if (response.success || response._id) { // Session returns object sometimes
+            if (response.success || response._id) {
                 onStatusChange(request._id, action === 'accept' ? 'ACCEPTED' : 'REJECTED');
             }
         } catch (error) {
@@ -53,6 +56,9 @@ const RequestCard = ({ request, onStatusChange }) => {
     };
 
     const isPending = request.status === 'PENDING_RESPONSE';
+    const requestDate = request.availabilitySlot?.date || request.booking?.date;
+    const requestStartTime = request.availabilitySlot?.startTime || request.booking?.startTime;
+    const requestEndTime = request.availabilitySlot?.endTime || request.booking?.endTime;
 
     return (
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow">
@@ -70,11 +76,13 @@ const RequestCard = ({ request, onStatusChange }) => {
                         <div className="mt-4 space-y-2">
                             <div className="flex items-center text-sm text-slate-600">
                                 <CalendarIcon className="h-4 w-4 mr-2 text-slate-400" />
-                                {new Date(request.availabilitySlot?.date).toLocaleDateString()}
+                                {requestDate ? new Date(requestDate).toLocaleDateString() : 'Date unavailable'}
                             </div>
                             <div className="flex items-center text-sm text-slate-600">
                                 <ClockIcon className="h-4 w-4 mr-2 text-slate-400" />
-                                {request.availabilitySlot?.startTime} - {request.availabilitySlot?.endTime}
+                                {requestStartTime && requestEndTime
+                                    ? `${requestStartTime} - ${requestEndTime}`
+                                    : 'Time unavailable'}
                             </div>
                             <div className="flex items-center text-sm text-slate-600">
                                 <MapPinIcon className="h-4 w-4 mr-2 text-slate-400" />
@@ -89,7 +97,7 @@ const RequestCard = ({ request, onStatusChange }) => {
 
                         {isPending && request.responseDeadline && (
                             <p className="mt-3 text-xs font-bold text-amber-600">
-                                {formatDeadline(request.responseDeadline)} — auto-declines if not confirmed
+                                {formatDeadline(request.responseDeadline, now)} - auto-declines if not confirmed
                             </p>
                         )}
 
