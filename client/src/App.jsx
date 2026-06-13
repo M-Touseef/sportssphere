@@ -262,7 +262,7 @@ const AnimatedRoutes = () => {
 
 const PublicLayout = () => {
   const location = useLocation();
-  const hasStandaloneHeader = ['/', '/login', '/register'].includes(location.pathname);
+  const hasStandaloneHeader = ['/', '/login', '/register', '/forgot-password', '/reset-password'].includes(location.pathname);
 
   return (
     <div className="min-h-screen bg-white selection:bg-indigo-100 selection:text-indigo-700">
