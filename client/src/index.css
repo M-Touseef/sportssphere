@@ -2,6 +2,11 @@
 
 @theme {
   /* Design Tokens */
+  --color-brand-navy: #082b58;
+  --color-brand-navy-deep: #03142f;
+  --color-brand-sky: #38bdf8;
+  --color-brand-lime: #a3e635;
+
   --color-background: hsl(210 40% 99.5%);
   --color-foreground: hsl(222.2 84% 4.9%);
 

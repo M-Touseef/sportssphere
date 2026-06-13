@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Facebook, Instagram, Youtube } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import './Home.css'
 
@@ -363,7 +364,9 @@ function Footer() {
             <Brand footer />
             <p className="mt-6 max-w-md text-sm leading-relaxed text-white/55">One connected home for badminton players. Find courts, train with verified coaches, meet partners, and compete at your level.</p>
             <div className="mt-7 flex items-center gap-3">
-              <SocialIcon label="Instagram">IG</SocialIcon><SocialIcon label="Facebook">f</SocialIcon><SocialIcon label="YouTube">YT</SocialIcon>
+              <SocialIcon label="Instagram"><Instagram size={18} strokeWidth={1.8} /></SocialIcon>
+              <SocialIcon label="Facebook"><Facebook size={18} strokeWidth={1.8} /></SocialIcon>
+              <SocialIcon label="YouTube"><Youtube size={19} strokeWidth={1.8} /></SocialIcon>
             </div>
           </div>
           <FooterLinks title="Platform" links={[['Book courts', '/courts'], ['Find coaches', '/coaches'], ['Tournaments', '/tournaments'], ['Matchmaking', '/app/sparring']]} />

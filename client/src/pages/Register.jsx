@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import {
+    ArrowRightIcon,
+    CheckBadgeIcon,
+    EnvelopeIcon,
+} from '@heroicons/react/24/outline';
+import { motion as Motion } from 'framer-motion';
+import AuthShell from '../components/auth/AuthShell';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import authService from '../services/authService';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import {
-    TrophyIcon,
-    CheckCircleIcon,
-    EnvelopeIcon
-} from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+
+const fieldClassName = 'h-12 border-sky-100 bg-slate-50/80 text-brand-navy placeholder:text-slate-400 focus-visible:border-brand-sky focus-visible:ring-sky-300 disabled:bg-slate-100 disabled:text-slate-500';
 
 const Register = () => {
     const { register: authRegister } = useAuth();
@@ -31,8 +34,8 @@ const Register = () => {
             email: '',
             password: '',
             confirmPassword: '',
-            emailVerificationCode: ''
-        }
+            emailVerificationCode: '',
+        },
     });
 
     const onSubmit = async (data) => {
@@ -41,7 +44,7 @@ const Register = () => {
             if (!verificationSent) {
                 await authService.requestRegistrationCode({
                     name: data.name,
-                    email: data.email
+                    email: data.email,
                 });
 
                 setVerificationSent(true);
@@ -53,16 +56,12 @@ const Register = () => {
                 name: data.name,
                 email: data.email,
                 password: data.password,
-                emailVerificationCode: data.emailVerificationCode
+                emailVerificationCode: data.emailVerificationCode,
             };
 
             await authRegister(formData);
-
             success('Email verified and account created! Please select your role to continue.');
-            // After registration, the user is logged in (per authContext implementation)
-            // Redirect to role selection
             navigate('/role-selection');
-
         } catch (err) {
             toastError(err.message || 'Registration failed. Please try again.');
         } finally {
@@ -75,7 +74,7 @@ const Register = () => {
         try {
             await authService.requestRegistrationCode({
                 name: watch('name'),
-                email: watch('email')
+                email: watch('email'),
             });
             success('A new verification code was sent.');
         } catch (err) {
@@ -86,231 +85,177 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen flex bg-slate-50">
-            {/* Left Panel - Branding */}
-            <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 relative overflow-hidden">
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl" />
-                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-400 rounded-full blur-3xl" />
+        <AuthShell
+            eyebrow="Join SportsSphere"
+            title="Build your profile."
+            accent="Step onto the court."
+            description="Create one free account, choose your role, and connect with the badminton services that match the way you play, coach, or organize."
+            cardBadge={verificationSent ? 'Verify your email' : 'Free account'}
+            cardTitle={verificationSent ? 'Check your inbox' : 'Create your account'}
+            cardDescription={verificationSent
+                ? `Enter the six-digit code sent to ${watch('email')}.`
+                : 'Start with your basic details. You will choose your role next.'}
+            footer={(
+                <div className="mt-6 text-center">
+                    <p className="text-sm font-medium text-slate-500">
+                        Already have an account?{' '}
+                        <Link to="/login" className="font-bold text-sky-700 transition hover:text-[#082b58]">
+                            Sign in
+                        </Link>
+                    </p>
+                    <p className="mt-4 text-xs leading-5 text-slate-400">
+                        By creating an account, you agree to our{' '}
+                        <Link to="/terms" className="font-semibold text-sky-700 hover:text-[#082b58]">
+                            Terms of Service
+                        </Link>
+                        {' '}and{' '}
+                        <Link to="/privacy" className="font-semibold text-sky-700 hover:text-[#082b58]">
+                            Privacy Policy
+                        </Link>
+                        .
+                    </p>
+                </div>
+            )}
+        >
+            <Motion.form
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-5"
+            >
+                <Input
+                    id="register-name"
+                    label="Full Name"
+                    autoComplete="name"
+                    placeholder="Enter your full name"
+                    error={errors.name}
+                    disabled={verificationSent}
+                    className={fieldClassName}
+                    {...register('name', { required: 'Name is required' })}
+                />
+
+                <Input
+                    id="register-email"
+                    label="Email Address"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    error={errors.email}
+                    disabled={verificationSent}
+                    className={fieldClassName}
+                    {...register('email', {
+                        required: 'Email is required',
+                        pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: 'Please enter a valid email',
+                        },
+                    })}
+                />
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Input
+                        id="register-password"
+                        label="Password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Minimum 6 characters"
+                        error={errors.password}
+                        disabled={verificationSent}
+                        className={fieldClassName}
+                        {...register('password', {
+                            required: 'Password is required',
+                            minLength: { value: 6, message: 'At least 6 characters' },
+                        })}
+                    />
+                    <Input
+                        id="register-confirm-password"
+                        label="Confirm Password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Re-enter password"
+                        error={errors.confirmPassword}
+                        disabled={verificationSent}
+                        className={fieldClassName}
+                        {...register('confirmPassword', {
+                            required: 'Please confirm password',
+                            validate: (value) => watch('password') === value || 'Passwords do not match',
+                        })}
+                    />
                 </div>
 
-                <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-                    {/* Logo */}
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-                            <TrophyIcon className="h-6 w-6 text-white" />
-                        </div>
-                        <span className="text-xl font-bold text-white">SportSphere</span>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="space-y-8">
-                        <div>
-                            <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-                                Join Pakistan's growing<br />badminton community
-                            </h1>
-                            <p className="text-indigo-200 text-lg max-w-md">
-                                Create your account and connect with players, coaches, and tournaments across the country.
+                {verificationSent && (
+                    <Motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4"
+                    >
+                        <div className="flex items-start gap-3 rounded-2xl border border-sky-100 bg-sky-50/80 p-4">
+                            <EnvelopeIcon className="mt-0.5 h-5 w-5 flex-none text-sky-600" />
+                            <p className="text-sm font-medium leading-6 text-slate-600">
+                                The code expires in 10 minutes. Check your spam folder if it does not arrive.
                             </p>
                         </div>
 
-                        {/* Benefits */}
-                        <div className="space-y-4">
-                            {[
-                                'Access to 500+ registered courts',
-                                'Connect with professional coaches',
-                                'Join local and national tournaments',
-                                'Find training partners in your city'
-                            ].map((benefit, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.3 + idx * 0.1 }}
-                                    className="flex items-center gap-3"
-                                >
-                                    <CheckCircleIcon className="h-5 w-5 text-emerald-400" />
-                                    <span className="text-white text-sm">{benefit}</span>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
+                        <Input
+                            id="registration-code"
+                            label="Verification Code"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            maxLength={6}
+                            placeholder="Enter 6-digit code"
+                            error={errors.emailVerificationCode}
+                            className={`${fieldClassName} text-center text-lg tracking-[0.35em]`}
+                            {...register('emailVerificationCode', {
+                                required: 'Verification code is required',
+                                pattern: {
+                                    value: /^\d{6}$/,
+                                    message: 'Enter the 6-digit code',
+                                },
+                            })}
+                        />
 
-                    {/* Footer */}
-                    <div className="text-indigo-300 text-sm">
-                        © 2025 SportSphere. All rights reserved.
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Panel - Registration Form */}
-            <div className="flex-1 flex items-center justify-center px-6 py-12 overflow-y-auto">
-                <div className="w-full max-w-xl">
-                    {/* Mobile Logo */}
-                    <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-                        <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                            <TrophyIcon className="h-6 w-6 text-white" />
-                        </div>
-                        <span className="text-xl font-bold text-slate-900">SportSphere</span>
-                    </div>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-6"
-                    >
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                            Create your account
-                        </h2>
-                        <p className="text-slate-500">
-                            {verificationSent ? 'Enter the code we sent to your email' : 'Enter your details to get started'}
-                        </p>
-                    </motion.div>
-
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="space-y-5"
-                        >
-                            <Input
-                                label="Full Name"
-                                placeholder="Enter your full name"
-                                error={errors.name}
-                                disabled={verificationSent}
-                                {...register('name', { required: 'Name is required' })}
-                            />
-
-                            <Input
-                                label="Email Address"
-                                type="email"
-                                placeholder="you@example.com"
-                                error={errors.email}
-                                disabled={verificationSent}
-                                {...register('email', {
-                                    required: 'Email is required',
-                                    pattern: {
-                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                        message: 'Please enter a valid email'
-                                    }
-                                })}
-                            />
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Input
-                                    label="Password"
-                                    type="password"
-                                    placeholder="Min 6 characters"
-                                    error={errors.password}
-                                    disabled={verificationSent}
-                                    {...register('password', {
-                                        required: 'Password is required',
-                                        minLength: { value: 6, message: 'At least 6 characters' }
-                                    })}
-                                />
-                                <Input
-                                    label="Confirm Password"
-                                    type="password"
-                                    placeholder="Re-enter password"
-                                    error={errors.confirmPassword}
-                                    disabled={verificationSent}
-                                    {...register('confirmPassword', {
-                                        required: 'Please confirm password',
-                                        validate: (val) => {
-                                            if (watch('password') !== val) {
-                                                return "Passwords do not match";
-                                            }
-                                        }
-                                    })}
-                                />
-                            </div>
-
-                            {verificationSent && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="space-y-3"
-                                >
-                                    <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-                                        <div className="flex items-start gap-3">
-                                            <EnvelopeIcon className="mt-0.5 h-5 w-5 flex-none text-indigo-600" />
-                                            <p>
-                                                We sent a 6-digit code to <span className="font-semibold">{watch('email')}</span>. It expires in 10 minutes.
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <Input
-                                        label="Verification Code"
-                                        inputMode="numeric"
-                                        maxLength={6}
-                                        placeholder="Enter 6-digit code"
-                                        error={errors.emailVerificationCode}
-                                        {...register('emailVerificationCode', {
-                                            required: 'Verification code is required',
-                                            pattern: {
-                                                value: /^\d{6}$/,
-                                                message: 'Enter the 6-digit code'
-                                            }
-                                        })}
-                                    />
-
-                                    <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                                        <button
-                                            type="button"
-                                            onClick={() => setVerificationSent(false)}
-                                            className="font-semibold text-slate-500 hover:text-slate-700"
-                                        >
-                                            Edit email
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={resendCode}
-                                            disabled={loading}
-                                            className="font-semibold text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
-                                        >
-                                            Resend code
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            <Button
-                                type="submit"
-                                fullWidth
-                                size="lg"
-                                isLoading={loading}
-                                className="h-12 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200"
+                        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                            <button
+                                type="button"
+                                onClick={() => setVerificationSent(false)}
+                                className="font-bold text-slate-500 transition hover:text-brand-navy"
                             >
-                                {verificationSent ? 'Verify & Create Account' : 'Continue'}
-                            </Button>
-                        </motion.div>
-                    </form>
-
-                    {/* Login Link */}
-                    <div className="mt-8 text-center">
-                        <p className="text-sm text-slate-500">
-                            Already have an account?{' '}
-                            <Link
-                                to="/login"
-                                className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                                Edit email
+                            </button>
+                            <button
+                                type="button"
+                                onClick={resendCode}
+                                disabled={loading}
+                                className="font-bold text-sky-700 transition hover:text-brand-navy disabled:opacity-50"
                             >
-                                Sign in
-                            </Link>
+                                Resend code
+                            </button>
+                        </div>
+                    </Motion.div>
+                )}
+
+                {!verificationSent && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-lime-100 bg-lime-50/70 p-4">
+                        <CheckBadgeIcon className="mt-0.5 h-5 w-5 flex-none text-lime-700" />
+                        <p className="text-xs font-medium leading-5 text-slate-600">
+                            We verify your email before creating the account. Role and profile setup come next.
                         </p>
                     </div>
+                )}
 
-                    {/* Terms */}
-                    <p className="mt-6 text-xs text-slate-400 text-center">
-                        By creating an account, you agree to our{' '}
-                        <Link to="/terms" className="text-indigo-600 hover:underline">Terms of Service</Link>
-                        {' '}and{' '}
-                        <Link to="/privacy" className="text-indigo-600 hover:underline">Privacy Policy</Link>
-                    </p>
-                </div>
-            </div>
-        </div>
+                <Button
+                    type="submit"
+                    fullWidth
+                    size="lg"
+                    isLoading={loading}
+                    className="h-12 rounded-2xl bg-brand-lime text-base font-black text-brand-navy shadow-xl shadow-lime-200/70 hover:bg-lime-300 focus-visible:ring-brand-lime"
+                >
+                    {verificationSent ? 'Verify and Create Account' : 'Continue'}
+                    <ArrowRightIcon className="h-5 w-5" />
+                </Button>
+            </Motion.form>
+        </AuthShell>
     );
 };
 
