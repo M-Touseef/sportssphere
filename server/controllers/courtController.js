@@ -368,7 +368,7 @@ exports.getOwnerOverview = async (req, res, next) => {
     }
 };
 
-// @desc    Get one owner court with booking logs and analytics
+// @desc    Get one owner court with summary stats and activity logs
 // @route   GET /api/courts/my/:id/details
 // @access  Private (Organizer/Admin)
 exports.getOwnerCourtDetails = async (req, res, next) => {
@@ -399,35 +399,6 @@ exports.getOwnerCourtDetails = async (req, res, next) => {
         const confirmedBookings = bookings.filter((booking) => booking.status === 'confirmed');
         const paidRegistrations = registrations.filter((registration) => registration.paymentStatus === 'paid');
 
-        const monthlyMap = new Map();
-        bookings.forEach((booking) => {
-            const date = new Date(booking.date);
-            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            const entry = monthlyMap.get(key) || { month: key, bookings: 0, revenue: 0 };
-            entry.bookings += 1;
-            if (booking.paymentStatus === 'paid') entry.revenue += booking.totalPrice || 0;
-            monthlyMap.set(key, entry);
-        });
-
-        const dailyMap = new Map();
-        bookings.forEach((booking) => {
-            const date = new Date(booking.date);
-            const key = date.toISOString().slice(0, 10);
-            const entry = dailyMap.get(key) || { date: key, bookings: 0 };
-            entry.bookings += 1;
-            dailyMap.set(key, entry);
-        });
-
-        const statusCounts = bookings.reduce((acc, booking) => {
-            acc[booking.status] = (acc[booking.status] || 0) + 1;
-            return acc;
-        }, {});
-
-        const paymentCounts = bookings.reduce((acc, booking) => {
-            acc[booking.paymentStatus] = (acc[booking.paymentStatus] || 0) + 1;
-            return acc;
-        }, {});
-
         res.status(200).json({
             success: true,
             data: {
@@ -442,12 +413,6 @@ exports.getOwnerCourtDetails = async (req, res, next) => {
                     tournaments: tournaments.length,
                     registrations: registrations.length,
                     registrationRevenue: paidRegistrations.reduce((sum, registration) => sum + (registration.paymentAmount || 0), 0)
-                },
-                analytics: {
-                    monthly: Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month)).slice(-6),
-                    daily: Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date)).slice(-14),
-                    statusCounts,
-                    paymentCounts
                 },
                 bookings,
                 tournaments,

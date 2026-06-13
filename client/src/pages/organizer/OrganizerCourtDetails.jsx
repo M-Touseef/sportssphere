@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { createElement, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
     ArrowLeftIcon,
@@ -37,44 +37,31 @@ const playerName = (registration) =>
 
 export default function OrganizerCourtDetails() {
     const { courtId } = useParams();
-    const [payload, setPayload] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [request, setRequest] = useState({ courtId: null, payload: null, error: false });
 
     useEffect(() => {
         let cancelled = false;
-        setLoading(true);
-        setError(false);
         courtService.getOwnerCourtDetails(courtId)
             .then((res) => {
-                if (!cancelled) setPayload(res.data);
+                if (!cancelled) setRequest({ courtId, payload: res.data, error: false });
             })
             .catch((err) => {
                 console.error('Error loading court details:', err);
-                if (!cancelled) setError(true);
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) setRequest({ courtId, payload: null, error: true });
             });
         return () => { cancelled = true; };
     }, [courtId]);
 
+    const loading = request.courtId !== courtId;
+    const error = request.courtId === courtId && request.error;
+    const payload = request.courtId === courtId ? request.payload : null;
     const court = payload?.court;
     const stats = payload?.stats || {};
-    const analytics = payload?.analytics || {};
     const bookings = payload?.bookings || [];
     const registrations = payload?.registrations || [];
     const tournaments = payload?.tournaments || [];
 
     const totalRevenue = (stats.bookingRevenue || 0) + (stats.registrationRevenue || 0);
-    const maxStatus = Math.max(1, ...Object.values(analytics.statusCounts || {}));
-
-    const revenueBars = useMemo(() => {
-        const rows = analytics.monthly || [];
-        const max = Math.max(1, ...rows.map((row) => row.revenue || 0));
-        return rows.map((row) => ({ ...row, height: Math.max(8, Math.round(((row.revenue || 0) / max) * 100)) }));
-    }, [analytics.monthly]);
-
     if (loading) {
         return (
             <div className="flex justify-center py-24">
@@ -108,7 +95,7 @@ export default function OrganizerCourtDetails() {
                     </Link>
                     <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-200">Court analytics</p>
+                            <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-200">Court details</p>
                             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{court.name}</h1>
                             <p className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-200">
                                 <MapPinIcon className="h-4 w-4 text-amber-300" />
@@ -134,49 +121,7 @@ export default function OrganizerCourtDetails() {
                 <Metric label="Total Revenue" value={money(totalRevenue)} icon={ChartBarIcon} strong />
             </div>
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.9fr]">
-                <section className="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">
-                    <div className="mb-6 flex items-center justify-between">
-                        <div>
-                            <h2 className="text-lg font-extrabold text-slate-900">Booking Trend</h2>
-                            <p className="mt-1 text-sm text-slate-500">Last 14 booking days for this court.</p>
-                        </div>
-                        <CalendarDaysIcon className="h-6 w-6 text-indigo-700" />
-                    </div>
-                    <LineChart data={analytics.daily || []} />
-                </section>
-
-                <section className="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">
-                    <h2 className="text-lg font-extrabold text-slate-900">Monthly Revenue</h2>
-                    <p className="mt-1 text-sm text-slate-500">Paid court bookings only.</p>
-                    <div className="mt-6 flex h-48 items-end gap-3 border-b border-slate-100 pb-2">
-                        {revenueBars.length ? revenueBars.map((row) => (
-                            <div key={row.month} className="flex flex-1 flex-col items-center gap-2">
-                                <div
-                                    className="w-full rounded-t-xl bg-gradient-to-t from-indigo-950 to-amber-400"
-                                    style={{ height: `${row.height}%` }}
-                                    title={`${row.month}: ${money(row.revenue)}`}
-                                />
-                                <span className="text-[10px] font-bold text-slate-400">{row.month.slice(5)}</span>
-                            </div>
-                        )) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm font-medium text-slate-400">No paid revenue yet.</div>
-                        )}
-                    </div>
-                </section>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <section className="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">
-                    <h2 className="text-lg font-extrabold text-slate-900">Booking Status</h2>
-                    <div className="mt-5 space-y-4">
-                        {Object.entries(analytics.statusCounts || {}).length ? Object.entries(analytics.statusCounts).map(([status, count]) => (
-                            <StatusBar key={status} label={titleCase(status)} value={count} max={maxStatus} />
-                        )) : <p className="text-sm text-slate-500">No booking activity yet.</p>}
-                    </div>
-                </section>
-
-                <section className="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6 lg:col-span-2">
+            <section className="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">
                     <h2 className="text-lg font-extrabold text-slate-900">Tournament Activity</h2>
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {tournaments.length ? tournaments.slice(0, 4).map((tournament) => (
@@ -194,8 +139,7 @@ export default function OrganizerCourtDetails() {
                             </div>
                         )) : <p className="text-sm text-slate-500">No tournaments hosted on this court yet.</p>}
                     </div>
-                </section>
-            </div>
+            </section>
 
             <LogTable title="Court Booking Logs" subtitle={`${bookings.length} booking${bookings.length === 1 ? '' : 's'} for this court.`}>
                 {bookings.length ? (
@@ -252,54 +196,12 @@ export default function OrganizerCourtDetails() {
     );
 }
 
-function Metric({ label, value = 0, icon: Icon, strong = false }) {
+function Metric({ label, value = 0, icon, strong = false }) {
     return (
         <div className={twMerge('rounded-3xl border p-5 shadow-sm', strong ? 'border-indigo-200 bg-indigo-950 text-white' : 'border-amber-100 bg-white')}>
-            <Icon className={twMerge('h-6 w-6', strong ? 'text-amber-300' : 'text-indigo-700')} />
+            {createElement(icon, { className: twMerge('h-6 w-6', strong ? 'text-amber-300' : 'text-indigo-700') })}
             <p className={twMerge('mt-4 text-[10px] font-bold uppercase tracking-wider', strong ? 'text-indigo-100' : 'text-slate-500')}>{label}</p>
             <p className="mt-1 text-2xl font-black">{value || 0}</p>
-        </div>
-    );
-}
-
-function LineChart({ data }) {
-    const width = 640;
-    const height = 190;
-    const max = Math.max(1, ...data.map((row) => row.bookings || 0));
-    const points = data.map((row, index) => {
-        const x = data.length === 1 ? width / 2 : (index / (data.length - 1)) * width;
-        const y = height - ((row.bookings || 0) / max) * (height - 24) - 12;
-        return `${x},${y}`;
-    }).join(' ');
-
-    if (!data.length) {
-        return <div className="flex h-56 items-center justify-center rounded-2xl bg-slate-50 text-sm font-medium text-slate-400">No bookings yet.</div>;
-    }
-
-    return (
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-amber-50/50 p-4">
-            <svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
-                <polyline fill="none" stroke="#312e81" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" points={points} />
-                {data.map((row, index) => {
-                    const x = data.length === 1 ? width / 2 : (index / (data.length - 1)) * width;
-                    const y = height - ((row.bookings || 0) / max) * (height - 24) - 12;
-                    return <circle key={row.date} cx={x} cy={y} r="6" fill="#f59e0b" stroke="#312e81" strokeWidth="3" />;
-                })}
-            </svg>
-        </div>
-    );
-}
-
-function StatusBar({ label, value, max }) {
-    return (
-        <div>
-            <div className="mb-1.5 flex items-center justify-between text-xs font-bold">
-                <span className="capitalize text-slate-700">{label}</span>
-                <span className="text-indigo-950">{value}</span>
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-indigo-950 to-amber-400" style={{ width: `${Math.max(6, (value / max) * 100)}%` }} />
-            </div>
         </div>
     );
 }
