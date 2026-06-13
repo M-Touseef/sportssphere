@@ -44,76 +44,6 @@ function Brand({ footer = false }) {
   )
 }
 
-function Header({ user }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const links = [
-    { label: 'Explore', href: '#features' },
-    { label: 'Courts', to: '/courts' },
-    { label: 'Coaches', to: '/coaches' },
-    { label: 'Tournaments', to: '/tournaments' },
-    { label: 'How it works', href: '#how-it-works' },
-  ]
-  const primaryPath = user ? '/app' : '/register'
-  const primaryLabel = user ? 'Dashboard' : 'Get started'
-
-  return (
-    <nav className="relative z-50 mx-auto max-w-[1440px] px-4 pt-4 md:px-8 md:pt-5" aria-label="Primary navigation">
-      <div className="site-nav rounded-2xl px-3 md:rounded-[1.4rem] md:px-4">
-        <div className="flex h-[68px] items-center justify-between gap-4">
-          <Brand />
-
-          <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 xl:flex">
-            {links.map(({ label, href, to }) => to ? (
-              <Link key={label} to={to} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-sky-700">{label}</Link>
-            ) : (
-              <a key={label} href={href} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-sky-700">{label}</a>
-            ))}
-          </div>
-
-          <div className="hidden shrink-0 items-center gap-2 xl:flex">
-            {!user && <Link to="/login" className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">Sign in</Link>}
-            <Link to={primaryPath} className="flex items-center gap-3 rounded-full bg-[#082b58] py-2 pl-5 pr-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-sky-800">
-              {primaryLabel}
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime-500 text-[#082b58]"><ArrowUpRight size={14} /></span>
-            </Link>
-          </div>
-
-          <button
-            type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#082b58] transition hover:bg-slate-200 xl:hidden"
-            aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? (
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
-            ) : (
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-            )}
-          </button>
-        </div>
-
-        {menuOpen && (
-          <div id="mobile-menu" className="border-t border-slate-200 pb-4 pt-3 xl:hidden">
-            <div className="grid grid-cols-2 gap-2">
-              {links.slice(0, 4).map(({ label, href, to }) => to ? (
-                <Link key={label} to={to} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100">{label}</Link>
-              ) : (
-                <a key={label} href={href} onClick={() => setMenuOpen(false)} className="rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100">{label}</a>
-              ))}
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-200 pt-3">
-              {!user && <Link to="/login" className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700">Sign in</Link>}
-              <Link to={primaryPath} onClick={() => setMenuOpen(false)} className={`${user ? 'col-span-2' : ''} rounded-xl bg-[#082b58] px-4 py-3 text-center text-sm font-semibold text-white`}>{primaryLabel}</Link>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
-  )
-}
-
 function Hero({ user }) {
   return (
     <header id="top" className="relative min-h-screen w-full overflow-hidden bg-[#051e46]">
@@ -123,9 +53,7 @@ function Hero({ user }) {
         <div className="hero-grid absolute inset-0 opacity-60" />
       </div>
 
-      <Header user={user} />
-
-      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-89px)] max-w-[1440px] grid-cols-1 items-center gap-10 px-6 pb-12 pt-10 md:px-10 md:pb-10 md:pt-8 lg:grid-cols-12">
+      <div className="relative z-10 mx-auto grid min-h-screen max-w-[1440px] grid-cols-1 items-center gap-10 px-6 pb-12 pt-32 md:px-10 md:pb-10 md:pt-32 lg:grid-cols-12">
         <div className="flex flex-col gap-5 pt-8 md:gap-3 lg:col-span-7 lg:pt-0 xl:col-span-6">
           <div className="glass flex w-fit items-center gap-2 rounded-full px-4 py-2 shadow-lg shadow-slate-950/10">
             <span className="ping-slow block h-2 w-2 rounded-full bg-green-400" />

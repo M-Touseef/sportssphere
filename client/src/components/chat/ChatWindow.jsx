@@ -91,7 +91,7 @@ const TypingIndicator = () => (
 export default function ChatWindow() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'bot', text: "Hi! I'm your SportSphere Assistant. How can I help you with your game today?", timestamp: new Date() }
+        { id: 1, sender: 'bot', text: "Hi! I'm your SportsSphere Assistant. How can I help you with your game today?", timestamp: new Date() }
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -256,7 +256,7 @@ export default function ChatWindow() {
                                 </div>
                             </form>
                             <p className="mt-3 text-center text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-30">
-                                SportSphere AI Support
+                                SportsSphere AI Support
                             </p>
                         </div>
                     </MotionDiv>

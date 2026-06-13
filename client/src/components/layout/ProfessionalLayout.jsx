@@ -2,9 +2,6 @@ import React, { useState, Fragment } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Dialog, Transition } from '@headlessui/react';
-import {
-    TrophyIcon,
-} from '@heroicons/react/24/outline';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from './Sidebar';
 import { buildProfessionalNavigation } from './navigationConfig';
@@ -52,7 +49,6 @@ const ProfessionalLayout = () => {
                                     brandTitle="Pro Portal"
                                     brandEyebrow="Competitive lane"
                                     brandDescription="Stay match-ready with fast access to sparring, tournaments, sessions, and court time."
-                                    brandIcon={TrophyIcon}
                                     brandVariant="professional"
                                 />
                             </Dialog.Panel>

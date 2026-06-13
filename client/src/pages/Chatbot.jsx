@@ -132,7 +132,7 @@ const Chatbot = () => {
         try {
             const data = await chatService.createConversation({
                 title: 'New Session',
-                initialMessage: 'Hello! Ask me about badminton rules and technique, or your SportSphere bookings and tournaments.'
+                initialMessage: 'Hello! Ask me about badminton rules and technique, or your SportsSphere bookings and tournaments.'
             });
 
             setActiveConversation(data.data);
@@ -220,10 +220,10 @@ const Chatbot = () => {
     const suggestedPrompts = [
         { label: 'My court bookings', text: 'What are my upcoming court bookings?' },
         { label: 'Badminton rules', text: 'Explain badminton scoring rules' },
-        { label: 'Courts near me', text: 'List available courts on SportSphere' },
+        { label: 'Courts near me', text: 'List available courts on SportsSphere' },
         { label: 'Improve smash', text: 'How can I improve my smash technique?' },
         { label: 'My tournaments', text: 'Which tournaments am I registered for?' },
-        { label: 'Find coaches', text: 'Show coaches on SportSphere' }
+        { label: 'Find coaches', text: 'Show coaches on SportsSphere' }
     ];
 
     const sendSuggested = (text) => {
@@ -355,7 +355,7 @@ const Chatbot = () => {
                             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">Hybrid AI Assistant</h2>
                             <p className="text-slate-500 font-medium mb-6 leading-relaxed text-lg">
                                 Ask badminton questions (rules, technique, equipment) — answered from our knowledge base.
-                                Ask about SportSphere — bookings, courts, coaches, and tournaments — answered from live data.
+                                Ask about SportsSphere — bookings, courts, coaches, and tournaments — answered from live data.
                             </p>
                             <div className="flex flex-wrap justify-center gap-2 mb-10 max-w-lg">
                                 {suggestedPrompts.map((item) => (
@@ -508,7 +508,7 @@ const Chatbot = () => {
                                     Send
                                 </button>
                             </form>
-                            <p className="text-center text-[10px] font-semibold text-slate-400 mt-4 uppercase tracking-[0.2em]">SportSphere AI Intelligence Core</p>
+                            <p className="text-center text-[10px] font-semibold text-slate-400 mt-4 uppercase tracking-[0.2em]">SportsSphere AI Intelligence Core</p>
                         </div>
                     </div>
                 )}

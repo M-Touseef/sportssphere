@@ -136,11 +136,10 @@ const AnimatedRoutes = () => {
           <Route path="/payment/return" element={<PaymentReturn />} />
           <Route path="/terms" element={<LazyPage><TermsOfService /></LazyPage>} />
           <Route path="/support" element={<LazyPage><SupportCenter /></LazyPage>} />
-        </Route>
-
-        <Route element={<ProtectedRoute />}>
-          <Route path="/role-selection" element={<LazyPage><RoleSelection /></LazyPage>} />
-          <Route path="/profile-setup" element={<LazyPage><ProfileSetup /></LazyPage>} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/role-selection" element={<LazyPage><RoleSelection /></LazyPage>} />
+            <Route path="/profile-setup" element={<LazyPage><ProfileSetup /></LazyPage>} />
+          </Route>
         </Route>
 
         <Route element={<ProtectedRoute />}>
@@ -261,16 +260,11 @@ const AnimatedRoutes = () => {
 };
 
 const PublicLayout = () => {
-  const location = useLocation();
-  const hasStandaloneHeader = ['/', '/login', '/register', '/forgot-password', '/reset-password'].includes(location.pathname);
-
   return (
-    <div className="min-h-screen bg-white selection:bg-indigo-100 selection:text-indigo-700">
-      {!hasStandaloneHeader && (
-        <Suspense fallback={<RouteFallback />}>
-          <Navbar />
-        </Suspense>
-      )}
+    <div className="min-h-screen bg-white selection:bg-sky-200 selection:text-brand-navy">
+      <Suspense fallback={<RouteFallback />}>
+        <Navbar />
+      </Suspense>
       <main className="relative z-0">
         <Outlet />
       </main>

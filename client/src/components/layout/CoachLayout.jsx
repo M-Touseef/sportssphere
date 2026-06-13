@@ -2,9 +2,6 @@ import React, { useState, Fragment } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Dialog, Transition } from '@headlessui/react';
-import {
-    AcademicCapIcon,
-} from '@heroicons/react/24/outline';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from './Sidebar';
 import { buildCoachNavigation } from './navigationConfig';
@@ -52,7 +49,6 @@ const CoachLayout = () => {
                                     brandTitle="Coach Portal"
                                     brandEyebrow="Coaching desk"
                                     brandDescription="Run schedules, manage athlete requests, and keep every coaching day organized."
-                                    brandIcon={AcademicCapIcon}
                                     brandVariant="coach"
                                 />
                             </Dialog.Panel>

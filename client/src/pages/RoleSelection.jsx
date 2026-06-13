@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     AcademicCapIcon,
     ArrowRightIcon,
@@ -99,33 +99,17 @@ const RoleSelection = () => {
     };
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[#f4f9fc] px-4 py-8 text-slate-950 selection:bg-sky-200 selection:text-brand-navy sm:px-6 lg:px-8 lg:py-12">
+        <div className="relative min-h-[calc(100vh-5.75rem)] overflow-hidden bg-[#f4f9fc] px-4 py-8 text-slate-950 selection:bg-sky-200 selection:text-brand-navy sm:px-6 lg:px-8 lg:py-12">
             <div className="pointer-events-none absolute -right-32 -top-28 h-96 w-96 rounded-full bg-sky-200/55 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-40 -left-32 h-[28rem] w-[28rem] rounded-full bg-lime-100/70 blur-3xl" />
 
             <main className="relative z-10 mx-auto w-full max-w-6xl">
-                <header className="mb-8 flex items-center justify-between gap-4">
-                    <Link to="/" className="inline-flex items-center gap-3">
-                        <img
-                            src="/images/homepage/website-logo-header.png"
-                            alt="SportsSphere"
-                            className="h-11 w-11 rounded-xl border border-slate-200 bg-white object-cover shadow-sm"
-                        />
-                        <div>
-                            <div className="text-xl font-black tracking-[-0.04em] text-brand-navy">
-                                Sports<span className="text-lime-600">Sphere</span>
-                            </div>
-                            <div className="mt-1 hidden text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400 sm:block">
-                                Play / Train / Compete
-                            </div>
-                        </div>
-                    </Link>
-
-                    <div className="hidden items-center gap-2 rounded-full border border-sky-100 bg-white/80 px-4 py-2 text-xs font-bold text-sky-700 shadow-sm backdrop-blur sm:flex">
+                <div className="mb-6 flex justify-end">
+                    <div className="flex items-center gap-2 rounded-full border border-sky-100 bg-white/80 px-4 py-2 text-xs font-bold text-sky-700 shadow-sm backdrop-blur">
                         <ShieldCheckIcon className="h-4 w-4" />
                         Account created
                     </div>
-                </header>
+                </div>
 
                 <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-white/95 shadow-[0_30px_90px_-40px_rgba(3,20,47,0.42)] backdrop-blur-xl">
                     <div className="h-1.5 bg-gradient-to-r from-brand-navy via-brand-sky to-brand-lime" />

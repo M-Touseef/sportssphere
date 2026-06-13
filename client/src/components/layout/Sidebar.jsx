@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
-    TrophyIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
@@ -42,18 +41,16 @@ const Sidebar = ({
     isMobile = false,
     navigation,
     secondaryNav,
-    brandTitle = 'SportSphere',
+    brandTitle = 'SportsSphere',
     brandEyebrow = 'Workspace',
     brandDescription = 'Your courts, tournaments, sessions, and team activity in one place.',
     brandHref = '/',
-    brandIcon: BrandIcon = TrophyIcon,
     brandVariant = 'default',
 }) => {
     const location = useLocation()
     const palette = getBrandPalette(brandVariant)
     const mainNav = navigation || buildDefaultNavigation(user)
     const accountNav = secondaryNav || buildDefaultSecondaryNav(user, logout)
-    const BrandMark = BrandIcon
     const userRoleLabel = user?.role === 'player'
         ? (user?.skillLevel === 'professional' ? 'Professional Player' : 'Non-Professional Player')
         : user?.role
@@ -152,20 +149,18 @@ const Sidebar = ({
             <div className="relative flex items-center justify-between border-b border-slate-200/70 px-6 pb-5 pt-6 sm:px-8">
                 <Link to={brandHref} className="group min-w-0" onClick={onCloseMobile}>
                     <div className="flex items-center gap-3">
-                        <MotionDiv
-                            whileHover={{ rotate: 5, scale: 1.03 }}
-                            className={twMerge(
-                                'flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-gradient-to-br shadow-[0_18px_36px_-18px_rgba(15,23,42,0.7)]',
-                                palette.badge
-                            )}
-                        >
-                            <BrandMark className="h-7 w-7" />
+                        <MotionDiv whileHover={{ scale: 1.03 }}>
+                            <img
+                                src="/images/homepage/website-logo-header.png"
+                                alt=""
+                                className="h-14 w-14 rounded-[1.35rem] border border-sky-100 bg-white object-cover shadow-[0_18px_36px_-18px_rgba(3,20,47,0.5)]"
+                            />
                         </MotionDiv>
                         <div className="min-w-0">
                             <p className={twMerge('text-[10px] font-black uppercase tracking-[0.28em]', palette.label)}>
                                 {brandEyebrow}
                             </p>
-                            <h2 className="truncate text-xl font-black tracking-tight text-slate-950">{brandTitle}</h2>
+                            <h2 className="truncate text-xl font-black tracking-tight text-brand-navy">{brandTitle}</h2>
                         </div>
                     </div>
                     <p className="mt-3 max-w-xs text-[12px] leading-5 text-slate-500">

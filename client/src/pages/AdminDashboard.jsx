@@ -265,19 +265,15 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 pb-12">
-            {/* Header */}
-            <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Admin Dashboard</h1>
-                            <p className="text-sm text-slate-500 font-medium mt-1">System Management & Operations</p>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div className="mb-8 rounded-3xl border border-sky-100 bg-white p-6 shadow-[0_18px_50px_-32px_rgba(3,20,47,0.35)] sm:p-8">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-sky-700">
+                        <span className="h-2 w-2 rounded-full bg-lime-500" />
+                        System operations
+                    </div>
+                    <h1 className="text-3xl font-black tracking-[-0.035em] text-brand-navy sm:text-4xl">Admin Dashboard</h1>
+                    <p className="mt-2 text-sm font-medium text-slate-500">Manage users, bookings, tournaments, courts, and platform verification.</p>
+                </div>
                 {/* Stats Grid */}
                 {stats && (
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
@@ -330,7 +326,7 @@ const AdminDashboard = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-bold text-slate-900">System Overview</h3>
-                                    <p className="text-slate-500 font-medium">Welcome to the SportSphere Admin Panel</p>
+                                    <p className="text-slate-500 font-medium">Welcome to the SportsSphere Admin Panel</p>
                                 </div>
                             </div>
                             <p className="text-slate-600 leading-relaxed mb-6">Use the navigation tabs above to manage users, bookings, tournaments, and court resources efficiently.</p>

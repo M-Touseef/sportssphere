@@ -63,7 +63,7 @@ export default function DashboardLayout() {
                     <div className="mx-auto max-w-7xl">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-center text-sm font-medium text-slate-300 sm:text-left">
-                                (c) 2026 <span className="font-bold text-white">SportSphere</span>. All rights reserved.
+                                (c) 2026 <span className="font-bold text-white">SportsSphere</span>. All rights reserved.
                             </p>
                             <div className="flex items-center justify-center gap-3 sm:justify-end">
                                 <Link
