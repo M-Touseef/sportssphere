@@ -161,6 +161,13 @@ class AIService {
         return 'I can answer badminton questions (rules, technique, equipment) or look up SportSphere data (your bookings, courts, coaches, tournaments). What would you like to know?';
     }
 
+    getProviderStatus() {
+        return {
+            rag: { configured: Boolean(this.ragEngine) },
+            deepseek: this.deepSeekEngine?.getStatus() || { configured: false, model: null }
+        };
+    }
+
     async healthCheck() {
         try {
             const response = await axios.get(`${this.flaskUrl}/api/health`, { timeout: 3000 });

@@ -110,6 +110,7 @@ async function main() {
 
     const originalFetch = global.fetch;
     const originalDeepSeekKey = process.env.DEEPSEEK_API_KEY;
+    const originalDeepSeekModel = process.env.DEEPSEEK_MODEL;
     let deepSeekRequest = null;
     try {
         process.env.DEEPSEEK_API_KEY = 'test-key';
@@ -128,10 +129,19 @@ async function main() {
             deepSeekRequest?.body?.messages?.[1]?.content === 'How can I improve my smash?');
         ok('DeepSeek engine uses bearer authentication',
             deepSeekRequest?.options?.headers?.Authorization === 'Bearer test-key');
+        ok('DeepSeek engine uses supported default model',
+            deepSeekRequest?.body?.model === 'deepseek-chat');
+
+        process.env.DEEPSEEK_MODEL = 'deepseek-v4-flash';
+        const aliasedDeepSeekEngine = new DeepSeekEngine();
+        ok('DeepSeek engine maps legacy invalid model',
+            aliasedDeepSeekEngine.getStatus().model === 'deepseek-chat');
     } finally {
         global.fetch = originalFetch;
         if (originalDeepSeekKey === undefined) delete process.env.DEEPSEEK_API_KEY;
         else process.env.DEEPSEEK_API_KEY = originalDeepSeekKey;
+        if (originalDeepSeekModel === undefined) delete process.env.DEEPSEEK_MODEL;
+        else process.env.DEEPSEEK_MODEL = originalDeepSeekModel;
     }
 
     console.log(`\n=== ${passed} passed, ${failed} failed ===`);

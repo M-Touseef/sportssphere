@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
     getConversations,
+    getProviderStatus,
     getConversation,
     createConversation,
     sendMessage,
@@ -13,6 +14,8 @@ const { auth } = require('../middleware/auth');
 
 // All routes require authentication
 router.use(auth);
+
+router.get('/providers', getProviderStatus);
 
 // Conversation routes
 router.get('/conversations', getConversations);

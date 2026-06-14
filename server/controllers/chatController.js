@@ -1,6 +1,16 @@
 const Conversation = require('../models/Conversation');
 const aiService = require('../services/aiService');
 
+// @desc    Get chatbot provider configuration (never returns secrets)
+// @route   GET /api/chat/providers
+// @access  Private
+exports.getProviderStatus = async (req, res) => {
+    res.status(200).json({
+        success: true,
+        data: aiService.getProviderStatus()
+    });
+};
+
 // @desc    Get all conversations for a user
 // @route   GET /api/chat/conversations
 // @access  Private

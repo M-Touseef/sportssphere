@@ -1,20 +1,31 @@
 const IIntentResolver = require('../interfaces/IIntentResolver');
 
 const DEFAULT_BASE_URL = 'https://api.deepseek.com';
-const DEFAULT_MODEL = 'deepseek-v4-flash';
+const DEFAULT_MODEL = 'deepseek-chat';
 const DEFAULT_TIMEOUT_MS = 10000;
+const MODEL_ALIASES = {
+    'deepseek-v4-flash': DEFAULT_MODEL
+};
 
 class DeepSeekEngine extends IIntentResolver {
     constructor() {
         super();
-        this.apiKey = process.env.DEEPSEEK_API_KEY || '';
+        this.apiKey = (process.env.DEEPSEEK_API_KEY || '').trim();
         this.baseUrl = (process.env.DEEPSEEK_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
-        this.model = process.env.DEEPSEEK_MODEL || DEFAULT_MODEL;
+        const configuredModel = (process.env.DEEPSEEK_MODEL || DEFAULT_MODEL).trim();
+        this.model = MODEL_ALIASES[configuredModel] || configuredModel;
         this.timeoutMs = Number(process.env.DEEPSEEK_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
     }
 
     isConfigured() {
         return Boolean(this.apiKey);
+    }
+
+    getStatus() {
+        return {
+            configured: this.isConfigured(),
+            model: this.model
+        };
     }
 
     async resolveIntent(message) {
