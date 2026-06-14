@@ -8,7 +8,6 @@ import {
     BuildingOffice2Icon,
     CheckBadgeIcon,
     ExclamationTriangleIcon,
-    FunnelIcon,
     MagnifyingGlassIcon,
     MapPinIcon,
     SparklesIcon,
@@ -19,7 +18,7 @@ import courtService from '../services/courtService';
 import { useToast } from '../context/ToastContext';
 import { LAHORE_AREAS } from '../constants/lahoreAreas';
 
-const COURT_HERO_IMAGE = '/images/homepage/indoor-badminton-court.jpg';
+const COURT_IMAGE = '/images/homepage/indoor-badminton-court.jpg';
 
 const SURFACE_LABELS = {
     synthetic: 'Mat / Synthetic',
@@ -28,24 +27,29 @@ const SURFACE_LABELS = {
     acrylic: 'Hard Court'
 };
 
+const SURFACE_OPTIONS = [
+    { value: '', label: 'All courts' },
+    { value: 'synthetic', label: 'Synthetic' },
+    { value: 'wooden', label: 'Wooden' },
+    { value: 'cement', label: 'Cement' },
+    { value: 'acrylic', label: 'Hard court' }
+];
+
 const CARD_ACCENTS = [
     {
-        border: 'hover:border-sky-300',
-        body: 'from-sky-50 via-white to-white',
-        badge: 'bg-brand-sky text-brand-navy-deep',
-        icon: 'bg-sky-100 text-sky-700'
+        line: 'bg-brand-sky',
+        surface: 'border-sky-400/25 bg-sky-400/10 text-sky-100',
+        icon: 'bg-brand-sky text-brand-navy-deep'
     },
     {
-        border: 'hover:border-lime-300',
-        body: 'from-lime-50 via-white to-white',
-        badge: 'bg-brand-lime text-brand-navy-deep',
-        icon: 'bg-lime-100 text-lime-700'
+        line: 'bg-brand-lime',
+        surface: 'border-lime-400/25 bg-lime-400/10 text-lime-100',
+        icon: 'bg-brand-lime text-brand-navy-deep'
     },
     {
-        border: 'hover:border-brand-navy',
-        body: 'from-slate-100 via-white to-sky-50',
-        badge: 'bg-white text-brand-navy-deep',
-        icon: 'bg-brand-navy text-brand-sky'
+        line: 'bg-violet-400',
+        surface: 'border-violet-400/25 bg-violet-400/10 text-violet-100',
+        icon: 'bg-violet-400 text-brand-navy-deep'
     }
 ];
 
@@ -92,8 +96,12 @@ const CourtList = () => {
         return () => clearTimeout(timeoutId);
     }, [fetchCourts, filters]);
 
-    const handleFilterChange = (event) => {
-        setFilters((previous) => ({ ...previous, [event.target.name]: event.target.value }));
+    const handleAreaChange = (event) => {
+        setFilters((previous) => ({ ...previous, area: event.target.value }));
+    };
+
+    const setSurface = (surfaceType) => {
+        setFilters((previous) => ({ ...previous, surfaceType }));
     };
 
     const resetFilters = () => {
@@ -108,348 +116,317 @@ const CourtList = () => {
     }, [courts]);
 
     return (
-        <div className="space-y-8 pb-20 sm:space-y-10">
-            <section className="relative isolate overflow-hidden rounded-[2rem] bg-brand-navy-deep text-white shadow-2xl shadow-brand-navy/20 sm:rounded-[2.5rem]">
-                <img
-                    src={COURT_HERO_IMAGE}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover object-center"
-                    aria-hidden
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-navy-deep via-brand-navy-deep/95 to-brand-navy/45" />
-                <div className="absolute inset-0 bg-gradient-to-t from-brand-navy-deep/80 via-transparent to-brand-sky/10" />
-                <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-sky/20 blur-3xl" aria-hidden />
-                <div className="absolute -bottom-32 right-1/4 h-72 w-72 rounded-full bg-brand-lime/15 blur-3xl" aria-hidden />
+        <div className="relative isolate overflow-hidden rounded-[2rem] bg-brand-navy-deep text-white shadow-[0_30px_80px_-35px_rgba(3,20,47,0.8)] sm:rounded-[2.5rem]">
+            <div className="pointer-events-none absolute -left-40 top-1/3 h-96 w-96 rounded-full bg-brand-sky/10 blur-3xl" aria-hidden />
+            <div className="pointer-events-none absolute -right-40 bottom-20 h-96 w-96 rounded-full bg-brand-lime/10 blur-3xl" aria-hidden />
 
-                <div className="relative grid min-h-[500px] items-center gap-8 px-6 py-9 sm:px-9 sm:py-12 lg:grid-cols-[1.05fr_0.95fr] lg:px-12">
-                    <div className="max-w-2xl">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-sky-300/25 bg-brand-sky/10 px-3.5 py-2 text-xs font-black text-sky-100 backdrop-blur-md">
-                            <SparklesIcon className="h-4 w-4 text-brand-lime" />
-                            Courts across Lahore
-                        </div>
-                        <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-                            Find your court.
-                            <span className="block text-brand-lime">Own the next game.</span>
-                        </h1>
-                        <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-slate-200 sm:text-base">
-                            Explore quality badminton venues, compare hourly rates, and book a court that fits your location and playing style.
-                        </p>
-
-                        <div className="mt-7 flex flex-wrap gap-3">
-                            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3.5 py-2.5 text-xs font-bold backdrop-blur-sm">
-                                <CheckBadgeIcon className="h-5 w-5 text-brand-lime" />
-                                Verified venues
-                            </div>
-                            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3.5 py-2.5 text-xs font-bold backdrop-blur-sm">
-                                <BanknotesIcon className="h-5 w-5 text-brand-sky" />
-                                Clear hourly pricing
-                            </div>
-                        </div>
-
-                        {!loading && !fetchError && (
-                            <div className="mt-8 flex gap-3">
-                                <div className="min-w-28 rounded-2xl border border-sky-300/20 bg-sky-400/15 px-4 py-3 backdrop-blur-md">
-                                    <p className="text-2xl font-black text-white">{stats.total}</p>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-100">Courts found</p>
-                                </div>
-                                <div className="min-w-28 rounded-2xl border border-lime-300/20 bg-lime-400/15 px-4 py-3 backdrop-blur-md">
-                                    <p className="text-2xl font-black text-white">{stats.areas}</p>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-lime-100">Lahore areas</p>
-                                </div>
-                            </div>
-                        )}
+            <section className="relative grid overflow-hidden border-b border-white/10 lg:grid-cols-[1.08fr_0.92fr]">
+                <div className="relative z-10 flex min-h-[360px] flex-col justify-center px-6 py-10 sm:px-10 lg:px-12 lg:py-14">
+                    <div className="inline-flex w-fit items-center gap-2 rounded-full border border-sky-300/20 bg-brand-sky/10 px-3.5 py-2 text-xs font-black text-sky-100">
+                        <SparklesIcon className="h-4 w-4 text-brand-lime" />
+                        Lahore court directory
                     </div>
 
-                    <div className="rounded-[1.75rem] border border-white/15 bg-brand-navy-deep/75 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
-                        <div className="flex items-center justify-between gap-4">
-                            <div>
-                                <p className="text-xs font-black uppercase tracking-[0.18em] text-brand-lime">Court finder</p>
-                                <h2 className="mt-1 text-2xl font-black">Search your way</h2>
-                            </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-sky text-brand-navy-deep shadow-lg shadow-sky-500/20">
-                                <FunnelIcon className="h-6 w-6" />
-                            </div>
-                        </div>
+                    <h1 className="mt-6 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
+                        Pick the right court.
+                        <span className="block text-brand-lime">Play a better game.</span>
+                    </h1>
+                    <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-slate-300 sm:text-base">
+                        Compare venues by area, playing surface, facilities, and price without jumping between pages.
+                    </p>
 
-                        <div className="mt-6 space-y-4">
-                            <div>
-                                <label htmlFor="area" className="mb-2 block text-xs font-black text-sky-100">
-                                    Lahore area
-                                </label>
-                                <div className="relative">
-                                    <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-sky" />
-                                    <input
-                                        type="search"
-                                        name="area"
-                                        id="area"
-                                        list="lahore-area-options"
-                                        className="h-13 w-full rounded-2xl border border-white/15 bg-white/10 pl-12 pr-4 text-sm font-bold text-white outline-none transition-all placeholder:text-slate-400 focus:border-brand-sky focus:bg-white/15 focus:ring-4 focus:ring-sky-400/10"
-                                        value={filters.area}
-                                        onChange={handleFilterChange}
-                                        placeholder="e.g. Johar Town"
-                                        autoComplete="off"
-                                    />
-                                    <datalist id="lahore-area-options">
-                                        {LAHORE_AREAS.map((area) => (
-                                            <option key={area} value={area}>{area}</option>
-                                        ))}
-                                    </datalist>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label htmlFor="surfaceType" className="mb-2 block text-xs font-black text-sky-100">
-                                    Court surface
-                                </label>
-                                <select
-                                    name="surfaceType"
-                                    id="surfaceType"
-                                    className="h-13 w-full rounded-2xl border border-white/15 bg-brand-navy px-4 text-sm font-bold text-white outline-none transition-all focus:border-brand-lime focus:ring-4 focus:ring-lime-400/10"
-                                    value={filters.surfaceType}
-                                    onChange={handleFilterChange}
-                                >
-                                    <option value="">All surface types</option>
-                                    <option value="synthetic">Mat / Synthetic</option>
-                                    <option value="wooden">Wooden Floor</option>
-                                    <option value="cement">Cement Floor</option>
-                                    <option value="acrylic">Hard Court</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl bg-white/5 px-4 py-3">
-                            <p className="text-xs font-semibold text-slate-300">Results update automatically.</p>
-                            {hasActiveFilters && (
-                                <button
-                                    type="button"
-                                    onClick={resetFilters}
-                                    className="inline-flex shrink-0 items-center gap-1.5 text-xs font-black text-brand-lime transition-colors hover:text-lime-300"
-                                >
-                                    <XMarkIcon className="h-4 w-4" />
-                                    Clear filters
-                                </button>
-                            )}
-                        </div>
+                    <div className="mt-7 flex flex-wrap gap-3">
+                        <span className="inline-flex items-center gap-2 rounded-xl bg-brand-navy px-3.5 py-2.5 text-xs font-bold text-sky-100 ring-1 ring-white/10">
+                            <CheckBadgeIcon className="h-5 w-5 text-brand-lime" />
+                            Verified venues
+                        </span>
+                        <span className="inline-flex items-center gap-2 rounded-xl bg-brand-navy px-3.5 py-2.5 text-xs font-bold text-sky-100 ring-1 ring-white/10">
+                            <BanknotesIcon className="h-5 w-5 text-brand-sky" />
+                            Upfront pricing
+                        </span>
                     </div>
                 </div>
-            </section>
 
-            <section className="rounded-[2rem] border border-sky-100 bg-gradient-to-br from-sky-50 via-slate-50 to-lime-50/70 p-4 shadow-sm sm:p-7 lg:p-8">
-                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <div className="inline-flex items-center gap-2 rounded-full bg-brand-navy px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">
-                            <Squares2X2Icon className="h-4 w-4 text-brand-sky" />
-                            Available venues
-                        </div>
-                        <h2 className="mt-3 text-2xl font-black tracking-tight text-brand-navy-deep sm:text-3xl">
-                            Courts ready for your next match
-                        </h2>
-                        <p className="mt-2 text-sm font-medium text-slate-600">
-                            Compare location, surface, and price before opening a court.
-                        </p>
-                    </div>
+                <div className="relative min-h-72 overflow-hidden lg:min-h-full">
+                    <img src={COURT_IMAGE} alt="Indoor badminton court" className="absolute inset-0 h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand-navy-deep via-brand-navy-deep/30 to-transparent lg:from-brand-navy-deep/80" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-brand-navy-deep via-transparent to-brand-sky/10" />
 
                     {!loading && !fetchError && (
-                        <div className="rounded-2xl border border-sky-200 bg-white/70 px-4 py-3 text-right shadow-sm backdrop-blur-sm">
-                            <p className="text-2xl font-black text-brand-navy-deep">{stats.total}</p>
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-sky-700">
-                                {hasActiveFilters ? 'Filtered results' : 'Total venues'}
-                            </p>
+                        <div className="absolute inset-x-5 bottom-5 grid grid-cols-2 gap-3 sm:inset-x-8 sm:bottom-8">
+                            <div className="rounded-2xl border border-sky-300/20 bg-brand-navy-deep/80 p-4 backdrop-blur-xl">
+                                <p className="text-3xl font-black text-white">{stats.total}</p>
+                                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-brand-sky">Courts found</p>
+                            </div>
+                            <div className="rounded-2xl border border-lime-300/20 bg-brand-navy-deep/80 p-4 backdrop-blur-xl">
+                                <p className="text-3xl font-black text-white">{stats.areas}</p>
+                                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-brand-lime">Lahore areas</p>
+                            </div>
                         </div>
                     )}
                 </div>
+            </section>
 
-                {hasActiveFilters && !loading && !fetchError && (
-                    <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-white/80 bg-white/65 p-3 backdrop-blur-sm">
-                        <span className="mr-1 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Showing</span>
-                        {filters.area.trim() && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-100 px-3 py-1.5 text-xs font-black text-sky-800">
-                                <MapPinIcon className="h-3.5 w-3.5" />
-                                {filters.area.trim()}
-                            </span>
-                        )}
-                        {filters.surfaceType && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-200 bg-lime-100 px-3 py-1.5 text-xs font-black text-lime-800">
-                                <SparklesIcon className="h-3.5 w-3.5" />
-                                {formatSurface(filters.surfaceType)}
-                            </span>
-                        )}
+            <div className="relative grid gap-5 p-4 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-7 lg:p-8">
+                <aside className="self-start rounded-[1.75rem] border border-sky-400/20 bg-brand-navy p-5 shadow-xl shadow-black/10 lg:sticky lg:top-28 sm:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-sky">Refine results</p>
+                            <h2 className="mt-1 text-xl font-black">Find your fit</h2>
+                        </div>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-sky text-brand-navy-deep">
+                            <MagnifyingGlassIcon className="h-5 w-5" />
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <label htmlFor="area" className="mb-2 block text-xs font-black text-sky-100">Lahore area</label>
+                        <div className="relative">
+                            <MapPinIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-sky" />
+                            <input
+                                type="search"
+                                name="area"
+                                id="area"
+                                list="lahore-area-options"
+                                value={filters.area}
+                                onChange={handleAreaChange}
+                                placeholder="e.g. Johar Town"
+                                autoComplete="off"
+                                className="h-12 w-full rounded-xl border border-white/10 bg-brand-navy-deep pl-11 pr-3 text-sm font-bold text-white outline-none transition-all placeholder:text-slate-500 focus:border-brand-sky focus:ring-4 focus:ring-sky-400/10"
+                            />
+                            <datalist id="lahore-area-options">
+                                {LAHORE_AREAS.map((area) => <option key={area} value={area}>{area}</option>)}
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <p className="mb-3 text-xs font-black text-sky-100">Playing surface</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {SURFACE_OPTIONS.map((option) => {
+                                const selected = filters.surfaceType === option.value;
+                                return (
+                                    <button
+                                        key={option.value || 'all'}
+                                        type="button"
+                                        onClick={() => setSurface(option.value)}
+                                        aria-pressed={selected}
+                                        className={`min-h-10 rounded-xl px-2.5 py-2 text-xs font-black transition-all ${
+                                            selected
+                                                ? 'bg-brand-lime text-brand-navy-deep shadow-lg shadow-lime-500/10'
+                                                : 'border border-white/10 bg-white/5 text-slate-300 hover:border-sky-300/30 hover:bg-brand-sky/10 hover:text-white'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {hasActiveFilters && (
                         <button
                             type="button"
                             onClick={resetFilters}
-                            className="ml-auto inline-flex items-center gap-1 text-xs font-black text-brand-navy transition-colors hover:text-sky-700"
+                            className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-brand-sky/10 text-xs font-black text-sky-100 transition-colors hover:bg-brand-sky/20"
                         >
-                            Reset
                             <XMarkIcon className="h-4 w-4" />
+                            Clear all filters
                         </button>
-                    </div>
-                )}
-
-                <AnimatePresence mode="wait">
-                    {loading ? (
-                        <Motion.div
-                            key="skeleton"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-                        >
-                            {Array.from({ length: 6 }, (_, index) => (
-                                <div key={index} className="overflow-hidden rounded-[1.75rem] border border-sky-100 bg-white/80 shadow-sm">
-                                    <div className="h-52 animate-pulse bg-gradient-to-br from-brand-navy via-brand-navy to-sky-800" />
-                                    <div className="space-y-4 p-5">
-                                        <div className="h-5 w-2/3 animate-pulse rounded-full bg-sky-100" />
-                                        <div className="h-10 animate-pulse rounded-xl bg-slate-100" />
-                                        <div className="h-10 animate-pulse rounded-xl bg-lime-100/70" />
-                                    </div>
-                                </div>
-                            ))}
-                        </Motion.div>
-                    ) : fetchError ? (
-                        <Motion.div
-                            key="error"
-                            initial={{ opacity: 0, scale: 0.98 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex min-h-[390px] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-rose-300 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-8 text-center"
-                        >
-                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
-                                <ExclamationTriangleIcon className="h-8 w-8" />
-                            </div>
-                            <h3 className="mt-5 text-2xl font-black text-brand-navy-deep">Couldn&apos;t load courts</h3>
-                            <p className="mt-2 max-w-sm text-sm font-medium leading-6 text-slate-600">
-                                Check your connection and try loading the available venues again.
-                            </p>
-                            <button
-                                type="button"
-                                onClick={() => fetchCourts(filters)}
-                                className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-navy px-5 text-sm font-black text-white shadow-lg shadow-brand-navy/15 transition-colors hover:bg-brand-navy-deep"
-                            >
-                                <ArrowPathIcon className="h-5 w-5" />
-                                Retry
-                            </button>
-                        </Motion.div>
-                    ) : courts.length > 0 ? (
-                        <Motion.div
-                            key="grid"
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-                        >
-                            {courts.map((court, index) => {
-                                const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
-                                const amenities = court.amenities?.slice(0, 2) || [];
-
-                                return (
-                                    <Motion.article
-                                        key={court._id}
-                                        layout
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.04 }}
-                                        whileHover={{ y: -6 }}
-                                        className={`group flex flex-col overflow-hidden rounded-[1.75rem] border border-white bg-white shadow-[0_18px_45px_-24px_rgba(3,20,47,0.35)] transition-all duration-300 hover:shadow-[0_24px_55px_-22px_rgba(3,20,47,0.42)] ${accent.border}`}
-                                    >
-                                        <div className="relative h-56 overflow-hidden bg-brand-navy-deep">
-                                            <img
-                                                src={court.images?.[0] || COURT_HERO_IMAGE}
-                                                alt={court.name}
-                                                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-brand-navy-deep via-brand-navy/20 to-transparent" />
-                                            {!court.images?.length && (
-                                                <div className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-brand-navy-deep/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-sky-100 backdrop-blur-md">
-                                                    <BuildingOffice2Icon className="h-4 w-4 text-brand-sky" />
-                                                    Venue preview
-                                                </div>
-                                            )}
-
-                                            <div className="absolute left-4 top-4">
-                                                <span className={`inline-flex rounded-xl px-3 py-1.5 text-[10px] font-black uppercase tracking-wider shadow-lg ${accent.badge}`}>
-                                                    {formatSurface(court.surfaceType)}
-                                                </span>
-                                            </div>
-
-                                            <div className="absolute bottom-4 right-4 rounded-2xl border border-white/15 bg-brand-navy-deep/85 px-4 py-3 text-right shadow-xl backdrop-blur-md">
-                                                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-brand-sky">Per hour</p>
-                                                <p className="mt-0.5 text-xl font-black text-white">
-                                                    <span className="mr-1 text-xs text-slate-300">Rs.</span>
-                                                    {court.pricePerHour?.toLocaleString?.() ?? court.pricePerHour}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className={`flex flex-1 flex-col bg-gradient-to-br p-5 ${accent.body}`}>
-                                            <div className="flex items-start gap-3">
-                                                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accent.icon}`}>
-                                                    <MapPinIcon className="h-5 w-5" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h3 className="line-clamp-2 text-xl font-black leading-tight tracking-tight text-brand-navy-deep">
-                                                        {court.name}
-                                                    </h3>
-                                                    <p className="mt-1 text-sm font-bold text-slate-600">
-                                                        {court.location?.area || 'Area TBA'}, Lahore
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-5 flex flex-wrap gap-2">
-                                                {(amenities.length ? amenities : ['Indoor venue', 'Online booking']).map((amenity) => (
-                                                    <span
-                                                        key={amenity}
-                                                        className="rounded-full border border-white bg-white/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-600 shadow-sm"
-                                                    >
-                                                        {amenity}
-                                                    </span>
-                                                ))}
-                                            </div>
-
-                                            <div className="mt-auto flex items-center justify-between gap-3 pt-6">
-                                                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
-                                                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                    Available
-                                                </span>
-                                                <Link
-                                                    to={`/courts/${court._id}`}
-                                                    className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-navy px-4 text-xs font-black text-white shadow-md shadow-brand-navy/15 transition-all hover:bg-brand-navy-deep"
-                                                >
-                                                    View court
-                                                    <ArrowRightIcon className="h-4 w-4" />
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </Motion.article>
-                                );
-                            })}
-                        </Motion.div>
-                    ) : (
-                        <Motion.div
-                            key="empty"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="grid min-h-[410px] place-items-center overflow-hidden rounded-[1.75rem] border border-dashed border-sky-300 bg-brand-navy-deep p-8 text-center text-white"
-                        >
-                            <div className="relative z-10">
-                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-lime text-brand-navy-deep shadow-lg shadow-lime-500/20">
-                                    <MagnifyingGlassIcon className="h-8 w-8" />
-                                </div>
-                                <h3 className="mt-5 text-2xl font-black">No courts match those filters</h3>
-                                <p className="mx-auto mt-2 max-w-md text-sm font-medium leading-6 text-slate-300">
-                                    Try another Lahore area or surface type, or reset the filters to see every available venue.
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={resetFilters}
-                                    className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-sky px-5 text-sm font-black text-brand-navy-deep transition-colors hover:bg-sky-300"
-                                >
-                                    <XMarkIcon className="h-5 w-5" />
-                                    Clear filters
-                                </button>
-                            </div>
-                        </Motion.div>
                     )}
-                </AnimatePresence>
-            </section>
+
+                    <div className="mt-6 rounded-2xl bg-brand-lime p-4 text-brand-navy-deep">
+                        <BuildingOffice2Icon className="h-7 w-7" />
+                        <p className="mt-3 font-black">Built for quick decisions</p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-brand-navy/75">
+                            Results update automatically as you search and select a surface.
+                        </p>
+                    </div>
+                </aside>
+
+                <main className="min-w-0 rounded-[1.75rem] border border-white/10 bg-[#071d3b] p-4 sm:p-6">
+                    <div className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <div className="inline-flex items-center gap-2 rounded-full bg-brand-sky/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-brand-sky ring-1 ring-sky-300/15">
+                                <Squares2X2Icon className="h-4 w-4" />
+                                Court results
+                            </div>
+                            <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">Available venues</h2>
+                            <p className="mt-2 text-sm font-medium text-slate-400">Compare every useful detail in one view.</p>
+                        </div>
+
+                        {!loading && !fetchError && (
+                            <div className="flex items-center gap-3 rounded-2xl bg-brand-navy px-4 py-3 ring-1 ring-white/10">
+                                <p className="text-3xl font-black text-brand-lime">{stats.total}</p>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Matching</p>
+                                    <p className="text-xs font-black text-white">venue{stats.total === 1 ? '' : 's'}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {hasActiveFilters && !loading && !fetchError && (
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Active</span>
+                            {filters.area.trim() && (
+                                <span className="rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1.5 text-xs font-black text-sky-100">
+                                    {filters.area.trim()}
+                                </span>
+                            )}
+                            {filters.surfaceType && (
+                                <span className="rounded-full border border-lime-400/20 bg-lime-400/10 px-3 py-1.5 text-xs font-black text-lime-100">
+                                    {formatSurface(filters.surfaceType)}
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="mt-5">
+                        <AnimatePresence mode="wait">
+                            {loading ? (
+                                <Motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                                    {Array.from({ length: 3 }, (_, index) => (
+                                        <div key={index} className="grid overflow-hidden rounded-[1.5rem] border border-white/10 bg-brand-navy md:grid-cols-[240px_1fr]">
+                                            <div className="min-h-52 animate-pulse bg-gradient-to-br from-sky-900 to-brand-navy-deep" />
+                                            <div className="space-y-4 p-5">
+                                                <div className="h-5 w-2/3 animate-pulse rounded-full bg-white/10" />
+                                                <div className="h-10 animate-pulse rounded-xl bg-white/5" />
+                                                <div className="h-10 animate-pulse rounded-xl bg-lime-400/10" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </Motion.div>
+                            ) : fetchError ? (
+                                <Motion.div
+                                    key="error"
+                                    initial={{ opacity: 0, scale: 0.98 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="grid min-h-[440px] place-items-center rounded-[1.5rem] border border-dashed border-rose-400/30 bg-rose-400/5 p-8 text-center"
+                                >
+                                    <div>
+                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-400/15 text-rose-300">
+                                            <ExclamationTriangleIcon className="h-8 w-8" />
+                                        </div>
+                                        <h3 className="mt-5 text-2xl font-black">Courts could not be loaded</h3>
+                                        <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-6 text-slate-400">Check your connection and try again.</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => fetchCourts(filters)}
+                                            className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-lime px-5 text-sm font-black text-brand-navy-deep hover:bg-lime-300"
+                                        >
+                                            <ArrowPathIcon className="h-5 w-5" />
+                                            Retry
+                                        </button>
+                                    </div>
+                                </Motion.div>
+                            ) : courts.length > 0 ? (
+                                <Motion.div key="results" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                                    {courts.map((court, index) => {
+                                        const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
+                                        const amenities = court.amenities?.slice(0, 3) || [];
+
+                                        return (
+                                            <Motion.article
+                                                key={court._id}
+                                                layout
+                                                initial={{ opacity: 0, y: 14 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.04 }}
+                                                className="group relative grid overflow-hidden rounded-[1.5rem] border border-white/10 bg-brand-navy shadow-xl shadow-black/10 transition-all hover:border-sky-300/25 md:grid-cols-[250px_minmax(0,1fr)]"
+                                            >
+                                                <div className={`absolute inset-y-0 left-0 z-20 w-1 ${accent.line}`} aria-hidden />
+                                                <div className="relative min-h-56 overflow-hidden md:min-h-full">
+                                                    <img
+                                                        src={court.images?.[0] || COURT_IMAGE}
+                                                        alt={court.name}
+                                                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-brand-navy-deep/90 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-brand-navy/50" />
+                                                    {!court.images?.length && (
+                                                        <span className="absolute bottom-4 left-4 rounded-full border border-white/15 bg-brand-navy-deep/75 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-sky-100 backdrop-blur-md">
+                                                            Venue preview
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex min-w-0 flex-col p-5 sm:p-6">
+                                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div className="min-w-0">
+                                                            <span className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${accent.surface}`}>
+                                                                {formatSurface(court.surfaceType)}
+                                                            </span>
+                                                            <h3 className="mt-3 text-xl font-black leading-tight tracking-tight text-white sm:text-2xl">{court.name}</h3>
+                                                            <p className="mt-2 flex items-center gap-2 text-sm font-bold text-slate-300">
+                                                                <MapPinIcon className="h-4 w-4 shrink-0 text-brand-sky" />
+                                                                {court.location?.area || 'Area TBA'}, Lahore
+                                                            </p>
+                                                        </div>
+                                                        <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-200">
+                                                            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                                                            Available
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="mt-5 flex flex-wrap gap-2">
+                                                        {(amenities.length ? amenities : ['Indoor venue', 'Online booking']).map((amenity) => (
+                                                            <span key={amenity} className="rounded-lg bg-white/5 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-slate-300 ring-1 ring-white/10">
+                                                                {amenity}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="mt-auto flex flex-col gap-4 border-t border-white/10 pt-5 sm:flex-row sm:items-end sm:justify-between">
+                                                        <div>
+                                                            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Hourly rate</p>
+                                                            <p className="mt-1 text-2xl font-black text-brand-lime">
+                                                                <span className="mr-1 text-xs text-lime-200">Rs.</span>
+                                                                {court.pricePerHour?.toLocaleString?.() ?? court.pricePerHour}
+                                                            </p>
+                                                        </div>
+                                                        <Link
+                                                            to={`/courts/${court._id}`}
+                                                            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-sky px-5 text-sm font-black text-brand-navy-deep shadow-lg shadow-sky-500/10 transition-colors hover:bg-sky-300"
+                                                        >
+                                                            View court
+                                                            <ArrowRightIcon className="h-4 w-4" />
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            </Motion.article>
+                                        );
+                                    })}
+                                </Motion.div>
+                            ) : (
+                                <Motion.div
+                                    key="empty"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="relative grid min-h-[440px] place-items-center overflow-hidden rounded-[1.5rem] border border-dashed border-sky-400/25 p-8 text-center"
+                                >
+                                    <img src={COURT_IMAGE} alt="" className="absolute inset-0 h-full w-full object-cover opacity-15" aria-hidden />
+                                    <div className="absolute inset-0 bg-brand-navy-deep/85" />
+                                    <div className="relative">
+                                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-sky text-brand-navy-deep">
+                                            <MagnifyingGlassIcon className="h-8 w-8" />
+                                        </div>
+                                        <h3 className="mt-5 text-2xl font-black">No matching courts</h3>
+                                        <p className="mx-auto mt-2 max-w-md text-sm font-medium leading-6 text-slate-400">Try another area or playing surface to broaden the results.</p>
+                                        <button
+                                            type="button"
+                                            onClick={resetFilters}
+                                            className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-lime px-5 text-sm font-black text-brand-navy-deep hover:bg-lime-300"
+                                        >
+                                            <XMarkIcon className="h-5 w-5" />
+                                            Reset filters
+                                        </button>
+                                    </div>
+                                </Motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </main>
+            </div>
         </div>
     );
 };
