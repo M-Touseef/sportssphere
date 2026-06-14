@@ -1,124 +1,94 @@
 const IIntentResolver = require('../interfaces/IIntentResolver');
 
-/** @gradio/client is ESM-only — load via dynamic import from CommonJS */
-let gradioClientPromise = null;
-const loadGradioClient = () => {
-    if (!gradioClientPromise) {
-        gradioClientPromise = import('@gradio/client');
-    }
-    return gradioClientPromise;
-};
-
-const CONNECTION_TIMEOUT_MS = Number(process.env.RAG_CONNECTION_TIMEOUT_MS) || 4000;
 const RESPONSE_TIMEOUT_MS = Number(process.env.RAG_RESPONSE_TIMEOUT_MS) || 8000;
+const DEFAULT_SPACE_URL = 'https://sportssphere-chatbot.hf.space';
 
-const withTimeout = (promise, timeoutMs, message) => {
-    let timeoutId;
-    const timeout = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
-    });
+const parseGradioResult = (payload) => {
+    const lines = payload.split(/\r?\n/);
+    let eventName = '';
 
-    return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+    for (const line of lines) {
+        if (line.startsWith('event:')) {
+            eventName = line.slice(6).trim();
+            continue;
+        }
+
+        if (!line.startsWith('data:')) continue;
+        if (eventName === 'error') throw new Error('Hugging Face inference failed');
+        if (eventName !== 'complete') continue;
+
+        const data = JSON.parse(line.slice(5).trim());
+        const value = Array.isArray(data) ? data[0] : data;
+        if (typeof value === 'string') return value;
+        if (value?.response) return value.response;
+        if (value?.answer) return value.answer;
+        return JSON.stringify(value);
+    }
+
+    throw new Error('Hugging Face returned no completed response');
 };
 
-/**
- * RAGEngine - Retrieval-Augmented Generation Engine using Hugging Face
- *
- * Uses online Hugging Face RAG service instead of local knowledge base.
- * Provides intelligent responses for badminton-related queries.
- */
 class RAGEngine extends IIntentResolver {
     constructor() {
         super();
-        this.client = null;
-        this.ready = false;
-        // Hugging Face Space: https://huggingface.co/spaces/Sportssphere/chatbot
-        this.spaceId =
-            process.env.RAG_SPACE_ID ||
-            process.env.HF_CHATBOT_SPACE ||
-            'Sportssphere/chatbot';
-        this.connectionPromise = null;
+        this.baseUrl = (process.env.RAG_SPACE_URL || DEFAULT_SPACE_URL).replace(/\/+$/, '');
+        this.ready = true;
     }
 
-    /**
-     * Initialize Gradio client
-     */
-    async initClient() {
-        if (this.ready && this.client) return this.client;
-        if (this.connectionPromise) return this.connectionPromise;
-
-        this.connectionPromise = this.connectClient();
+    async request(message) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), RESPONSE_TIMEOUT_MS);
 
         try {
-            return await this.connectionPromise;
-        } catch (error) {
-            console.error('[RAGEngine] Failed to initialize Gradio client:', error.message);
-            this.ready = false;
-            this.client = null;
-            return null;
+            const startResponse = await fetch(`${this.baseUrl}/gradio_api/call/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: [message] }),
+                signal: controller.signal
+            });
+
+            if (!startResponse.ok) {
+                throw new Error(`Hugging Face request failed with ${startResponse.status}`);
+            }
+
+            const { event_id: eventId } = await startResponse.json();
+            if (!eventId) throw new Error('Hugging Face returned no event ID');
+
+            const resultResponse = await fetch(
+                `${this.baseUrl}/gradio_api/call/chat/${encodeURIComponent(eventId)}`,
+                { signal: controller.signal }
+            );
+
+            if (!resultResponse.ok) {
+                throw new Error(`Hugging Face result failed with ${resultResponse.status}`);
+            }
+
+            return parseGradioResult(await resultResponse.text());
         } finally {
-            this.connectionPromise = null;
+            clearTimeout(timeoutId);
         }
     }
 
-    async connectClient() {
-        const { Client } = await loadGradioClient();
-        const client = await withTimeout(
-            Client.connect(this.spaceId),
-            CONNECTION_TIMEOUT_MS,
-            'Hugging Face connection timed out'
-        );
-
-        this.client = client;
-        this.ready = true;
-        console.log(`[RAGEngine] Connected to Hugging Face Space: ${this.spaceId}`);
-        return client;
-    }
-
-    /**
-     * Resolve intent using RAG with Hugging Face endpoint
-     * @param {string} message - User's input message
-     * @param {Object} context - Context
-     * @returns {Promise<Object>} - Intent result with RAG response
-     */
-    async resolveIntent(message, context = {}) {
+    async resolveIntent(message) {
         try {
-            // Ensure client is initialized
-            if (!this.ready) {
-                await this.initClient();
-            }
-
-            if (!this.client) {
-                throw new Error('Gradio client not available');
-            }
-
-            // Call the /chatbot endpoint with query parameter
-            const result = await withTimeout(
-                this.client.predict('/chatbot', { query: message }),
-                RESPONSE_TIMEOUT_MS,
-                'Hugging Face response timed out'
-            );
-
-            // Extract response from result.data
-            const response = result.data && result.data.length > 0 ? result.data[0] : "I'm not sure how to respond to that.";
-            
+            const response = await this.request(message);
             return {
                 intentId: 'RAG_QUERY',
                 confidence: 0.9,
                 actionType: 'STATIC_RESPONSE',
-                response: response,
+                response,
                 source: 'rag',
                 retrievedContext: 'Hugging Face RAG Service',
                 processingTimeMs: 0
             };
         } catch (error) {
             console.error('[RAGEngine] Hugging Face error:', error.message);
-            // Fallback to basic response
             return {
                 intentId: 'RAG_FALLBACK',
                 confidence: 0.5,
                 actionType: 'STATIC_RESPONSE',
-                response: "I can help with badminton rules, techniques, and equipment. Could you be more specific?",
+                response: 'I can help with badminton rules, techniques, and equipment. Could you be more specific?',
+                source: 'rag',
                 retrievedContext: 'Fallback response',
                 processingTimeMs: 0
             };

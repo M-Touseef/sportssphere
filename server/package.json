@@ -20,7 +20,6 @@
   "author": "SportsSphere Team",
   "license": "MIT",
   "dependencies": {
-    "@gradio/client": "^1.19.1",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.9.0",

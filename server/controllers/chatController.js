@@ -107,6 +107,10 @@ exports.createConversation = async (req, res) => {
 // @route   POST /api/chat/conversations/:id/messages
 // @access  Private
 exports.sendMessage = async (req, res) => {
+    const requestStartedAt = Date.now();
+    const requestLabel = `[Chat ${req.params.id}]`;
+    console.log(`${requestLabel} Message request started`);
+
     try {
         const { message } = req.body;
 
@@ -195,6 +199,7 @@ exports.sendMessage = async (req, res) => {
                     aiMessage: aiMessageObj
                 }
             });
+            console.log(`${requestLabel} Completed in ${Date.now() - requestStartedAt}ms`);
 
         } catch (aiError) {
             console.error('[AI Error]:', aiError);
@@ -211,10 +216,11 @@ exports.sendMessage = async (req, res) => {
                     }
                 }
             });
+            console.log(`${requestLabel} Returned fallback in ${Date.now() - requestStartedAt}ms`);
         }
 
     } catch (error) {
-        console.error(error);
+        console.error(`${requestLabel} Failed after ${Date.now() - requestStartedAt}ms`, error);
         res.status(500).json({ error: 'Server error' });
     }
 };
