@@ -8,6 +8,16 @@ const RAGEngine = require('../chatbot/engines/RAGEngine');
 
 /** Rule intents that should not block database routing */
 const RULE_ONLY_INTENTS = new Set(['GREETING', 'PLATFORM_INFO']);
+const AI_RESPONSE_TIMEOUT_MS = Number(process.env.AI_RESPONSE_TIMEOUT_MS) || 10000;
+
+const withTimeout = (promise, timeoutMs) => {
+    let timeoutId;
+    const timeout = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('AI response timed out')), timeoutMs);
+    });
+
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+};
 
 /**
  * AIService - Hybrid chatbot orchestrator
@@ -26,17 +36,6 @@ class AIService {
         this.publicEngine = new PublicDataEngine();
         this.queryRouter = new QueryRouter();
         this.responseGenerator = new ResponseGenerator();
-    }
-
-    async ensureRAGEngine() {
-        const maxAttempts = 150;
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            if (this.ragEngine && (await this.ragEngine.isReady())) {
-                return this.ragEngine;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-        return this.ragEngine;
     }
 
     /**
@@ -114,14 +113,21 @@ class AIService {
     }
 
     async resolveRAG(message, context) {
-        const ragEngine = await this.ensureRAGEngine();
-        if (ragEngine) {
-            const result = await ragEngine.resolveIntent(message, context);
+        if (this.ragEngine) {
+            const result = await withTimeout(
+                this.ragEngine.resolveIntent(message, context),
+                AI_RESPONSE_TIMEOUT_MS
+            ).catch((error) => {
+                console.warn('[AIService] RAG fallback:', error.message);
+                return null;
+            });
+
             if (result) {
                 result.source = 'rag';
+                return result;
             }
-            return result;
         }
+
         return {
             intentId: 'RAG_FALLBACK',
             actionType: 'STATIC_RESPONSE',

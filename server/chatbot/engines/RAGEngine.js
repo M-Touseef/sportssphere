@@ -9,6 +9,18 @@ const loadGradioClient = () => {
     return gradioClientPromise;
 };
 
+const CONNECTION_TIMEOUT_MS = Number(process.env.RAG_CONNECTION_TIMEOUT_MS) || 4000;
+const RESPONSE_TIMEOUT_MS = Number(process.env.RAG_RESPONSE_TIMEOUT_MS) || 8000;
+
+const withTimeout = (promise, timeoutMs, message) => {
+    let timeoutId;
+    const timeout = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+    });
+
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+};
+
 /**
  * RAGEngine - Retrieval-Augmented Generation Engine using Hugging Face
  *
@@ -25,22 +37,42 @@ class RAGEngine extends IIntentResolver {
             process.env.RAG_SPACE_ID ||
             process.env.HF_CHATBOT_SPACE ||
             'Sportssphere/chatbot';
-        this.initClient();
+        this.connectionPromise = null;
     }
 
     /**
      * Initialize Gradio client
      */
     async initClient() {
+        if (this.ready && this.client) return this.client;
+        if (this.connectionPromise) return this.connectionPromise;
+
+        this.connectionPromise = this.connectClient();
+
         try {
-            const { Client } = await loadGradioClient();
-            this.client = await Client.connect(this.spaceId);
-            this.ready = true;
-            console.log(`[RAGEngine] Connected to Hugging Face Space: ${this.spaceId}`);
+            return await this.connectionPromise;
         } catch (error) {
             console.error('[RAGEngine] Failed to initialize Gradio client:', error.message);
             this.ready = false;
+            this.client = null;
+            return null;
+        } finally {
+            this.connectionPromise = null;
         }
+    }
+
+    async connectClient() {
+        const { Client } = await loadGradioClient();
+        const client = await withTimeout(
+            Client.connect(this.spaceId),
+            CONNECTION_TIMEOUT_MS,
+            'Hugging Face connection timed out'
+        );
+
+        this.client = client;
+        this.ready = true;
+        console.log(`[RAGEngine] Connected to Hugging Face Space: ${this.spaceId}`);
+        return client;
     }
 
     /**
@@ -61,9 +93,11 @@ class RAGEngine extends IIntentResolver {
             }
 
             // Call the /chatbot endpoint with query parameter
-            const result = await this.client.predict("/chatbot", {
-                query: message
-            });
+            const result = await withTimeout(
+                this.client.predict('/chatbot', { query: message }),
+                RESPONSE_TIMEOUT_MS,
+                'Hugging Face response timed out'
+            );
 
             // Extract response from result.data
             const response = result.data && result.data.length > 0 ? result.data[0] : "I'm not sure how to respond to that.";

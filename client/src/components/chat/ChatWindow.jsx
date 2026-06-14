@@ -111,7 +111,7 @@ export default function ChatWindow() {
         if (isOpen && isAuthenticated && !conversationId) {
             createConversation();
         }
-    }, [isOpen, isAuthenticated]);
+    }, [isOpen, isAuthenticated, conversationId]);
 
     const createConversation = async () => {
         try {
@@ -165,10 +165,15 @@ export default function ChatWindow() {
             }
         } catch (error) {
             console.error('Chat error:', error);
+            const serviceUnavailable =
+                error.response?.status === 503 ||
+                error.code === 'ERR_NETWORK';
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 sender: 'bot',
-                text: "Sorry, I couldn't send that. Please try again.",
+                text: serviceUnavailable
+                    ? 'The assistant service is waking up or temporarily unavailable. Please try again in a moment.'
+                    : "Sorry, I couldn't send that. Please try again.",
                 timestamp: new Date()
             }]);
         } finally {
