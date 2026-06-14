@@ -16,7 +16,7 @@ const messageSchema = new mongoose.Schema({
     },
     source: {
         type: String,
-        enum: ['rules', 'database', 'rag'],
+        enum: ['rules', 'database', 'rag', 'deepseek'],
         default: undefined
     }
 });

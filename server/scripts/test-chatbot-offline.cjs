@@ -5,6 +5,7 @@
 const QueryRouter = require('../chatbot/QueryRouter');
 const PersonalDataEngine = require('../chatbot/engines/PersonalDataEngine');
 const PublicDataEngine = require('../chatbot/engines/PublicDataEngine');
+const DeepSeekEngine = require('../chatbot/engines/DeepSeekEngine');
 const aiService = require('../services/aiService');
 
 let passed = 0;
@@ -88,6 +89,50 @@ async function main() {
 
     const denied = await aiService.generateResponse('Show another user bookings', { userId: userA });
     ok('AIService denies cross-user', /only access your own/i.test(denied.response));
+
+    const originalRagEngine = aiService.ragEngine;
+    const originalDeepSeekEngine = aiService.deepSeekEngine;
+    aiService.ragEngine = {
+        resolveIntent: async () => ({ intentId: 'RAG_FALLBACK', response: 'RAG unavailable', source: 'rag' })
+    };
+    aiService.deepSeekEngine = {
+        isConfigured: () => true,
+        resolveIntent: async () => ({
+            intentId: 'DEEPSEEK_QUERY',
+            response: 'DeepSeek fallback answer',
+            source: 'deepseek'
+        })
+    };
+    const deepSeekFallback = await aiService.generateResponse('How can I improve my smash?', {});
+    ok('AIService uses DeepSeek after RAG failure', deepSeekFallback.source === 'deepseek');
+    aiService.ragEngine = originalRagEngine;
+    aiService.deepSeekEngine = originalDeepSeekEngine;
+
+    const originalFetch = global.fetch;
+    const originalDeepSeekKey = process.env.DEEPSEEK_API_KEY;
+    let deepSeekRequest = null;
+    try {
+        process.env.DEEPSEEK_API_KEY = 'test-key';
+        global.fetch = async (url, options) => {
+            deepSeekRequest = { url, options, body: JSON.parse(options.body) };
+            return {
+                ok: true,
+                json: async () => ({ choices: [{ message: { content: 'Keep your grip relaxed.' } }] })
+            };
+        };
+
+        const deepSeekEngine = new DeepSeekEngine();
+        const deepSeekResult = await deepSeekEngine.resolveIntent('How can I improve my smash?');
+        ok('DeepSeek engine parses chat completion', deepSeekResult?.response === 'Keep your grip relaxed.');
+        ok('DeepSeek engine sends only the general question',
+            deepSeekRequest?.body?.messages?.[1]?.content === 'How can I improve my smash?');
+        ok('DeepSeek engine uses bearer authentication',
+            deepSeekRequest?.options?.headers?.Authorization === 'Bearer test-key');
+    } finally {
+        global.fetch = originalFetch;
+        if (originalDeepSeekKey === undefined) delete process.env.DEEPSEEK_API_KEY;
+        else process.env.DEEPSEEK_API_KEY = originalDeepSeekKey;
+    }
 
     console.log(`\n=== ${passed} passed, ${failed} failed ===`);
     process.exit(failed > 0 ? 1 : 0);

@@ -5,6 +5,7 @@ const PublicDataEngine = require('../chatbot/engines/PublicDataEngine');
 const QueryRouter = require('../chatbot/QueryRouter');
 const ResponseGenerator = require('../chatbot/ResponseGenerator');
 const RAGEngine = require('../chatbot/engines/RAGEngine');
+const DeepSeekEngine = require('../chatbot/engines/DeepSeekEngine');
 
 /** Rule intents that should not block database routing */
 const RULE_ONLY_INTENTS = new Set(['GREETING', 'PLATFORM_INFO']);
@@ -32,6 +33,7 @@ class AIService {
 
         this.ruleEngine = new RuleBasedEngine();
         this.ragEngine = new RAGEngine();
+        this.deepSeekEngine = new DeepSeekEngine();
         this.personalEngine = new PersonalDataEngine();
         this.publicEngine = new PublicDataEngine();
         this.queryRouter = new QueryRouter();
@@ -39,7 +41,7 @@ class AIService {
     }
 
     /**
-     * @returns {Promise<{ response: string, source: 'rules'|'database'|'rag' }>}
+     * @returns {Promise<{ response: string, source: 'rules'|'database'|'rag'|'deepseek' }>}
      */
     async generateResponse(message, context = {}) {
         try {
@@ -84,7 +86,14 @@ class AIService {
                 source = 'rag';
             }
 
-            if (result && (result.intentId === 'RAG_QUERY' || result.intentId === 'RAG_FALLBACK')) {
+            if (result && (result.intentId === 'RAG_QUERY' || result.intentId === 'DEEPSEEK_QUERY')) {
+                return {
+                    response: result.response || this.getDefaultFallback(),
+                    source: result.source || 'rag'
+                };
+            }
+
+            if (result?.intentId === 'RAG_FALLBACK') {
                 return {
                     response: result.response || this.getDefaultFallback(),
                     source: 'rag'
@@ -122,10 +131,22 @@ class AIService {
                 return null;
             });
 
-            if (result) {
+            if (result?.intentId === 'RAG_QUERY') {
                 result.source = 'rag';
                 return result;
             }
+        }
+
+        if (this.deepSeekEngine?.isConfigured()) {
+            const deepSeekResult = await withTimeout(
+                this.deepSeekEngine.resolveIntent(message),
+                AI_RESPONSE_TIMEOUT_MS
+            ).catch((error) => {
+                console.warn('[AIService] DeepSeek fallback:', error.message);
+                return null;
+            });
+
+            if (deepSeekResult) return deepSeekResult;
         }
 
         return {

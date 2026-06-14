@@ -213,6 +213,7 @@ const Chatbot = () => {
     const sourceLabel = (source) => {
         if (source === 'database') return 'Live data';
         if (source === 'rag') return 'Knowledge base';
+        if (source === 'deepseek') return 'AI fallback';
         if (source === 'rules') return 'Assistant';
         return null;
     };
@@ -415,6 +416,8 @@ const Chatbot = () => {
                                                     'text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full',
                                                     msg.source === 'database'
                                                         ? 'bg-emerald-50 text-emerald-700'
+                                                        : msg.source === 'deepseek'
+                                                            ? 'bg-sky-50 text-sky-700'
                                                         : msg.source === 'rag'
                                                             ? 'bg-violet-50 text-violet-700'
                                                             : 'bg-slate-100 text-slate-500'
