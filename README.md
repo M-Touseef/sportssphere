@@ -32,7 +32,7 @@ SportsSphere is a comprehensive web application designed to centralize badminton
 - **Rating System**: Rate and review completed coaching sessions ✅
 - **Tournament Management**: Full tournament system with registration, brackets, and leaderboards ✅
 - **Sparring Matchmaking**: Intelligent matching algorithm based on skill, location, and availability ✅
-- **AI Chatbot**: Context-aware badminton assistant with knowledge base ✅
+- **AI Chatbot**: DeepSeek-powered assistant with a Hugging Face RAG fallback ✅
 
 ### Coach Management System (Phase 3) ✅
 - **Coach Profiles**: Comprehensive profiles with specializations, certifications, and availability

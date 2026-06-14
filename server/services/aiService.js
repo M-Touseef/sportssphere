@@ -25,7 +25,8 @@ const withTimeout = (promise, timeoutMs) => {
  *
  * 1. Rules — greetings & platform intro
  * 2. Database — personal + public SportSphere data (MongoDB)
- * 3. RAG — badminton knowledge via Hugging Face Space (linked service)
+ * 3. DeepSeek — primary badminton knowledge provider
+ * 4. RAG — Hugging Face knowledge fallback
  */
 class AIService {
     constructor() {
@@ -78,12 +79,12 @@ class AIService {
                 if (result) {
                     source = result.source || 'database';
                 } else {
-                    result = await this.resolveRAG(message, context);
-                    source = 'rag';
+                    result = await this.resolveKnowledge(message, context);
+                    source = result?.source || 'deepseek';
                 }
             } else {
-                result = await this.resolveRAG(message, context);
-                source = 'rag';
+                result = await this.resolveKnowledge(message, context);
+                source = result?.source || 'deepseek';
             }
 
             if (result && (result.intentId === 'RAG_QUERY' || result.intentId === 'DEEPSEEK_QUERY')) {
@@ -121,32 +122,32 @@ class AIService {
         }
     }
 
-    async resolveRAG(message, context) {
-        if (this.ragEngine) {
-            const result = await withTimeout(
-                this.ragEngine.resolveIntent(message, context),
-                AI_RESPONSE_TIMEOUT_MS
-            ).catch((error) => {
-                console.warn('[AIService] RAG fallback:', error.message);
-                return null;
-            });
-
-            if (result?.intentId === 'RAG_QUERY') {
-                result.source = 'rag';
-                return result;
-            }
-        }
-
+    async resolveKnowledge(message, context) {
         if (this.deepSeekEngine?.isConfigured()) {
             const deepSeekResult = await withTimeout(
                 this.deepSeekEngine.resolveIntent(message),
                 AI_RESPONSE_TIMEOUT_MS
             ).catch((error) => {
-                console.warn('[AIService] DeepSeek fallback:', error.message);
+                console.warn('[AIService] DeepSeek failed:', error.message);
                 return null;
             });
 
-            if (deepSeekResult) return deepSeekResult;
+            if (deepSeekResult?.intentId === 'DEEPSEEK_QUERY') return deepSeekResult;
+        }
+
+        if (this.ragEngine) {
+            const ragResult = await withTimeout(
+                this.ragEngine.resolveIntent(message, context),
+                AI_RESPONSE_TIMEOUT_MS
+            ).catch((error) => {
+                console.warn('[AIService] RAG fallback failed:', error.message);
+                return null;
+            });
+
+            if (ragResult?.intentId === 'RAG_QUERY') {
+                ragResult.source = 'rag';
+                return ragResult;
+            }
         }
 
         return {

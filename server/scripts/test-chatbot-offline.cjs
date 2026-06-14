@@ -92,8 +92,12 @@ async function main() {
 
     const originalRagEngine = aiService.ragEngine;
     const originalDeepSeekEngine = aiService.deepSeekEngine;
+    let ragCalls = 0;
     aiService.ragEngine = {
-        resolveIntent: async () => ({ intentId: 'RAG_FALLBACK', response: 'RAG unavailable', source: 'rag' })
+        resolveIntent: async () => {
+            ragCalls++;
+            return { intentId: 'RAG_QUERY', response: 'RAG answer', source: 'rag' };
+        }
     };
     aiService.deepSeekEngine = {
         isConfigured: () => true,
@@ -103,8 +107,14 @@ async function main() {
             source: 'deepseek'
         })
     };
-    const deepSeekFallback = await aiService.generateResponse('How can I improve my smash?', {});
-    ok('AIService uses DeepSeek after RAG failure', deepSeekFallback.source === 'deepseek');
+    const deepSeekPrimary = await aiService.generateResponse('How can I improve my smash?', {});
+    ok('AIService uses DeepSeek as primary knowledge provider', deepSeekPrimary.source === 'deepseek');
+    ok('AIService skips RAG when DeepSeek succeeds', ragCalls === 0);
+
+    aiService.deepSeekEngine.resolveIntent = async () => null;
+    const ragFallback = await aiService.generateResponse('Explain badminton scoring rules', {});
+    ok('AIService uses RAG when DeepSeek fails', ragFallback.source === 'rag');
+    ok('AIService calls RAG after DeepSeek failure', ragCalls === 1);
     aiService.ragEngine = originalRagEngine;
     aiService.deepSeekEngine = originalDeepSeekEngine;
 

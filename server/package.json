@@ -9,6 +9,7 @@
     "migrate:lahore-areas": "node scripts/migrate-lahore-areas.cjs",
     "test": "node scripts/test-chatbot-offline.cjs",
     "test:chatbot": "node scripts/test-chatbot-offline.cjs",
+    "test:deepseek": "node scripts/test-deepseek.cjs",
     "test:chatbot:e2e": "node scripts/test-chatbot-scenarios.cjs"
   },
   "keywords": [
