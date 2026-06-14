@@ -5,7 +5,7 @@
 const QueryRouter = require('../chatbot/QueryRouter');
 const PersonalDataEngine = require('../chatbot/engines/PersonalDataEngine');
 const PublicDataEngine = require('../chatbot/engines/PublicDataEngine');
-const DeepSeekEngine = require('../chatbot/engines/DeepSeekEngine');
+const GeminiEngine = require('../chatbot/engines/GeminiEngine');
 const aiService = require('../services/aiService');
 
 let passed = 0;
@@ -91,7 +91,7 @@ async function main() {
     ok('AIService denies cross-user', /only access your own/i.test(denied.response));
 
     const originalRagEngine = aiService.ragEngine;
-    const originalDeepSeekEngine = aiService.deepSeekEngine;
+    const originalGeminiEngine = aiService.geminiEngine;
     let ragCalls = 0;
     aiService.ragEngine = {
         resolveIntent: async () => {
@@ -99,59 +99,57 @@ async function main() {
             return { intentId: 'RAG_QUERY', response: 'RAG answer', source: 'rag' };
         }
     };
-    aiService.deepSeekEngine = {
+    aiService.geminiEngine = {
         isConfigured: () => true,
         resolveIntent: async () => ({
-            intentId: 'DEEPSEEK_QUERY',
-            response: 'DeepSeek fallback answer',
-            source: 'deepseek'
+            intentId: 'GEMINI_QUERY',
+            response: 'Gemini answer',
+            source: 'gemini'
         })
     };
-    const deepSeekPrimary = await aiService.generateResponse('How can I improve my smash?', {});
-    ok('AIService uses DeepSeek as primary knowledge provider', deepSeekPrimary.source === 'deepseek');
-    ok('AIService skips RAG when DeepSeek succeeds', ragCalls === 0);
+    const geminiPrimary = await aiService.generateResponse('How can I improve my smash?', {});
+    ok('AIService uses Gemini as primary knowledge provider', geminiPrimary.source === 'gemini');
+    ok('AIService skips RAG when Gemini succeeds', ragCalls === 0);
 
-    aiService.deepSeekEngine.resolveIntent = async () => null;
+    aiService.geminiEngine.resolveIntent = async () => null;
     const ragFallback = await aiService.generateResponse('Explain badminton scoring rules', {});
-    ok('AIService uses RAG when DeepSeek fails', ragFallback.source === 'rag');
-    ok('AIService calls RAG after DeepSeek failure', ragCalls === 1);
+    ok('AIService uses RAG when Gemini fails', ragFallback.source === 'rag');
+    ok('AIService calls RAG after Gemini failure', ragCalls === 1);
     aiService.ragEngine = originalRagEngine;
-    aiService.deepSeekEngine = originalDeepSeekEngine;
+    aiService.geminiEngine = originalGeminiEngine;
 
     const originalFetch = global.fetch;
-    const originalDeepSeekKey = process.env.DEEPSEEK_API_KEY;
-    const originalDeepSeekModel = process.env.DEEPSEEK_MODEL;
-    let deepSeekRequest = null;
+    const originalGeminiKey = process.env.GEMINI_API_KEY;
+    const originalGeminiModel = process.env.GEMINI_MODEL;
+    let geminiRequest = null;
     try {
-        process.env.DEEPSEEK_API_KEY = 'test-key';
+        process.env.GEMINI_API_KEY = 'test-key';
+        delete process.env.GEMINI_MODEL;
         global.fetch = async (url, options) => {
-            deepSeekRequest = { url, options, body: JSON.parse(options.body) };
+            geminiRequest = { url, options, body: JSON.parse(options.body) };
             return {
                 ok: true,
-                json: async () => ({ choices: [{ message: { content: 'Keep your grip relaxed.' } }] })
+                json: async () => ({
+                    candidates: [{ content: { parts: [{ text: 'Keep your grip relaxed.' }] } }]
+                })
             };
         };
 
-        const deepSeekEngine = new DeepSeekEngine();
-        const deepSeekResult = await deepSeekEngine.resolveIntent('How can I improve my smash?');
-        ok('DeepSeek engine parses chat completion', deepSeekResult?.response === 'Keep your grip relaxed.');
-        ok('DeepSeek engine sends only the general question',
-            deepSeekRequest?.body?.messages?.[1]?.content === 'How can I improve my smash?');
-        ok('DeepSeek engine uses bearer authentication',
-            deepSeekRequest?.options?.headers?.Authorization === 'Bearer test-key');
-        ok('DeepSeek engine uses supported default model',
-            deepSeekRequest?.body?.model === 'deepseek-chat');
-
-        process.env.DEEPSEEK_MODEL = 'deepseek-v4-flash';
-        const aliasedDeepSeekEngine = new DeepSeekEngine();
-        ok('DeepSeek engine maps legacy invalid model',
-            aliasedDeepSeekEngine.getStatus().model === 'deepseek-chat');
+        const geminiEngine = new GeminiEngine();
+        const geminiResult = await geminiEngine.resolveIntent('How can I improve my smash?');
+        ok('Gemini engine parses generated content', geminiResult?.response === 'Keep your grip relaxed.');
+        ok('Gemini engine sends only the general question',
+            geminiRequest?.body?.contents?.[0]?.parts?.[0]?.text === 'How can I improve my smash?');
+        ok('Gemini engine uses API key header',
+            geminiRequest?.options?.headers?.['x-goog-api-key'] === 'test-key');
+        ok('Gemini engine uses supported default model',
+            geminiRequest?.url?.includes('/models/gemini-3.1-flash-lite:generateContent'));
     } finally {
         global.fetch = originalFetch;
-        if (originalDeepSeekKey === undefined) delete process.env.DEEPSEEK_API_KEY;
-        else process.env.DEEPSEEK_API_KEY = originalDeepSeekKey;
-        if (originalDeepSeekModel === undefined) delete process.env.DEEPSEEK_MODEL;
-        else process.env.DEEPSEEK_MODEL = originalDeepSeekModel;
+        if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
+        else process.env.GEMINI_API_KEY = originalGeminiKey;
+        if (originalGeminiModel === undefined) delete process.env.GEMINI_MODEL;
+        else process.env.GEMINI_MODEL = originalGeminiModel;
     }
 
     console.log(`\n=== ${passed} passed, ${failed} failed ===`);

@@ -32,7 +32,7 @@ SportsSphere is a comprehensive web application designed to centralize badminton
 - **Rating System**: Rate and review completed coaching sessions ✅
 - **Tournament Management**: Full tournament system with registration, brackets, and leaderboards ✅
 - **Sparring Matchmaking**: Intelligent matching algorithm based on skill, location, and availability ✅
-- **AI Chatbot**: DeepSeek-powered assistant with a Hugging Face RAG fallback ✅
+- **AI Chatbot**: Gemini-powered assistant with a Hugging Face RAG fallback ✅
 
 ### Coach Management System (Phase 3) ✅
 - **Coach Profiles**: Comprehensive profiles with specializations, certifications, and availability
@@ -207,9 +207,9 @@ VITE_AI_SERVICE_URL=http://localhost:5001
 PORT=5000
 MONGO_URI=mongodb://localhost:27017/sportssphere
 JWT_SECRET=your_secret_key
-DEEPSEEK_API_KEY=your_deepseek_api_key
-DEEPSEEK_MODEL=deepseek-chat
-DEEPSEEK_TIMEOUT_MS=10000
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.1-flash-lite
+GEMINI_TIMEOUT_MS=10000
 EMAIL_HOST=smtp.gmail.com
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASSWORD=your_password

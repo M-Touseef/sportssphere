@@ -5,7 +5,7 @@ const PublicDataEngine = require('../chatbot/engines/PublicDataEngine');
 const QueryRouter = require('../chatbot/QueryRouter');
 const ResponseGenerator = require('../chatbot/ResponseGenerator');
 const RAGEngine = require('../chatbot/engines/RAGEngine');
-const DeepSeekEngine = require('../chatbot/engines/DeepSeekEngine');
+const GeminiEngine = require('../chatbot/engines/GeminiEngine');
 
 /** Rule intents that should not block database routing */
 const RULE_ONLY_INTENTS = new Set(['GREETING', 'PLATFORM_INFO']);
@@ -25,7 +25,7 @@ const withTimeout = (promise, timeoutMs) => {
  *
  * 1. Rules — greetings & platform intro
  * 2. Database — personal + public SportSphere data (MongoDB)
- * 3. DeepSeek — primary badminton knowledge provider
+ * 3. Gemini - primary badminton knowledge provider
  * 4. RAG — Hugging Face knowledge fallback
  */
 class AIService {
@@ -34,7 +34,7 @@ class AIService {
 
         this.ruleEngine = new RuleBasedEngine();
         this.ragEngine = new RAGEngine();
-        this.deepSeekEngine = new DeepSeekEngine();
+        this.geminiEngine = new GeminiEngine();
         this.personalEngine = new PersonalDataEngine();
         this.publicEngine = new PublicDataEngine();
         this.queryRouter = new QueryRouter();
@@ -42,7 +42,7 @@ class AIService {
     }
 
     /**
-     * @returns {Promise<{ response: string, source: 'rules'|'database'|'rag'|'deepseek' }>}
+     * @returns {Promise<{ response: string, source: 'rules'|'database'|'rag'|'gemini' }>}
      */
     async generateResponse(message, context = {}) {
         try {
@@ -80,14 +80,14 @@ class AIService {
                     source = result.source || 'database';
                 } else {
                     result = await this.resolveKnowledge(message, context);
-                    source = result?.source || 'deepseek';
+                    source = result?.source || 'gemini';
                 }
             } else {
                 result = await this.resolveKnowledge(message, context);
-                source = result?.source || 'deepseek';
+                source = result?.source || 'gemini';
             }
 
-            if (result && (result.intentId === 'RAG_QUERY' || result.intentId === 'DEEPSEEK_QUERY')) {
+            if (result && (result.intentId === 'RAG_QUERY' || result.intentId === 'GEMINI_QUERY')) {
                 return {
                     response: result.response || this.getDefaultFallback(),
                     source: result.source || 'rag'
@@ -123,16 +123,16 @@ class AIService {
     }
 
     async resolveKnowledge(message, context) {
-        if (this.deepSeekEngine?.isConfigured()) {
-            const deepSeekResult = await withTimeout(
-                this.deepSeekEngine.resolveIntent(message),
+        if (this.geminiEngine?.isConfigured()) {
+            const geminiResult = await withTimeout(
+                this.geminiEngine.resolveIntent(message),
                 AI_RESPONSE_TIMEOUT_MS
             ).catch((error) => {
-                console.warn('[AIService] DeepSeek failed:', error.message);
+                console.warn('[AIService] Gemini failed:', error.message);
                 return null;
             });
 
-            if (deepSeekResult?.intentId === 'DEEPSEEK_QUERY') return deepSeekResult;
+            if (geminiResult?.intentId === 'GEMINI_QUERY') return geminiResult;
         }
 
         if (this.ragEngine) {
@@ -165,7 +165,7 @@ class AIService {
     getProviderStatus() {
         return {
             rag: { configured: Boolean(this.ragEngine) },
-            deepseek: this.deepSeekEngine?.getStatus() || { configured: false, model: null }
+            gemini: this.geminiEngine?.getStatus() || { configured: false, model: null }
         };
     }
 
