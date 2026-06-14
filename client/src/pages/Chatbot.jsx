@@ -18,6 +18,84 @@ import { motion, AnimatePresence } from 'framer-motion';
 const MotionAside = motion.aside;
 const MotionDiv = motion.div;
 
+const formatInlineText = (text) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+
+    return parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={index} className="font-bold text-slate-950">{part.slice(2, -2)}</strong>;
+        }
+        return part;
+    });
+};
+
+const AssistantMessage = ({ content }) => {
+    const lines = content
+        .replace(/\s+(?=#{1,3}\s)/g, '\n')
+        .replace(/\s+(?=(?:[-*]|\d+\.)\s)/g, '\n')
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean);
+
+    const blocks = [];
+    let list = [];
+    let listType = null;
+
+    const flushList = () => {
+        if (!list.length) return;
+        const ListTag = listType === 'ordered' ? 'ol' : 'ul';
+        blocks.push(
+            <ListTag
+                key={`list-${blocks.length}`}
+                className={twMerge(
+                    'space-y-2 pl-5 marker:font-bold marker:text-sky-600',
+                    listType === 'ordered' ? 'list-decimal' : 'list-disc'
+                )}
+            >
+                {list.map((item, index) => (
+                    <li key={index} className="pl-1 text-slate-700">{formatInlineText(item)}</li>
+                ))}
+            </ListTag>
+        );
+        list = [];
+        listType = null;
+    };
+
+    lines.forEach((line) => {
+        const heading = line.match(/^#{1,3}\s+(.+)$/);
+        const ordered = line.match(/^\d+\.\s+(.+)$/);
+        const unordered = line.match(/^[-*]\s+(.+)$/);
+
+        if (heading) {
+            flushList();
+            blocks.push(
+                <h3 key={`heading-${blocks.length}`} className="pt-1 text-sm font-extrabold text-slate-950">
+                    {formatInlineText(heading[1])}
+                </h3>
+            );
+            return;
+        }
+
+        if (ordered || unordered) {
+            const nextType = ordered ? 'ordered' : 'unordered';
+            if (list.length && listType !== nextType) flushList();
+            listType = nextType;
+            list.push((ordered || unordered)[1]);
+            return;
+        }
+
+        flushList();
+        blocks.push(
+            <p key={`paragraph-${blocks.length}`} className="text-slate-700">
+                {formatInlineText(line)}
+            </p>
+        );
+    });
+
+    flushList();
+    return <div className="space-y-3 leading-6">{blocks}</div>;
+};
+
 const Chatbot = () => {
     const [conversations, setConversations] = useState([]);
     const [activeConversation, setActiveConversation] = useState(null);
@@ -409,7 +487,9 @@ const Chatbot = () => {
                                                 ? "bg-indigo-600 text-white border-indigo-600 rounded-tr-none"
                                                 : "bg-white border-slate-100 text-slate-800 rounded-tl-none"
                                         )}>
-                                            {msg.content}
+                                            {msg.role === 'assistant'
+                                                ? <AssistantMessage content={msg.content} />
+                                                : msg.content}
                                         </div>
                                         <div className="px-1 flex items-center gap-2">
                                             {msg.role === 'assistant' && sourceLabel(msg.source) && (

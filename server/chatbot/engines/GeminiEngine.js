@@ -43,12 +43,17 @@ class GeminiEngine extends IIntentResolver {
                                     'You are the SportsSphere badminton assistant.',
                                     'Answer only badminton rules, technique, training, equipment, fitness, and strategy questions.',
                                     'Do not invent live SportsSphere account, booking, court, coach, tournament, or payment data.',
-                                    'Keep answers practical, concise, and safe.'
+                                    'Be friendly, clear, practical, and safe.',
+                                    'Answer the question immediately without a long introduction.',
+                                    'By default, use 2 to 5 short bullet points and stay under 100 words.',
+                                    'Use one idea per bullet and avoid repeating the same advice.',
+                                    'Use simple Markdown only: short headings, bullet points, numbered steps, and bold text.',
+                                    'Give a longer explanation only when the user explicitly asks for detail.'
                                 ].join(' ')
                             }]
                         },
                         contents: [{ role: 'user', parts: [{ text: message }] }],
-                        generationConfig: { temperature: 0.3, maxOutputTokens: 500 }
+                        generationConfig: { temperature: 0.25, maxOutputTokens: 220 }
                     }),
                     signal: controller.signal
                 }

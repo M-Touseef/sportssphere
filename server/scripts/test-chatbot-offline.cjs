@@ -144,6 +144,9 @@ async function main() {
             geminiRequest?.options?.headers?.['x-goog-api-key'] === 'test-key');
         ok('Gemini engine uses supported default model',
             geminiRequest?.url?.includes('/models/gemini-3.1-flash-lite:generateContent'));
+        ok('Gemini engine requests concise answers',
+            geminiRequest?.body?.generationConfig?.maxOutputTokens === 220 &&
+            geminiRequest?.body?.system_instruction?.parts?.[0]?.text?.includes('under 100 words'));
     } finally {
         global.fetch = originalFetch;
         if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
