@@ -6,6 +6,8 @@ const { dayFromDate, getBookingId, timesOverlap } = require('../utils/coachAvail
 const { ensureCoachProfile } = require('../utils/coachProfileUtils');
 const { LAHORE_CITY, normalizeArea } = require('../constants/lahoreAreas');
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // @desc    Create or update coach profile
 // @route   POST /api/coaches/profile
 // @access  Private (Coach only)
@@ -62,9 +64,9 @@ exports.getCoaches = async (req, res) => {
         }
 
         const userFilters = {};
-        const areaFilter = area || (city && city !== LAHORE_CITY ? city : '');
+        const areaFilter = String(area || (city && city !== LAHORE_CITY ? city : '')).trim();
         if (areaFilter) {
-            userFilters.area = normalizeArea(areaFilter);
+            userFilters.area = { $regex: `^${escapeRegex(areaFilter)}`, $options: 'i' };
         }
         if (skillLevel) {
             userFilters.skillLevel = skillLevel;
