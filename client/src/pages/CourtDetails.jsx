@@ -351,7 +351,7 @@ const CourtDetails = () => {
             : '—';
 
     return (
-        <div className="pb-16 max-w-3xl mx-auto">
+        <div className="mx-auto max-w-6xl pb-16">
             {/* Nav */}
             <div className="flex items-center justify-between gap-3 mb-5">
                 <Link
@@ -374,8 +374,8 @@ const CourtDetails = () => {
             </div>
 
             {/* Compact court header */}
-            <div className="flex gap-4 mb-6 rounded-2xl border border-amber-100 bg-white p-3 sm:p-4 shadow-sm">
-                <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-xl overflow-hidden bg-indigo-950">
+            <div className="mb-6 flex gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:items-center sm:p-5">
+                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-indigo-950 sm:h-28 sm:w-32">
                     {court.images?.[0] ? (
                         <img src={court.images[0]} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -385,12 +385,12 @@ const CourtDetails = () => {
                     )}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <h1 className="text-lg sm:text-xl font-black text-slate-900 leading-tight truncate">{court.name}</h1>
+                    <h1 className="text-xl font-black leading-tight text-slate-950 sm:text-2xl">{court.name}</h1>
                     <p className="text-xs font-bold text-slate-500 mt-1 flex items-center gap-1 truncate">
                         <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
                         {court.location?.area || 'Lahore'}
                     </p>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
                         <span className="text-[10px] font-bold uppercase bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md">
                             {formatSurface(court.surfaceType)}
                         </span>

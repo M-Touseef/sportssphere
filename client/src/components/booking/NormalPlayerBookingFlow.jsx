@@ -2,11 +2,15 @@ import { createElement, useCallback, useEffect, useMemo, useRef, useState } from
 import { useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 import {
+    ArrowRightIcon,
     BuildingOffice2Icon,
     CalendarDaysIcon,
     CheckCircleIcon,
     ClockIcon,
     CurrencyDollarIcon,
+    MapPinIcon,
+    ShieldCheckIcon,
+    SparklesIcon,
     UserGroupIcon
 } from '@heroicons/react/24/outline';
 import courtService from '../../services/courtService';
@@ -48,16 +52,16 @@ const ModeCard = ({ active, icon, title, description, badge, onClick }) => (
         type="button"
         onClick={onClick}
         className={twMerge(
-            'group relative overflow-hidden rounded-3xl border-2 p-5 text-left transition-all duration-200 sm:p-6',
+            'group relative min-h-40 overflow-hidden rounded-3xl border p-5 text-left transition-all duration-200 sm:p-6',
             active
                 ? 'border-indigo-950 bg-indigo-950 text-white shadow-xl shadow-indigo-950/20'
-                : 'border-amber-100 bg-white hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-lg'
+                : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg'
         )}
     >
         <div className="flex items-start gap-4">
             <span className={twMerge(
                 'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
-                active ? 'bg-amber-300 text-indigo-950' : 'bg-amber-50 text-indigo-950'
+                active ? 'bg-lime-300 text-indigo-950' : 'bg-sky-50 text-sky-800'
             )}>
                 {createElement(icon, { className: 'h-6 w-6' })}
             </span>
@@ -78,7 +82,11 @@ const ModeCard = ({ active, icon, title, description, badge, onClick }) => (
                 </p>
             </div>
         </div>
-        {active && <CheckCircleIcon className="absolute right-4 top-4 h-6 w-6 text-amber-300" />}
+        {active ? (
+            <CheckCircleIcon className="absolute right-4 top-4 h-6 w-6 text-lime-300" />
+        ) : (
+            <ArrowRightIcon className="absolute bottom-5 right-5 h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-sky-700" />
+        )}
     </button>
 );
 
@@ -241,16 +249,33 @@ export default function NormalPlayerBookingFlow({ court, courtId }) {
     };
 
     return (
-        <section className="mb-8 overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-br from-white via-white to-amber-50/50 shadow-[0_24px_70px_-32px_rgba(30,27,75,0.35)]">
-            <div className="border-b border-amber-100 bg-indigo-950 px-5 py-6 text-white sm:px-8">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-amber-300">Book this court</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">How would you like to play?</h2>
-                <p className="mt-2 max-w-2xl text-sm font-medium text-indigo-100">
-                    Choose a simple court reservation or add an available professional player to your session.
-                </p>
+        <section className="mb-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-100/70 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.32)]">
+            <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-sky-950 px-5 py-7 text-white sm:px-8 lg:px-10">
+                <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-sky-300">Complete your booking</p>
+                        <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Choose how you want to play</h2>
+                        <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-slate-300">
+                            Reserve the venue for your own game, or pair the court with an available professional player.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:flex">
+                        <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-sky-300">Location</p>
+                            <p className="mt-1 flex items-center gap-1.5 text-sm font-bold text-white">
+                                <MapPinIcon className="h-4 w-4" />
+                                {court.location?.area || 'Lahore'}
+                            </p>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-sky-300">Court rate</p>
+                            <p className="mt-1 text-sm font-black text-white">Rs.{Number(court.pricePerHour || 0).toLocaleString()}/hr</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div className="p-5 sm:p-8">
+            <div className="p-5 sm:p-8 lg:p-10">
                 <div className="grid gap-4 md:grid-cols-2">
                     <ModeCard
                         active={mode === 'court'}
@@ -270,14 +295,28 @@ export default function NormalPlayerBookingFlow({ court, courtId }) {
                 </div>
 
                 {!mode && (
-                    <div className="mt-6 rounded-2xl border border-dashed border-amber-200 bg-amber-50/70 px-5 py-6 text-center">
-                        <p className="text-sm font-bold text-amber-900">Select one of the booking options above to begin.</p>
+                    <div className="mt-6 grid gap-3 md:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <CalendarDaysIcon className="h-5 w-5 text-sky-700" />
+                            <p className="mt-3 text-sm font-black text-slate-900">Real-time availability</p>
+                            <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">See available court and player times before confirming.</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <ShieldCheckIcon className="h-5 w-5 text-emerald-700" />
+                            <p className="mt-3 text-sm font-black text-slate-900">Clear checkout</p>
+                            <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">Review the court fee and selected schedule before payment.</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <SparklesIcon className="h-5 w-5 text-indigo-700" />
+                            <p className="mt-3 text-sm font-black text-slate-900">Flexible play</p>
+                            <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">Book only the court or add a professional to your session.</p>
+                        </div>
                     </div>
                 )}
 
                 {mode === 'court' && (
-                    <div className="mt-7 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-                        <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+                    <div className="mt-7 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
                             <div className="flex items-center gap-3">
                                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-950 text-amber-200">
                                     <CalendarDaysIcon className="h-5 w-5" />
@@ -302,7 +341,7 @@ export default function NormalPlayerBookingFlow({ court, courtId }) {
                             </p>
                         </div>
 
-                        <div className="rounded-3xl border border-slate-200 bg-white p-5">
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
                             <div className="mb-4 flex items-center gap-3">
                                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-indigo-950">
                                     <ClockIcon className="h-5 w-5" />
@@ -355,8 +394,8 @@ export default function NormalPlayerBookingFlow({ court, courtId }) {
                 )}
 
                 {mode === 'pro' && (
-                    <div className="mt-7 grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-                        <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 lg:sticky lg:top-6">
+                    <div className="mt-7 grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+                        <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 xl:sticky xl:top-6">
                             <div className="flex items-center gap-3">
                                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-950 text-amber-200">
                                     <ClockIcon className="h-5 w-5" />
@@ -376,23 +415,30 @@ export default function NormalPlayerBookingFlow({ court, courtId }) {
                                     onSelect={setSelectedProSlot}
                                 />
                             </div>
-                            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                                <CurrencyDollarIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
-                                <p className="text-xs font-bold leading-relaxed text-amber-900">
-                                    The professional has 30 minutes to accept. After acceptance, payment includes Rs.{Number(court.pricePerHour || 0).toLocaleString()} court fee plus the selected professional's fee.
+                            <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50 p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-900">
+                                        <CurrencyDollarIcon className="h-5 w-5" /> Court fee
+                                    </span>
+                                    <span className="text-base font-black text-indigo-950">Rs.{Number(court.pricePerHour || 0).toLocaleString()}</span>
+                                </div>
+                                <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600">
+                                    The selected professional's fee is shown separately. They have 30 minutes to accept your request.
                                 </p>
                             </div>
                         </div>
 
-                        <ProSelectionList
-                            startTime={selectedProSlot?.time}
-                            area={court.location?.area}
-                            courtId={courtId}
-                            onSelect={sendProfessionalRequest}
-                            selecting={paymentLoading}
-                            actionLabel="Send 30-minute request"
-                            compact
-                        />
+                        <div className="flex min-h-[28rem] flex-col rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 [&>div]:flex-1">
+                            <ProSelectionList
+                                startTime={selectedProSlot?.time}
+                                area={court.location?.area}
+                                courtId={courtId}
+                                onSelect={sendProfessionalRequest}
+                                selecting={paymentLoading}
+                                actionLabel="Send 30-minute request"
+                                compact
+                            />
+                        </div>
                     </div>
                 )}
             </div>
