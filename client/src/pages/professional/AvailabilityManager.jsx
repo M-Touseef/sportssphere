@@ -137,15 +137,16 @@ const AvailabilityManager = () => {
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             {/* ── Gradient Header ─────────────────────────────── */}
-            <header className="relative bg-gradient-to-r from-indigo-600 to-amber-500 p-8 rounded-2xl shadow-lg text-white overflow-hidden">
+            <header className="relative bg-gradient-to-r from-slate-950 via-slate-900 to-sky-950 p-8 rounded-[2rem] border border-slate-800 shadow-xl shadow-slate-900/15 text-white overflow-hidden">
                 {/* Decorative shapes */}
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
                 <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
 
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight">Weekly Availability</h1>
-                        <p className="mt-1 text-sm opacity-90">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-200">Sparring schedule</p>
+                        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Weekly Availability</h1>
+                        <p className="mt-1 text-sm text-slate-300">
                             Set when you are free each week. Players choose the court when they send a request.
                         </p>
                     </div>
@@ -156,7 +157,7 @@ const AvailabilityManager = () => {
                         className={`inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg ${
                             showAddForm && !editingSlotId
                                 ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
-                                : 'bg-white text-indigo-700 hover:bg-indigo-50 shadow-indigo-200'
+                                : 'bg-lime-300 text-slate-950 hover:bg-lime-200 shadow-slate-950/20'
                         }`}
                     >
                         {showAddForm && !editingSlotId ? (
@@ -172,7 +173,7 @@ const AvailabilityManager = () => {
             </header>
 
             {/* ── Mini Day Overview ───────────────────────────── */}
-            <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-4 shadow-md border border-slate-100">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
                 <div className="grid grid-cols-7 gap-2">
                     {days.map(day => {
                         const count = slotsByDay[day.value] || 0;
@@ -181,13 +182,13 @@ const AvailabilityManager = () => {
                                 key={day.value}
                                 className={`text-center py-3 rounded-xl transition-all ${
                                     count > 0
-                                        ? 'bg-indigo-50 border border-indigo-100'
+                                        ? 'bg-sky-50 border border-sky-100'
                                         : 'bg-slate-50 border border-slate-100'
                                 }`}
                             >
                                 <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wide">{day.short}</span>
                                 <span className={`block text-lg font-extrabold mt-0.5 ${
-                                    count > 0 ? 'text-indigo-600' : 'text-slate-300'
+                                    count > 0 ? 'text-sky-700' : 'text-slate-300'
                                 }`}>
                                     {count}
                                 </span>
@@ -199,8 +200,8 @@ const AvailabilityManager = () => {
             </div>
 
             {/* ── Info Banner ─────────────────────────────────── */}
-            <div className="flex gap-3 p-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-amber-50 border border-indigo-100/60 text-sm text-indigo-900">
-                <InformationCircleIcon className="h-5 w-5 shrink-0 text-indigo-600 mt-0.5" />
+            <div className="flex gap-3 p-4 rounded-2xl bg-sky-50 border border-sky-100 text-sm text-sky-900">
+                <InformationCircleIcon className="h-5 w-5 shrink-0 text-sky-600 mt-0.5" />
                 <p className="font-medium leading-relaxed">
                     You only pick the day and time. The non-professional player selects the venue when booking a sparring session with you.
                 </p>
@@ -208,7 +209,7 @@ const AvailabilityManager = () => {
 
             {/* ── Add / Edit Form ─────────────────────────────── */}
             {showAddForm && (
-                <div className="bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-200 shadow-md p-6">
+                <div className="bg-white rounded-[1.75rem] border border-slate-200 shadow-[0_16px_45px_rgba(15,23,42,0.06)] p-6">
                     <div className="flex items-start justify-between gap-4 mb-6">
                         <div>
                             <h3 className="text-lg font-bold text-slate-900">
@@ -238,7 +239,7 @@ const AvailabilityManager = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Day of week</label>
                                 <select
                                     {...register('day', { required: 'Day is required' })}
-                                    className="block w-full rounded-xl border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm py-2.5 bg-white"
+                                    className="block w-full rounded-xl border-slate-300 focus:ring-sky-500 focus:border-sky-500 sm:text-sm py-2.5 bg-white"
                                 >
                                     {days.map(day => (
                                         <option key={day.value} value={day.value}>{day.label}</option>
@@ -284,7 +285,7 @@ const AvailabilityManager = () => {
                             </button>
                             <button
                                 type="submit"
-                                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200"
+                                className="px-6 py-2.5 bg-lime-300 text-slate-950 rounded-xl font-bold hover:bg-lime-200 transition-all shadow-md shadow-lime-100"
                             >
                                 {editingSlotId ? 'Save Changes' : 'Save Weekly Slot'}
                             </button>
@@ -294,14 +295,14 @@ const AvailabilityManager = () => {
             )}
 
             {/* ── Schedule Table ──────────────────────────────── */}
-            <div className="bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-100 shadow-md overflow-hidden">
+            <div className="bg-white rounded-[1.75rem] border border-slate-200 shadow-[0_16px_45px_rgba(15,23,42,0.06)] overflow-hidden">
                 <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
                     <div>
                         <h2 className="font-bold text-slate-900 text-lg">Your weekly schedule</h2>
                         <p className="text-xs text-slate-400 mt-0.5">{slots.length} slot{slots.length !== 1 ? 's' : ''} configured</p>
                     </div>
                     <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-sm">
-                        <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                        <CalendarIcon className="h-4 w-4 text-sky-600" />
                         Recurs every week
                     </div>
                 </div>
@@ -309,8 +310,8 @@ const AvailabilityManager = () => {
                 <div className="divide-y divide-slate-100">
                     {sortedSlots.length === 0 ? (
                         <div className="py-16 text-center">
-                            <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-amber-50 flex items-center justify-center mb-4 shadow-inner">
-                                <CalendarIcon className="h-7 w-7 text-indigo-400" />
+                            <div className="mx-auto h-14 w-14 rounded-2xl bg-sky-50 flex items-center justify-center mb-4 shadow-inner">
+                                <CalendarIcon className="h-7 w-7 text-sky-500" />
                             </div>
                             <h3 className="text-base font-bold text-slate-900">No availability slots yet</h3>
                             <p className="mt-1 text-sm text-slate-500">Click "Add Weekly Slot" to define when you're available.</p>
@@ -323,7 +324,7 @@ const AvailabilityManager = () => {
                             >
                                 <div className="flex items-center gap-4 flex-1">
                                     {/* Day badge */}
-                                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs uppercase shadow-md shadow-indigo-100 shrink-0">
+                                    <div className="h-12 w-12 rounded-xl bg-slate-950 flex items-center justify-center text-lime-200 font-bold text-xs uppercase shadow-md shadow-slate-200 shrink-0">
                                         {slot.day.slice(0, 3)}
                                     </div>
                                     <div>
@@ -338,7 +339,7 @@ const AvailabilityManager = () => {
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                                            <ClockIcon className="h-4 w-4 text-indigo-500 shrink-0" />
+                                            <ClockIcon className="h-4 w-4 text-sky-600 shrink-0" />
                                             <span className="font-medium">{slot.startTime}</span>
                                             <span className="text-slate-300">–</span>
                                             <span className="font-medium">{slot.endTime}</span>
@@ -353,7 +354,7 @@ const AvailabilityManager = () => {
                                     <button
                                         type="button"
                                         onClick={() => openEditSlot(slot)}
-                                        className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors rounded-xl"
+                                        className="p-2.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 transition-colors rounded-xl"
                                         title="Edit slot"
                                         aria-label="Edit slot"
                                     >

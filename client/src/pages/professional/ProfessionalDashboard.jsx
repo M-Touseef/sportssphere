@@ -284,7 +284,7 @@ const ProfessionalDashboard = () => {
                 <MetricCard icon={TrophyIcon} label="Active events" value={activeTournaments.length} detail="Tournament entries in motion" accent="bg-sky-500" />
                 <MetricCard icon={CalendarIcon} label="Court sessions" value={upcomingBookings.length} detail="Upcoming reservations" accent="bg-lime-400" />
                 <MetricCard icon={InboxIcon} label="Needs response" value={pendingRequests.length} detail="Open sparring requests" accent="bg-amber-400" />
-                <MetricCard icon={AcademicCapIcon} label="Player tier" value="PRO" detail={user?.verified ? 'Identity verified' : 'Verification pending'} accent="bg-violet-500" />
+                <MetricCard icon={AcademicCapIcon} label="Player tier" value="PRO" detail={user?.verified ? 'Identity verified' : 'Verification pending'} accent="bg-slate-950" />
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">

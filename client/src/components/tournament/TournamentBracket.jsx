@@ -22,12 +22,12 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
         >
             <div className={clsx(
                 "rounded-xl overflow-hidden border transition-all duration-200 shadow-sm",
-                isActionable ? "ring-2 ring-amber-300/80 border-amber-200" : "border-slate-200"
+                isActionable ? "ring-2 ring-lime-300/80 border-lime-300" : "border-slate-200"
             )}>
                 <div className="bg-slate-50 px-4 py-1.5 flex justify-between items-center border-b border-slate-100">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Match #{match.rawMatch?.matchNumber ?? match.matchNumber ?? matchIndex + 1}</span>
                     {isActionable && (
-                        <span className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">
+                        <span className="bg-slate-950 text-lime-200 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">
                             Score
                         </span>
                     )}
@@ -37,16 +37,16 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
                     {/* Player 1 */}
                     <div className={clsx(
                         "flex justify-between items-center px-4 py-3 border-b border-slate-50 transition-colors",
-                        p1Won ? "bg-indigo-50/50" : ""
+                        p1Won ? "bg-sky-50/60" : ""
                     )}>
                         <div className="flex items-center gap-3 overflow-hidden">
                             <div className={clsx(
                                 "w-1 h-8 rounded-full shrink-0",
-                                p1Won ? "bg-indigo-500" : "bg-slate-200"
+                                p1Won ? "bg-sky-500" : "bg-slate-200"
                             )}></div>
                             <span className={clsx(
                                 "truncate font-bold text-sm",
-                                !p1.name ? "text-slate-300 italic font-normal" : p1Won ? "text-indigo-900" : "text-slate-600"
+                                !p1.name ? "text-slate-300 italic font-normal" : p1Won ? "text-slate-950" : "text-slate-600"
                             )}>
                                 {p1.name || "TBD"}
                             </span>
@@ -63,16 +63,16 @@ const MatchCard = ({ match, roundIndex, matchIndex, totalRounds, onMatchClick, i
                     {/* Player 2 */}
                     <div className={clsx(
                         "flex justify-between items-center px-4 py-3 transition-colors",
-                        p2Won ? "bg-indigo-50/50" : ""
+                        p2Won ? "bg-sky-50/60" : ""
                     )}>
                         <div className="flex items-center gap-3 overflow-hidden">
                             <div className={clsx(
                                 "w-1 h-8 rounded-full shrink-0",
-                                p2Won ? "bg-indigo-500" : "bg-slate-200"
+                                p2Won ? "bg-sky-500" : "bg-slate-200"
                             )}></div>
                             <span className={clsx(
                                 "truncate font-bold text-sm",
-                                !p2.name ? "text-slate-300 italic font-normal" : p2Won ? "text-indigo-900" : "text-slate-600"
+                                !p2.name ? "text-slate-300 italic font-normal" : p2Won ? "text-slate-950" : "text-slate-600"
                             )}>
                                 {p2.name || "TBD"}
                             </span>
@@ -104,7 +104,7 @@ const SetScores = ({ scores, opponentScores, fallbackScore, participant, isMatch
             return (
                 <span className={clsx(
                     "font-mono font-bold text-lg",
-                    isMatchWinner ? "text-indigo-600" : "text-slate-300"
+                    isMatchWinner ? "text-sky-600" : "text-slate-300"
                 )}>
                     {fallbackScore}
                 </span>
@@ -128,8 +128,8 @@ const SetScores = ({ scores, opponentScores, fallbackScore, participant, isMatch
                         title={wonGame ? `Won game ${index + 1}` : `Lost game ${index + 1}`}
                         className={clsx(
                             "flex h-7 min-w-7 items-center justify-center rounded px-1.5 font-mono text-xs font-bold",
-                            wonGame ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500",
-                            isMatchWinner && !wonGame ? "ring-1 ring-indigo-200" : ""
+                            wonGame ? "bg-sky-600 text-white" : "bg-slate-100 text-slate-500",
+                            isMatchWinner && !wonGame ? "ring-1 ring-sky-200" : ""
                         )}
                     >
                         {score}
@@ -148,13 +148,13 @@ export default function TournamentBracket({ rounds, onMatchClick, isEditable }) 
     );
 
     return (
-        <div className="max-w-full overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory px-1 pb-4 pt-6 sm:px-4 sm:py-12 [scrollbar-width:thin] [scrollbar-color:rgb(251_191_36)_rgb(241_245_249)]">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory px-1 pb-4 pt-6 sm:px-4 sm:py-12 [scrollbar-width:thin] [scrollbar-color:rgb(14_165_233)_rgb(241_245_249)]">
             <div className="flex min-w-max gap-x-10 sm:gap-x-16">
                 {rounds.map((round, rIndex) => (
                     <section key={round.title || rIndex} className="relative flex flex-col snap-start">
                         {/* Round Title */}
-                        <div className="mb-6 text-center py-2 px-3 rounded-lg bg-indigo-950/5 border border-amber-100">
-                            <h3 className="font-bold text-[11px] uppercase tracking-wider text-indigo-950">
+                        <div className="mb-6 text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200">
+                            <h3 className="font-bold text-[11px] uppercase tracking-wider text-slate-950">
                                 {round.title}
                             </h3>
                         </div>

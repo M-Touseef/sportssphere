@@ -195,7 +195,7 @@ const TournamentBrackets = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center py-24">
-                <div className="h-12 w-12 border-4 border-amber-200 border-t-indigo-900 rounded-full animate-spin" />
+                <div className="h-12 w-12 border-4 border-sky-100 border-t-slate-950 rounded-full animate-spin" />
             </div>
         );
     }
@@ -204,7 +204,7 @@ const TournamentBrackets = () => {
         return (
             <div className="py-20 text-center">
                 <p className="font-bold text-slate-700">Tournament not found</p>
-                <Link to="/tournaments" className="text-indigo-800 font-bold text-sm mt-4 inline-block hover:underline">
+                <Link to="/tournaments" className="text-sky-700 font-bold text-sm mt-4 inline-block hover:underline">
                     Browse tournaments
                 </Link>
             </div>
@@ -220,35 +220,36 @@ const TournamentBrackets = () => {
             <header className="mb-6">
                 <Link
                     to={`/tournaments/${id}`}
-                    className="inline-flex items-center gap-2 text-sm font-bold text-indigo-900/70 hover:text-indigo-950 mb-4"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-950 mb-4"
                 >
                     <ArrowLeftIcon className="h-4 w-4" />
                     Tournament details
                 </Link>
-                <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-r from-indigo-950 to-indigo-900 px-5 sm:px-8 py-6 sm:py-7 text-white shadow-md">
+                <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-sky-950 px-5 sm:px-8 py-7 sm:py-9 text-white shadow-xl shadow-slate-900/15">
+                    <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-sky-500/20 blur-3xl" />
                     <div className="flex items-start gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-amber-400/20 border border-amber-300/30 flex items-center justify-center shrink-0">
-                            <TrophyIcon className="h-6 w-6 text-amber-300" />
+                        <div className="h-12 w-12 rounded-xl bg-lime-300/15 border border-lime-300/25 flex items-center justify-center shrink-0 relative">
+                            <TrophyIcon className="h-6 w-6 text-lime-300" />
                         </div>
                         <div className="min-w-0">
                             <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight truncate">
                                 {tournament.name}
                             </h1>
-                            <p className="text-sm text-indigo-200/90 font-medium mt-1">Draws & results</p>
+                            <p className="text-sm text-slate-300 font-medium mt-1">Draws and results</p>
                         </div>
                     </div>
                 </div>
             </header>
 
             {/* Controls */}
-            <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-4 sm:p-5 mb-6 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5 mb-6 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                     <div className="flex-1 min-w-0">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-amber-800/70 mb-1.5 block">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">
                             Category
                         </label>
                         <select
-                            className="w-full sm:max-w-xs h-11 px-4 rounded-xl border border-amber-100 bg-slate-50 font-bold text-sm text-slate-900 focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none"
+                            className="w-full sm:max-w-xs h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-sm text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none"
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
                         >
@@ -272,7 +273,7 @@ const TournamentBrackets = () => {
                                 className={twMerge(
                                     'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-bold transition-colors',
                                     activeTab === tab.id
-                                        ? 'bg-white text-indigo-950 shadow-sm border border-amber-100'
+                                        ? 'bg-white text-slate-950 shadow-sm border border-slate-200'
                                         : 'text-slate-500 hover:text-slate-800'
                                 )}
                             >
@@ -319,7 +320,7 @@ const TournamentBrackets = () => {
                                 return (
                                     <div
                                         key={match._id}
-                                        className="rounded-xl border border-slate-200 p-4 sm:p-5 hover:border-amber-200 transition-colors"
+                                        className="rounded-xl border border-slate-200 p-4 sm:p-5 hover:border-sky-200 transition-colors"
                                     >
                                         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                                             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -347,7 +348,7 @@ const TournamentBrackets = () => {
                                         </div>
 
                                         {winnerName && (
-                                            <div className="mt-4 inline-flex rounded-full bg-indigo-950 px-3 py-1 text-xs font-bold text-amber-100">
+                                            <div className="mt-4 inline-flex rounded-full bg-slate-950 px-3 py-1 text-xs font-bold text-lime-200">
                                                 Overall winner: {winnerName}
                                             </div>
                                         )}
@@ -356,7 +357,7 @@ const TournamentBrackets = () => {
                                             <div className="mt-4 flex justify-end">
                                                 <Button
                                                     onClick={() => openResultModal(match)}
-                                                    className="h-10 px-5 rounded-xl text-sm font-bold bg-indigo-950 text-amber-50 hover:bg-indigo-900"
+                                                    className="h-10 px-5 rounded-xl text-sm font-bold bg-slate-950 text-white hover:bg-slate-800"
                                                 >
                                                     Enter scores
                                                 </Button>
@@ -399,8 +400,8 @@ const TournamentBrackets = () => {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {leaderboard.map((entry) => (
-                                        <tr key={entry.rank} className="hover:bg-amber-50/30">
-                                            <td className="px-5 py-4 font-black text-indigo-950">{entry.rank}</td>
+                                        <tr key={entry.rank} className="hover:bg-sky-50/40">
+                                            <td className="px-5 py-4 font-black text-slate-950">{entry.rank}</td>
                                             <td className="px-5 py-4 font-bold text-slate-800">
                                                 {entry.registration.player?.name || entry.registration.teamName}
                                             </td>
@@ -425,7 +426,7 @@ const TournamentBrackets = () => {
 
             {resultModal.open && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl border border-amber-100 p-6 sm:p-8 max-w-lg w-full shadow-xl">
+                    <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 max-w-lg w-full shadow-xl">
                         <h3 className="text-xl font-black text-slate-900 mb-1">Match scores</h3>
                         <p className="text-sm text-slate-500 mb-6">Enter up to three games. A match is best of 3 games to 21.</p>
 
@@ -452,7 +453,7 @@ const TournamentBrackets = () => {
                             </Button>
                             <Button
                                 onClick={submitMatchResult}
-                                className="flex-[2] h-11 rounded-xl font-bold bg-indigo-950 text-amber-50"
+                                className="flex-[2] h-11 rounded-xl font-bold bg-slate-950 text-white hover:bg-slate-800"
                             >
                                 Save result
                             </Button>

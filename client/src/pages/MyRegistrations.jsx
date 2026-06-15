@@ -42,8 +42,8 @@ const REG_STATUS = {
     },
     confirmed: {
         label: 'Confirmed',
-        badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        stripe: 'from-emerald-500 to-teal-600'
+        badge: 'bg-lime-100 text-lime-800 border-lime-200',
+        stripe: 'from-lime-400 to-sky-500'
     },
     withdrawn: {
         label: 'Withdrawn',
@@ -52,13 +52,13 @@ const REG_STATUS = {
     },
     completed: {
         label: 'Completed',
-        badge: 'bg-indigo-100 text-indigo-900 border-indigo-200',
-        stripe: 'from-indigo-600 to-violet-700'
+        badge: 'bg-slate-100 text-slate-700 border-slate-200',
+        stripe: 'from-slate-600 to-slate-900'
     }
 };
 
 const PAY_STATUS = {
-    paid: { label: 'Paid', badge: 'bg-emerald-600/95 text-white border-emerald-400/40' },
+    paid: { label: 'Paid', badge: 'bg-lime-300 text-slate-950 border-lime-200' },
     pending: { label: 'Payment due', badge: 'bg-amber-500/95 text-white border-amber-300/40' },
     failed: { label: 'Failed', badge: 'bg-rose-600/95 text-white border-rose-300/40' },
     refunded: { label: 'Refunded', badge: 'bg-slate-600/90 text-white border-slate-400/30' }
@@ -130,26 +130,26 @@ const MyRegistrations = () => {
     return (
         <div className="pb-24">
             {/* Hero */}
-            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-amber-200/60 shadow-[0_24px_70px_-28px_rgba(30,27,75,0.4)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900" />
-                <div className="absolute -top-20 -right-10 h-64 w-64 rounded-full bg-amber-400/20 blur-3xl" />
-                <div className="absolute -bottom-16 -left-8 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl" />
+            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-slate-800 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.55)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950" />
+                <div className="absolute -top-20 -right-10 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl" />
+                <div className="absolute -bottom-16 -left-8 h-56 w-56 rounded-full bg-lime-300/10 blur-3xl" />
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23fbbf24\' fill-opacity=\'0.04\'%3E%3Cpath d=\'M20 20h20v20H20V20zm-20 0h20v20H0V20z\'/%3E%3C/g%3E%3C/svg%3E')]" />
 
                 <div className="relative px-6 sm:px-10 lg:px-12 py-10 sm:py-14">
                     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                         <div className="max-w-2xl">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/15 backdrop-blur-md border border-amber-300/30 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-100 mb-5">
-                                <TrophyIcon className="h-4 w-4 text-amber-300" />
+                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-100 mb-5">
+                                <TrophyIcon className="h-4 w-4 text-lime-300" />
                                 Your entries
                             </div>
                             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.1]">
                                 Tournament
-                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-300">
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-200 to-lime-300">
                                     registrations
                                 </span>
                             </h1>
-                            <p className="mt-4 text-base sm:text-lg text-indigo-100/85 font-medium leading-relaxed max-w-xl">
+                            <p className="mt-4 text-base sm:text-lg text-slate-300 font-medium leading-relaxed max-w-xl">
                                 Track entry status, venue details, and complete fees for events you have joined.
                             </p>
                         </div>
@@ -157,7 +157,7 @@ const MyRegistrations = () => {
                         {!loading && (
                             <div className="flex flex-wrap gap-3 lg:justify-end">
                                 <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 px-5 py-4 min-w-[6.5rem]">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100/70">Entries</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Entries</p>
                                     <p className="text-2xl font-black text-white mt-1">{stats.total}</p>
                                 </div>
                                 <div className="rounded-2xl bg-emerald-500/20 backdrop-blur-md border border-emerald-300/25 px-5 py-4 min-w-[6.5rem]">
@@ -183,9 +183,9 @@ const MyRegistrations = () => {
                 <Motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-16 sm:py-20 rounded-[2rem] border border-amber-100/80 bg-gradient-to-br from-amber-50/80 via-white to-indigo-50/40 shadow-[0_20px_50px_-24px_rgba(30,27,75,0.12)]"
+                    className="text-center py-16 sm:py-20 rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50/50 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.14)]"
                 >
-                    <div className="mx-auto h-20 w-20 rounded-2xl bg-indigo-950 flex items-center justify-center text-amber-300 shadow-lg shadow-indigo-200/50 mb-6">
+                    <div className="mx-auto h-20 w-20 rounded-2xl bg-slate-950 flex items-center justify-center text-lime-300 shadow-lg shadow-slate-200 mb-6">
                         <TrophyIcon className="h-10 w-10" />
                     </div>
                     <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">No entries yet</h3>
@@ -193,7 +193,7 @@ const MyRegistrations = () => {
                         Browse upcoming championships and register for your category to see them here.
                     </p>
                     <Link to="/tournaments" className="inline-block mt-8">
-                        <Button className="px-10 h-14 font-bold rounded-2xl bg-indigo-950 hover:bg-indigo-900 text-amber-50 shadow-lg shadow-indigo-900/20">
+                        <Button className="px-10 h-14 font-bold rounded-2xl bg-slate-950 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20">
                             Browse tournaments
                             <ArrowRightIcon className="h-5 w-5 ml-2 inline" />
                         </Button>
@@ -215,7 +215,7 @@ const MyRegistrations = () => {
                                     initial={{ opacity: 0, y: 16 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="group relative bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-amber-100/90 shadow-[0_16px_48px_-20px_rgba(30,27,75,0.15)] overflow-hidden hover:shadow-[0_24px_56px_-20px_rgba(30,27,75,0.22)] hover:border-amber-200/90 transition-all duration-300"
+                                    className="group relative bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-slate-200 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.15)] overflow-hidden hover:shadow-[0_24px_56px_-20px_rgba(14,116,144,0.2)] hover:border-sky-200 transition-all duration-300"
                                 >
                                     <div
                                         className={twMerge(
@@ -225,18 +225,18 @@ const MyRegistrations = () => {
                                     />
 
                                     {/* Card header */}
-                                    <div className="relative px-6 sm:px-8 pt-7 pb-5 border-b border-amber-50/80 bg-gradient-to-br from-slate-50/50 to-amber-50/30">
+                                    <div className="relative px-6 sm:px-8 pt-7 pb-5 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-sky-50/30">
                                         <div className="flex items-start justify-between gap-4 pl-2">
                                             <div className="flex items-start gap-4 min-w-0 flex-1">
-                                                <div className="h-12 w-12 shrink-0 rounded-xl bg-indigo-950 flex items-center justify-center text-amber-300 shadow-md border border-indigo-800">
+                                                <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-950 flex items-center justify-center text-lime-300 shadow-md border border-slate-800">
                                                     <TrophyIcon className="h-6 w-6" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight truncate group-hover:text-indigo-950 transition-colors">
+                                                    <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight truncate group-hover:text-sky-700 transition-colors">
                                                         {reg.tournament?.name || 'Tournament'}
                                                     </h3>
-                                                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-bold text-amber-800/90">
-                                                        <SparklesIcon className="h-4 w-4 text-amber-600 shrink-0" />
+                                                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-bold text-sky-800">
+                                                        <SparklesIcon className="h-4 w-4 text-sky-600 shrink-0" />
                                                         {formatCategory(reg.category)}
                                                     </p>
                                                 </div>
@@ -264,27 +264,27 @@ const MyRegistrations = () => {
 
                                     {/* Details */}
                                     <div className="px-6 sm:px-8 py-6 space-y-3 pl-8">
-                                        <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-slate-50 to-amber-50/50 border border-amber-100/60 px-4 py-3">
-                                            <CalendarIcon className="h-5 w-5 text-indigo-800 shrink-0" />
+                                        <div className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+                                            <CalendarIcon className="h-5 w-5 text-sky-700 shrink-0" />
                                             <div>
-                                                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/60">Event date</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Event date</p>
                                                 <p className="text-sm font-bold text-slate-900">{formatDate(reg.tournament?.startDate)}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-slate-50 to-amber-50/50 border border-amber-100/60 px-4 py-3">
-                                            <MapPinIcon className="h-5 w-5 text-indigo-800 shrink-0" />
+                                        <div className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+                                            <MapPinIcon className="h-5 w-5 text-sky-700 shrink-0" />
                                             <div className="min-w-0">
-                                                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/60">Venue</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Venue</p>
                                                 <p className="text-sm font-bold text-slate-900 truncate">
                                                     {[reg.tournament?.venue, reg.tournament?.city].filter(Boolean).join(', ') || 'TBA'}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-indigo-950/5 to-amber-50 border border-indigo-100/50 px-4 py-3">
+                                        <div className="flex items-center justify-between gap-3 rounded-xl bg-sky-50 border border-sky-100 px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <BanknotesIcon className="h-5 w-5 text-amber-700 shrink-0" />
+                                                <BanknotesIcon className="h-5 w-5 text-sky-700 shrink-0" />
                                                 <div>
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/60">Entry fee</p>
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Entry fee</p>
                                                     <p className="text-lg font-black text-slate-900 tracking-tight">
                                                         Rs. {reg.paymentAmount?.toLocaleString?.() ?? reg.paymentAmount ?? '—'}
                                                     </p>
@@ -310,7 +310,7 @@ const MyRegistrations = () => {
                                         {tournamentId && (
                                             <Link
                                                 to={`/tournaments/${tournamentId}`}
-                                                className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-800 text-sm font-bold hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-950 transition-all"
+                                                className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-slate-200 bg-white text-slate-800 text-sm font-bold hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 transition-all"
                                             >
                                                 View details
                                                 <ChevronRightIcon className="h-4 w-4" />
@@ -321,7 +321,7 @@ const MyRegistrations = () => {
                                                 type="button"
                                                 disabled={payingId === reg._id}
                                                 onClick={() => handlePay(reg._id)}
-                                                className="flex-1 py-3 px-4 rounded-xl bg-indigo-950 text-amber-50 text-sm font-bold hover:bg-indigo-900 disabled:opacity-60 shadow-lg shadow-indigo-900/20 transition-all border-b-4 border-indigo-800 active:border-b-0 active:translate-y-0.5"
+                                                className="flex-1 py-3 px-4 rounded-xl bg-slate-950 text-white text-sm font-bold hover:bg-slate-800 disabled:opacity-60 shadow-lg shadow-slate-900/20 transition-all border-b-4 border-slate-800 active:border-b-0 active:translate-y-0.5"
                                                 title={getPayButtonHint(mockMode)}
                                             >
                                                 {payingId === reg._id ? 'Processing…' : getPayButtonLabel(mockMode)}
@@ -330,7 +330,7 @@ const MyRegistrations = () => {
                                             tournamentId && (
                                                 <Link
                                                     to={`/tournaments/${tournamentId}/brackets`}
-                                                    className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-indigo-950 text-sm font-bold hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-200/50 transition-all border-b-4 border-amber-700 active:border-b-0"
+                                                    className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-lime-300 text-slate-950 text-sm font-bold hover:bg-lime-200 shadow-lg shadow-lime-100 transition-all border-b-4 border-lime-500 active:border-b-0"
                                                 >
                                                     View draws
                                                     <ChevronRightIcon className="h-4 w-4" />

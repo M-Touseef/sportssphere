@@ -15,6 +15,7 @@ import {
 import { twMerge } from 'tailwind-merge';
 import courtService from '../../services/courtService';
 import UserAvatar from '../../components/ui/UserAvatar';
+import OrganizerPageHeader from '../../components/organizer/OrganizerPageHeader';
 
 const money = (amount = 0) => `Rs. ${Number(amount || 0).toLocaleString()}`;
 const titleCase = (value = '') => value.replace(/_/g, ' ');
@@ -82,36 +83,21 @@ export default function OrganizerCourtDetails() {
     }
 
     return (
-        <div className="mx-auto max-w-7xl space-y-8 pb-20 animate-enter">
-            <header className="relative overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl">
-                {court.images?.[0] && (
-                    <img src={court.images[0]} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+        <div className="mx-auto max-w-[1280px] space-y-6 pb-10">
+            <OrganizerPageHeader
+                eyebrow="Venue analytics"
+                title={court.name}
+                description="Review booking performance, tournament activity, registrations, and revenue for this venue."
+                icon={ChartBarIcon}
+                actions={(
+                    <>
+                        <Link to="/org/courts" className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-bold text-white hover:bg-white/10"><ArrowLeftIcon className="h-4 w-4" /> My courts</Link>
+                        <Link to={`/org/courts/${court._id}/edit`} className="inline-flex items-center gap-2 rounded-xl bg-lime-300 px-5 py-3 text-sm font-extrabold text-slate-950 hover:bg-lime-200"><PencilSquareIcon className="h-5 w-5" /> Edit court</Link>
+                    </>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-indigo-950/90 to-slate-950/70" />
-                <div className="relative z-10 p-6 sm:p-8">
-                    <Link to="/org/courts" className="inline-flex items-center gap-2 text-sm font-bold text-amber-100/90 hover:text-amber-100">
-                        <ArrowLeftIcon className="h-4 w-4" />
-                        My Courts
-                    </Link>
-                    <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-200">Court details</p>
-                            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{court.name}</h1>
-                            <p className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-200">
-                                <MapPinIcon className="h-4 w-4 text-amber-300" />
-                                {court.location?.address}, {court.location?.area || 'Lahore'}, Lahore
-                            </p>
-                        </div>
-                        <Link
-                            to={`/org/courts/${court._id}/edit`}
-                            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 text-sm font-bold text-indigo-950 shadow-lg hover:bg-amber-300"
-                        >
-                            <PencilSquareIcon className="h-5 w-5" />
-                            Edit Court
-                        </Link>
-                    </div>
-                </div>
-            </header>
+            >
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-sky-100"><MapPinIcon className="h-3.5 w-3.5" />{court.location?.address}, {court.location?.area || 'Lahore'}, Lahore</span>
+            </OrganizerPageHeader>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <Metric label="Bookings" value={stats.bookings} icon={CalendarDaysIcon} />
@@ -121,8 +107,9 @@ export default function OrganizerCourtDetails() {
                 <Metric label="Total Revenue" value={money(totalRevenue)} icon={ChartBarIcon} strong />
             </div>
 
-            <section className="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">
-                    <h2 className="text-lg font-extrabold text-slate-900">Tournament Activity</h2>
+            <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Hosted events</p>
+                    <h2 className="mt-1 text-lg font-extrabold text-slate-900">Tournament activity</h2>
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {tournaments.length ? tournaments.slice(0, 4).map((tournament) => (
                             <div key={tournament._id} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
@@ -131,7 +118,7 @@ export default function OrganizerCourtDetails() {
                                         <p className="font-bold text-slate-900">{tournament.name}</p>
                                         <p className="mt-1 text-xs font-medium text-slate-500">{formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}</p>
                                     </div>
-                                    <TrophyIcon className="h-5 w-5 text-amber-600" />
+                                    <TrophyIcon className="h-5 w-5 text-sky-600" />
                                 </div>
                                 <span className={twMerge('mt-3 inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold capitalize', badgeClass(tournament.status))}>
                                     {titleCase(tournament.status)}
@@ -149,7 +136,7 @@ export default function OrganizerCourtDetails() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {bookings.map((booking) => (
-                                <tr key={booking._id} className="hover:bg-amber-50/30">
+                                <tr key={booking._id} className="hover:bg-sky-50/40">
                                     <td className="px-5 py-4">
                                         <div className="flex items-center gap-3">
                                             <UserAvatar user={booking.user} className="h-10 w-10 rounded-xl text-xs" fallbackClassName="text-xs" />
@@ -163,7 +150,7 @@ export default function OrganizerCourtDetails() {
                                     <td className="px-5 py-4 capitalize text-slate-600">{titleCase(booking.purpose)}</td>
                                     <td className="px-5 py-4"><span className={twMerge('rounded-full border px-2.5 py-1 text-xs font-bold capitalize', badgeClass(booking.status))}>{titleCase(booking.status)}</span></td>
                                     <td className="px-5 py-4"><span className={twMerge('rounded-full border px-2.5 py-1 text-xs font-bold capitalize', badgeClass(booking.paymentStatus))}>{booking.paymentStatus}</span></td>
-                                    <td className="px-5 py-4 text-right font-black text-indigo-950">{money(booking.totalPrice)}</td>
+                                    <td className="px-5 py-4 text-right font-black text-slate-950">{money(booking.totalPrice)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -179,13 +166,13 @@ export default function OrganizerCourtDetails() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {registrations.map((registration) => (
-                                <tr key={registration._id} className="hover:bg-amber-50/30">
+                                <tr key={registration._id} className="hover:bg-sky-50/40">
                                     <td className="px-5 py-4 font-bold text-slate-900">{registration.tournament?.name}</td>
                                     <td className="px-5 py-4 text-slate-600">{playerName(registration)}</td>
                                     <td className="px-5 py-4 capitalize text-slate-600">{titleCase(registration.category)}</td>
                                     <td className="px-5 py-4"><span className={twMerge('rounded-full border px-2.5 py-1 text-xs font-bold capitalize', badgeClass(registration.status))}>{registration.status}</span></td>
                                     <td className="px-5 py-4"><span className={twMerge('rounded-full border px-2.5 py-1 text-xs font-bold capitalize', badgeClass(registration.paymentStatus))}>{registration.paymentStatus}</span></td>
-                                    <td className="px-5 py-4 text-right font-black text-indigo-950">{money(registration.paymentAmount)}</td>
+                                    <td className="px-5 py-4 text-right font-black text-slate-950">{money(registration.paymentAmount)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -198,9 +185,9 @@ export default function OrganizerCourtDetails() {
 
 function Metric({ label, value = 0, icon, strong = false }) {
     return (
-        <div className={twMerge('rounded-3xl border p-5 shadow-sm', strong ? 'border-indigo-200 bg-indigo-950 text-white' : 'border-amber-100 bg-white')}>
-            {createElement(icon, { className: twMerge('h-6 w-6', strong ? 'text-amber-300' : 'text-indigo-700') })}
-            <p className={twMerge('mt-4 text-[10px] font-bold uppercase tracking-wider', strong ? 'text-indigo-100' : 'text-slate-500')}>{label}</p>
+        <div className={twMerge('rounded-2xl border p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]', strong ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white')}>
+            {createElement(icon, { className: twMerge('h-6 w-6', strong ? 'text-lime-300' : 'text-sky-700') })}
+            <p className={twMerge('mt-4 text-[10px] font-bold uppercase tracking-wider', strong ? 'text-slate-300' : 'text-slate-500')}>{label}</p>
             <p className="mt-1 text-2xl font-black">{value || 0}</p>
         </div>
     );
@@ -208,7 +195,7 @@ function Metric({ label, value = 0, icon, strong = false }) {
 
 function LogTable({ title, subtitle, children }) {
     return (
-        <section className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.05)]">
             <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
                 <h2 className="text-lg font-extrabold text-slate-900">{title}</h2>
                 <p className="mt-1 text-sm text-slate-500">{subtitle}</p>

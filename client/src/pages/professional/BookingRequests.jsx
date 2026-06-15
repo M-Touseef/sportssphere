@@ -54,15 +54,16 @@ const BookingRequests = () => {
     return (
         <div className="max-w-5xl mx-auto space-y-8">
             {/* ── Gradient Header ─────────────────────────────── */}
-            <header className="relative bg-gradient-to-r from-indigo-600 to-amber-500 p-8 rounded-2xl shadow-lg text-white overflow-hidden">
+            <header className="relative bg-gradient-to-r from-slate-950 via-slate-900 to-sky-950 p-8 rounded-[2rem] border border-slate-800 shadow-xl shadow-slate-900/15 text-white overflow-hidden">
                 {/* Decorative circles */}
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
                 <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
 
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight">Booking Requests</h1>
-                        <p className="mt-1 text-sm opacity-90">Manage incoming sparring session requests from players.</p>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-200">Sparring inbox</p>
+                        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Booking Requests</h1>
+                        <p className="mt-1 text-sm text-slate-300">Manage incoming sparring session requests from players.</p>
                     </div>
 
                     {/* Live counters */}
@@ -84,7 +85,7 @@ const BookingRequests = () => {
             </header>
 
             {/* ── Filter Tabs ─────────────────────────────────── */}
-            <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-2 shadow-md border border-slate-100">
+            <div className="bg-white rounded-2xl p-2 shadow-sm border border-slate-200">
                 <div className="flex items-center gap-2 overflow-x-auto">
                     <FunnelIcon className="h-5 w-5 text-slate-400 shrink-0 ml-2" />
                     {tabs.map(tab => (
@@ -93,7 +94,7 @@ const BookingRequests = () => {
                             onClick={() => setFilter(tab.key)}
                             className={`px-4 py-2 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200
                                 ${filter === tab.key
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                                    ? 'bg-slate-950 text-white shadow-md shadow-slate-200'
                                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                                 }`}
                         >
@@ -121,9 +122,9 @@ const BookingRequests = () => {
                         />
                     ))
                 ) : (
-                    <div className="bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-100 shadow-sm py-20 text-center">
-                        <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-amber-50 flex items-center justify-center mb-4 shadow-inner">
-                            <InboxIcon className="h-8 w-8 text-indigo-400" />
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm py-20 text-center">
+                        <div className="mx-auto h-16 w-16 rounded-2xl bg-sky-50 flex items-center justify-center mb-4 shadow-inner">
+                            <InboxIcon className="h-8 w-8 text-sky-500" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900">No requests found</h3>
                         <p className="mt-2 text-sm text-slate-500 max-w-sm mx-auto">

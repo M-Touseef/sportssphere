@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import sessionService from '../services/sessionService';
 import * as paymentService from '../services/paymentService';
@@ -20,8 +20,8 @@ import {
 const STATUS_CONFIG = {
     confirmed: {
         label: 'Confirmed',
-        badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        stripe: 'from-emerald-500 to-teal-600'
+        badge: 'bg-lime-100 text-lime-800 border-lime-200',
+        stripe: 'from-lime-400 to-sky-500'
     },
     pending: {
         label: 'Pending',
@@ -40,8 +40,8 @@ const STATUS_CONFIG = {
     },
     completed: {
         label: 'Completed',
-        badge: 'bg-indigo-100 text-indigo-900 border-indigo-200',
-        stripe: 'from-indigo-600 to-violet-700'
+        badge: 'bg-slate-100 text-slate-700 border-slate-200',
+        stripe: 'from-slate-600 to-slate-900'
     }
 };
 
@@ -126,23 +126,23 @@ const MySessions = () => {
 
     return (
         <div className="pb-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-amber-200/60 shadow-[0_24px_70px_-28px_rgba(30,27,75,0.4)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-indigo-900 to-teal-900" />
-                <div className="absolute -top-16 -right-8 h-56 w-56 rounded-full bg-amber-400/20 blur-3xl" />
+            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-slate-800 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.55)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950" />
+                <div className="absolute -top-16 -right-8 h-56 w-56 rounded-full bg-sky-400/20 blur-3xl" />
                 <div className="relative px-6 sm:px-10 lg:px-12 py-10 sm:py-14">
                     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                         <div className="max-w-2xl">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/15 border border-amber-300/30 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-100 mb-5">
-                                <CalendarIcon className="h-4 w-4 text-amber-300" />
+                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-100 mb-5">
+                                <CalendarIcon className="h-4 w-4 text-lime-300" />
                                 Your schedule
                             </div>
                             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.1]">
                                 Coaching
-                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-teal-200">
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-200 to-lime-300">
                                     sessions
                                 </span>
                             </h1>
-                            <p className="mt-4 text-base sm:text-lg text-indigo-100/85 font-medium max-w-xl">
+                            <p className="mt-4 text-base sm:text-lg text-slate-300 font-medium max-w-xl">
                                 View and manage your coaching sessions in one place.
                             </p>
                         </div>
@@ -150,7 +150,7 @@ const MySessions = () => {
                             {!loading && !fetchError && (
                                 <>
                                     <div className="rounded-2xl bg-white/10 backdrop-blur border border-white/15 px-5 py-4 min-w-[5.5rem]">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100/70">Total</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Total</p>
                                         <p className="text-2xl font-black text-white mt-1">{stats.total}</p>
                                     </div>
                                     <div className="rounded-2xl bg-emerald-500/20 backdrop-blur border border-emerald-300/25 px-5 py-4 min-w-[5.5rem]">
@@ -166,7 +166,7 @@ const MySessions = () => {
                                 </>
                             )}
                             <Link to="/coaches">
-                                <Button className="h-12 px-6 rounded-2xl font-bold bg-amber-400 hover:bg-amber-300 text-indigo-950 shadow-lg">
+                                <Button className="h-12 px-6 rounded-2xl font-bold bg-lime-300 hover:bg-lime-200 text-slate-950 shadow-lg">
                                     Find a coach
                                 </Button>
                             </Link>
@@ -180,7 +180,7 @@ const MySessions = () => {
                     <button
                         key={tab}
                         onClick={() => setFilter(tab)}
-                        className={`px-5 py-2.5 rounded-xl font-bold text-sm capitalize transition-all ${filter === tab ? 'bg-indigo-950 text-amber-50 shadow-md' : 'bg-white border border-amber-100 text-slate-500 hover:border-amber-300 hover:text-indigo-900'}`}
+                        className={`px-5 py-2.5 rounded-xl font-bold text-sm capitalize transition-all ${filter === tab ? 'bg-slate-950 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-500 hover:border-sky-200 hover:text-sky-800'}`}
                     >
                         {tab === 'all' ? `All Sessions (${sessions.length})` : tab}
                     </button>
@@ -190,10 +190,10 @@ const MySessions = () => {
             {loading ? (
                 <CardSkeleton count={4} />
             ) : fetchError ? (
-                <div className="flex flex-col items-center p-12 rounded-[2rem] border-2 border-dashed border-amber-200 bg-amber-50/30 text-center gap-6">
+                <div className="flex flex-col items-center p-12 rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 text-center gap-6">
                     <ExclamationTriangleIcon className="h-12 w-12 text-amber-700" />
                     <p className="text-lg font-bold text-slate-800">Could not load sessions</p>
-                    <Button onClick={fetchSessions} className="bg-indigo-950 text-amber-50 rounded-2xl px-8 font-bold">
+                    <Button onClick={fetchSessions} className="bg-slate-950 text-white rounded-2xl px-8 font-bold">
                         Retry
                     </Button>
                 </div>
@@ -206,13 +206,13 @@ const MySessions = () => {
                             const needsPay = session.status === 'pending_payment';
 
                             return (
-                                <motion.article
+                                <Motion.article
                                     key={session._id}
                                     layout
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.04 }}
-                                    className="group relative bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-amber-100/90 shadow-[0_16px_48px_-20px_rgba(30,27,75,0.12)] overflow-hidden hover:shadow-[0_24px_56px_-20px_rgba(30,27,75,0.18)] transition-all"
+                                    className="group relative bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-slate-200 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.14)] overflow-hidden hover:border-sky-200 hover:shadow-[0_24px_56px_-20px_rgba(14,116,144,0.2)] transition-all"
                                 >
                                     <div
                                         className={twMerge(
@@ -223,7 +223,7 @@ const MySessions = () => {
 
                                     <div className="flex flex-col lg:flex-row lg:items-center gap-6 p-6 sm:p-8 pl-8">
                                         <div className="flex gap-4 flex-1 min-w-0">
-                                            <div className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-2xl bg-indigo-950 flex items-center justify-center text-amber-200 shadow-md">
+                                            <div className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-2xl bg-slate-950 flex items-center justify-center text-lime-200 shadow-md">
                                                 <UserIcon className="h-7 w-7 sm:h-8 sm:w-8" />
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -247,19 +247,19 @@ const MySessions = () => {
                                                     )}
                                                 </div>
                                                 <p className="text-sm font-bold text-slate-600 flex items-center gap-1.5 mb-4 truncate">
-                                                    <MapPinIcon className="h-4 w-4 text-amber-700 shrink-0" />
+                                                    <MapPinIcon className="h-4 w-4 text-sky-700 shrink-0" />
                                                     {session.location || 'Location TBA'}
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-950 bg-gradient-to-r from-slate-50 to-amber-50/60 border border-amber-100 px-3 py-2 rounded-xl">
-                                                        <CalendarIcon className="h-4 w-4 text-indigo-800" />
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                                                        <CalendarIcon className="h-4 w-4 text-sky-700" />
                                                         {new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                                                     </span>
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-950 bg-gradient-to-r from-slate-50 to-amber-50/60 border border-amber-100 px-3 py-2 rounded-xl">
-                                                        <ClockIcon className="h-4 w-4 text-indigo-800" />
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                                                        <ClockIcon className="h-4 w-4 text-sky-700" />
                                                         {session.startTime} - {session.endTime} ({session.duration}h)
                                                     </span>
-                                                    <span className="inline-flex items-center gap-1 text-xs font-black text-indigo-950 bg-indigo-950/5 border border-indigo-100 px-3 py-2 rounded-xl">
+                                                    <span className="inline-flex items-center gap-1 text-xs font-black text-slate-950 bg-sky-50 border border-sky-100 px-3 py-2 rounded-xl">
                                                         Rs.{session.totalPrice}
                                                     </span>
                                                 </div>
@@ -295,18 +295,18 @@ const MySessions = () => {
                                             </p>
                                         </div>
                                     )}
-                                </motion.article>
+                                </Motion.article>
                             );
                         })}
                     </AnimatePresence>
                 </div>
             ) : (
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-16 rounded-[2rem] border border-amber-100 bg-gradient-to-br from-amber-50/80 to-indigo-50/30"
+                    className="text-center py-16 rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50/50"
                 >
-                    <div className="mx-auto h-20 w-20 rounded-2xl bg-indigo-950 flex items-center justify-center text-amber-300 mb-6">
+                    <div className="mx-auto h-20 w-20 rounded-2xl bg-slate-950 flex items-center justify-center text-lime-300 mb-6">
                         <CalendarIcon className="h-10 w-10" />
                     </div>
                     <h3 className="text-2xl font-extrabold text-slate-900">No sessions yet</h3>
@@ -314,12 +314,12 @@ const MySessions = () => {
                         Book a coach to see your sessions here.
                     </p>
                     <Link to="/coaches" className="inline-block mt-8">
-                        <Button className="px-10 h-14 rounded-2xl font-bold bg-indigo-950 text-amber-50 gap-2">
+                        <Button className="px-10 h-14 rounded-2xl font-bold bg-slate-950 text-white gap-2">
                             Find a coach
                             <ArrowRightIcon className="h-5 w-5" />
                         </Button>
                     </Link>
-                </motion.div>
+                </Motion.div>
             )}
         </div>
     );

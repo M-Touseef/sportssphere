@@ -16,13 +16,13 @@ import {
 } from '@heroicons/react/24/outline';
 
 const SpecializationOption = ({ label, value, register }) => (
-    <label className="relative flex items-start p-4 cursor-pointer rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-indigo-300 transition-all select-none">
+    <label className="relative flex items-start p-4 cursor-pointer rounded-xl border border-slate-200 hover:bg-sky-50/60 hover:border-sky-200 transition-all select-none">
         <div className="flex items-center h-5">
             <input
                 type="checkbox"
                 value={value}
                 {...register('specializations')}
-                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-slate-300 rounded"
+                className="focus:ring-sky-500 h-4 w-4 text-sky-600 border-slate-300 rounded"
             />
         </div>
         <div className="ml-3 text-sm">
@@ -90,23 +90,23 @@ const ProfessionalProfile = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             {/* ── Gradient Header ─────────────────────────────── */}
-            <header className="relative rounded-2xl border border-indigo-200/80 bg-gradient-to-r from-indigo-600 to-amber-500 px-6 sm:px-8 py-8 text-white shadow-lg overflow-hidden">
+            <header className="relative rounded-[2rem] border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-sky-950 px-6 sm:px-8 py-8 text-white shadow-xl shadow-slate-900/15 overflow-hidden">
                 {/* Decorative shapes */}
                 <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
                 <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-white/10 rounded-full blur-2xl" />
 
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                     <div>
-                        <p className="text-sm text-indigo-100/90 font-medium">Settings</p>
+                        <p className="text-[11px] text-sky-200 font-bold uppercase tracking-[0.18em]">Professional settings</p>
                         <h1 className="text-3xl font-black tracking-tight mt-1">Professional Profile</h1>
-                        <p className="mt-2 text-sm text-indigo-100/80">
+                        <p className="mt-2 text-sm text-slate-300">
                             Manage your public profile, fees, and specializations.
                         </p>
                     </div>
                     {profileExists && !isEditing && (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="inline-flex items-center h-12 px-6 rounded-xl font-bold bg-white hover:bg-indigo-50 text-indigo-700 transition-all shadow-lg shadow-indigo-200"
+                            className="inline-flex items-center h-12 px-6 rounded-xl font-bold bg-lime-300 hover:bg-lime-200 text-slate-950 transition-all shadow-lg shadow-slate-950/20"
                         >
                             Edit Profile
                         </button>
@@ -130,12 +130,12 @@ const ProfessionalProfile = () => {
             )}
 
             {/* ── Profile Form Card ──────────────────────────── */}
-            <div className="bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-100 shadow-md p-6 sm:p-8">
+            <div className="bg-white rounded-[1.75rem] border border-slate-200 shadow-[0_16px_45px_rgba(15,23,42,0.06)] p-6 sm:p-8">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                     {/* Basic Info */}
                     <div>
                         <div className="flex items-center gap-3 mb-5">
-                            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md shadow-indigo-100">
+                            <div className="h-9 w-9 rounded-xl bg-slate-950 flex items-center justify-center shadow-md shadow-slate-200">
                                 <CurrencyDollarIcon className="h-5 w-5 text-white" />
                             </div>
                             <h3 className="text-lg font-bold text-slate-900">Basic Information</h3>
@@ -150,7 +150,7 @@ const ProfessionalProfile = () => {
                                         type="number"
                                         id="matchFee"
                                         disabled={!isEditing && profileExists}
-                                        className={`block w-full rounded-xl border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm py-2.5 ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
+                                        className={`block w-full rounded-xl border-slate-300 focus:ring-sky-500 focus:border-sky-500 sm:text-sm py-2.5 ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
                                             }`}
                                         {...register('matchFee', {
                                             required: 'Match fee is required',
@@ -172,7 +172,7 @@ const ProfessionalProfile = () => {
                                         type="number"
                                         id="experienceYears"
                                         disabled={!isEditing && profileExists}
-                                        className={`block w-full rounded-xl border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm py-2.5 ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
+                                        className={`block w-full rounded-xl border-slate-300 focus:ring-sky-500 focus:border-sky-500 sm:text-sm py-2.5 ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
                                             }`}
                                         {...register('experienceYears', {
                                             required: 'Experience is required',
@@ -194,7 +194,7 @@ const ProfessionalProfile = () => {
                                         id="bio"
                                         rows={4}
                                         disabled={!isEditing && profileExists}
-                                        className={`block w-full rounded-xl border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
+                                        className={`block w-full rounded-xl border-slate-300 focus:ring-sky-500 focus:border-sky-500 sm:text-sm ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
                                             }`}
                                         {...register('bio', {
                                             required: 'Bio is required',
@@ -215,8 +215,8 @@ const ProfessionalProfile = () => {
                     {/* Specializations */}
                     <div className="pt-6 border-t border-slate-100">
                         <div className="flex items-center gap-3 mb-5">
-                            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-md shadow-amber-100">
-                                <AcademicCapIcon className="h-5 w-5 text-white" />
+                            <div className="h-9 w-9 rounded-xl bg-sky-100 flex items-center justify-center shadow-sm">
+                                <AcademicCapIcon className="h-5 w-5 text-sky-700" />
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900">Specializations</h3>
@@ -257,7 +257,7 @@ const ProfessionalProfile = () => {
                                             disabled={!isEditing}
                                             {...register('isActive')}
                                         />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
                                         <span className="ml-3 text-sm font-medium text-slate-900">
                                             {(!isEditing && profileExists) ? null : 'Active'}
                                         </span>
@@ -285,7 +285,7 @@ const ProfessionalProfile = () => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-6 py-2.5 border border-transparent rounded-xl shadow-md shadow-indigo-200 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                className="px-6 py-2.5 border border-transparent rounded-xl shadow-md shadow-lime-100 text-sm font-bold text-slate-950 bg-lime-300 hover:bg-lime-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             >
                                 {isSubmitting ? 'Saving...' : 'Save Profile'}
                             </button>
@@ -298,7 +298,7 @@ const ProfessionalProfile = () => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full px-6 py-3 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-md shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-6 py-3 rounded-xl font-bold bg-lime-300 hover:bg-lime-200 text-slate-950 transition-all shadow-md shadow-lime-100 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? 'Saving...' : 'Save Profile'}
                             </button>

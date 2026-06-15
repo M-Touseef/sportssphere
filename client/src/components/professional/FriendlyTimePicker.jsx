@@ -71,16 +71,16 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
     return (
         <div
             className={clsx(
-                'rounded-2xl border bg-gradient-to-br from-slate-50 to-indigo-50/40 p-4 sm:p-5',
-                error ? 'border-red-300 ring-1 ring-red-200' : 'border-indigo-100'
+                'rounded-2xl border bg-gradient-to-br from-slate-50 to-sky-50/60 p-4 sm:p-5',
+                error ? 'border-red-300 ring-1 ring-red-200' : 'border-sky-100'
             )}
         >
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/25">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-lime-200 shadow-md shadow-slate-300">
                     <ClockIcon className="h-9 w-9" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">Session start</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-sky-700">Session start</p>
                     <p className="truncate text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                         {value ? formatFriendly(value) : 'Choose an hour'}
                     </p>
@@ -103,8 +103,8 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                         className={clsx(
                             'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
                             value === p.value
-                                ? 'border-indigo-600 bg-indigo-600 text-white'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50',
+                                ? 'border-slate-950 bg-slate-950 text-white'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50',
                             disabled && 'cursor-not-allowed opacity-50'
                         )}
                     >
@@ -121,7 +121,7 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                         disabled={disabled}
                         value={h12}
                         onChange={(e) => setFrom12(Number(e.target.value), period)}
-                        className="block w-full rounded-xl border-slate-200 bg-white py-3 pl-3 pr-8 text-center text-lg font-semibold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                        className="block w-full rounded-xl border-slate-200 bg-white py-3 pl-3 pr-8 text-center text-lg font-semibold text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                     >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
                             <option key={h} value={h}>
@@ -140,7 +140,7 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                             className={clsx(
                                 'rounded-xl py-3 text-sm font-bold transition-colors',
                                 period === 'am'
-                                    ? 'bg-indigo-600 text-white shadow'
+                                    ? 'bg-slate-950 text-white shadow'
                                     : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                             )}
                         >
@@ -153,7 +153,7 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                             className={clsx(
                                 'rounded-xl py-3 text-sm font-bold transition-colors',
                                 period === 'pm'
-                                    ? 'bg-indigo-600 text-white shadow'
+                                    ? 'bg-slate-950 text-white shadow'
                                     : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                             )}
                         >
@@ -163,7 +163,7 @@ const FriendlyTimePicker = ({ value, onChange, disabled, error }) => {
                 </div>
             </div>
 
-            <p className="mt-3 text-xs text-slate-500 border-t border-indigo-100/80 pt-3">
+            <p className="mt-3 text-xs text-slate-500 border-t border-sky-100 pt-3">
                 Sessions are booked in full-hour blocks ({value || '—'}).
             </p>
         </div>

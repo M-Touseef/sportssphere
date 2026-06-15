@@ -132,6 +132,7 @@ export const buildDefaultNavigation = (user) => {
             { name: 'My Tournaments', href: '/app/tournaments', icon: TrophyIcon, description: 'Manage your events.', groupKey: 'events' },
             { name: 'Create Tournament', href: '/app/tournaments/create', icon: CalendarIcon, description: 'Launch a new bracket.', groupKey: 'events' },
             { name: 'My Courts', href: '/org/courts', icon: BuildingOffice2Icon, description: 'View venue operations.', groupKey: 'venues' },
+            { name: 'Add Court', href: '/org/courts/create', icon: MapPinIcon, description: 'Publish a new venue listing.', groupKey: 'venues' },
         )
     } else if (user?.role === 'player' && user?.skillLevel !== 'professional') {
         items.push(

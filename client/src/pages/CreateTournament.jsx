@@ -28,6 +28,7 @@ import {
     TOURNAMENT_FORMAT_LABEL,
     validateMobile11Digits
 } from '../shared/constants';
+import OrganizerPageHeader from '../components/organizer/OrganizerPageHeader';
 
 const TOURNAMENT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const TOURNAMENT_IMAGE_MAX_SIZE = 5 * 1024 * 1024;
@@ -159,29 +160,20 @@ const CreateTournament = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto animate-enter space-y-8">
-            <header className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-amber-500 p-6 sm:p-8 text-white shadow-lg">
-                <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-                <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
-                <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="h-12 w-12 bg-indigo-950 rounded-xl flex items-center justify-center text-amber-100 shadow-lg shadow-indigo-950/20">
-                        <TrophyIcon className="h-7 w-7" />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-100">Tournament management</p>
-                        <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight leading-none">Create Tournament</h1>
-                    </div>
-                </div>
-                <p className="max-w-2xl text-sm text-white/90 font-medium">Choose one of your courts as the venue, then set dates, divisions, prizes, and contact details.</p>
-                </div>
-            </header>
+        <div className="mx-auto max-w-[1200px] space-y-6 pb-10">
+            <OrganizerPageHeader
+                eyebrow="Event builder"
+                title="Create tournament"
+                description="Choose one of your courts as the venue, then set dates, divisions, prizes, media, and contact details."
+                icon={TrophyIcon}
+                actions={<Link to="/app/tournaments" className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-bold text-white hover:bg-white/10">My tournaments</Link>}
+            />
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 pb-20">
                 {/* Basic Intel */}
-                <div className="bg-card shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl p-6 md:p-8 space-y-8">
-                    <div className="flex items-center gap-3 border-b border-amber-100 pb-6">
-                        <InformationCircleIcon className="h-5 w-5 text-indigo-600" />
+                <div className="space-y-8 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] md:p-8">
+                    <div className="flex items-center gap-3 border-b border-slate-100 pb-6">
+                        <InformationCircleIcon className="h-5 w-5 text-sky-700" />
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Tournament details</h3>
                     </div>
 
@@ -212,7 +204,7 @@ const CreateTournament = () => {
                                 Tournament Image
                             </label>
                             {imagePreview ? (
-                                <div className="relative overflow-hidden rounded-2xl border border-amber-100 bg-slate-950">
+                                <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950">
                                     <img
                                         src={imagePreview}
                                         alt="Tournament preview"
@@ -231,9 +223,9 @@ const CreateTournament = () => {
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/40 px-6 text-center transition-all hover:border-indigo-300 hover:bg-indigo-50/50"
+                                    className="flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 text-center transition-all hover:border-sky-400 hover:bg-sky-50"
                                 >
-                                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-950 text-amber-100 shadow-lg shadow-indigo-950/15">
+                                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950 text-sky-200 shadow-lg shadow-slate-200">
                                         <PhotoIcon className="h-6 w-6" />
                                     </span>
                                     <span className="text-sm font-bold text-slate-800">Upload tournament image</span>
@@ -324,10 +316,10 @@ const CreateTournament = () => {
                 </div>
 
                 {/* Categories */}
-                <div className="bg-card shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl p-6 md:p-8 space-y-8">
-                    <div className="flex items-center justify-between border-b border-amber-100 pb-6">
+                <div className="space-y-8 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] md:p-8">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-6">
                         <div className="flex items-center gap-3">
-                            <Bars3CenterLeftIcon className="h-5 w-5 text-indigo-600" />
+                            <Bars3CenterLeftIcon className="h-5 w-5 text-sky-700" />
                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Divisions & Categories</h3>
                         </div>
                         <Button
@@ -357,7 +349,7 @@ const CreateTournament = () => {
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
-                                    className="p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-amber-50/50 border border-amber-100 space-y-6 relative group"
+                                    className="group relative space-y-6 rounded-2xl border border-slate-200 bg-slate-50 p-6"
                                 >
                                     {fields.length > 1 && (
                                         <button
@@ -444,9 +436,9 @@ const CreateTournament = () => {
                 </div>
 
                 {/* Comms Intel */}
-                <div className="bg-card shadow-[0_16px_48px_-24px_rgba(30,27,75,0.18)] border border-amber-100 rounded-3xl p-6 md:p-8 space-y-8">
-                    <div className="flex items-center gap-3 border-b border-amber-100 pb-6">
-                        <EnvelopeIcon className="h-5 w-5 text-indigo-600" />
+                <div className="space-y-8 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] md:p-8">
+                    <div className="flex items-center gap-3 border-b border-slate-100 pb-6">
+                        <EnvelopeIcon className="h-5 w-5 text-sky-700" />
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Contact & Rules</h3>
                     </div>
 
@@ -493,7 +485,7 @@ const CreateTournament = () => {
                         size="lg"
                         isLoading={loading}
                         disabled={courtsLoading || myCourts.length === 0}
-                        className="px-16 h-14"
+                        className="h-14 rounded-xl bg-slate-950 px-16 text-white shadow-lg shadow-slate-200 hover:bg-sky-900"
                     >
                         Create Tournament
                     </Button>

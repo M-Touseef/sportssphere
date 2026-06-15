@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import courtService from '../services/courtService';
 import { useToast } from '../context/ToastContext';
@@ -21,8 +21,8 @@ import { CardSkeleton } from '../components/ui/Skeleton';
 const BOOKING_STATUS = {
     confirmed: {
         label: 'Confirmed',
-        badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        stripe: 'from-emerald-500 to-teal-600'
+        badge: 'bg-lime-100 text-lime-800 border-lime-200',
+        stripe: 'from-lime-400 to-sky-500'
     },
     pending: {
         label: 'Pending',
@@ -36,8 +36,8 @@ const BOOKING_STATUS = {
     },
     pending_pro: {
         label: 'Awaiting pro',
-        badge: 'bg-violet-100 text-violet-900 border-violet-200',
-        stripe: 'from-violet-500 to-indigo-600'
+        badge: 'bg-sky-100 text-sky-800 border-sky-200',
+        stripe: 'from-sky-500 to-cyan-600'
     },
     cancelled: {
         label: 'Cancelled',
@@ -46,8 +46,8 @@ const BOOKING_STATUS = {
     },
     completed: {
         label: 'Completed',
-        badge: 'bg-indigo-100 text-indigo-900 border-indigo-200',
-        stripe: 'from-indigo-600 to-violet-700'
+        badge: 'bg-slate-100 text-slate-700 border-slate-200',
+        stripe: 'from-slate-600 to-slate-900'
     }
 };
 
@@ -133,23 +133,23 @@ const MyBookings = () => {
 
     return (
         <div className="pb-32">
-            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-amber-200/60 shadow-[0_24px_70px_-28px_rgba(30,27,75,0.4)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-indigo-900 to-teal-900" />
-                <div className="absolute -top-16 -right-8 h-56 w-56 rounded-full bg-amber-400/20 blur-3xl" />
+            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mb-10 sm:mb-12 border border-slate-800 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.55)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950" />
+                <div className="absolute -top-16 -right-8 h-56 w-56 rounded-full bg-sky-400/20 blur-3xl" />
                 <div className="relative px-6 sm:px-10 lg:px-12 py-10 sm:py-14">
                     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                         <div className="max-w-2xl">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/15 border border-amber-300/30 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-100 mb-5">
-                                <CalendarIcon className="h-4 w-4 text-amber-300" />
+                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-100 mb-5">
+                                <CalendarIcon className="h-4 w-4 text-lime-300" />
                                 Your schedule
                             </div>
                             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.1]">
                                 Court
-                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-teal-200">
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-200 to-lime-300">
                                     bookings
                                 </span>
                             </h1>
-                            <p className="mt-4 text-base sm:text-lg text-indigo-100/85 font-medium max-w-xl">
+                            <p className="mt-4 text-base sm:text-lg text-slate-300 font-medium max-w-xl">
                                 Upcoming sessions, payments, and venue details in one place.
                             </p>
                         </div>
@@ -157,7 +157,7 @@ const MyBookings = () => {
                             {!loading && !fetchError && (
                                 <>
                                     <div className="rounded-2xl bg-white/10 backdrop-blur border border-white/15 px-5 py-4 min-w-[5.5rem]">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100/70">Total</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Total</p>
                                         <p className="text-2xl font-black text-white mt-1">{stats.total}</p>
                                     </div>
                                     <div className="rounded-2xl bg-emerald-500/20 backdrop-blur border border-emerald-300/25 px-5 py-4 min-w-[5.5rem]">
@@ -173,7 +173,7 @@ const MyBookings = () => {
                                 </>
                             )}
                             <Link to="/courts">
-                                <Button className="h-12 px-6 rounded-2xl font-bold bg-amber-400 hover:bg-amber-300 text-indigo-950 shadow-lg">
+                                <Button className="h-12 px-6 rounded-2xl font-bold bg-lime-300 hover:bg-lime-200 text-slate-950 shadow-lg">
                                     Book a court
                                 </Button>
                             </Link>
@@ -185,10 +185,10 @@ const MyBookings = () => {
             {loading ? (
                 <CardSkeleton count={4} />
             ) : fetchError ? (
-                <div className="flex flex-col items-center p-12 rounded-[2rem] border-2 border-dashed border-amber-200 bg-amber-50/30 text-center gap-6">
+                <div className="flex flex-col items-center p-12 rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 text-center gap-6">
                     <ExclamationTriangleIcon className="h-12 w-12 text-amber-700" />
                     <p className="text-lg font-bold text-slate-800">Could not load bookings</p>
-                    <Button onClick={fetchBookings} className="bg-indigo-950 text-amber-50 rounded-2xl px-8 font-bold">
+                    <Button onClick={fetchBookings} className="bg-slate-950 text-white rounded-2xl px-8 font-bold">
                         Retry
                     </Button>
                 </div>
@@ -203,13 +203,13 @@ const MyBookings = () => {
                             const timeLabel = formatSlotHourRange(booking.time, booking.endTime);
 
                             return (
-                                <motion.article
+                                <Motion.article
                                     key={booking.id}
                                     layout
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.04 }}
-                                    className="group relative bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-amber-100/90 shadow-[0_16px_48px_-20px_rgba(30,27,75,0.12)] overflow-hidden hover:shadow-[0_24px_56px_-20px_rgba(30,27,75,0.18)] transition-all"
+                                    className="group relative bg-white rounded-[1.75rem] sm:rounded-[2rem] border border-slate-200 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.14)] overflow-hidden hover:border-sky-200 hover:shadow-[0_24px_56px_-20px_rgba(14,116,144,0.2)] transition-all"
                                 >
                                     <div
                                         className={twMerge(
@@ -220,7 +220,7 @@ const MyBookings = () => {
 
                                     <div className="flex flex-col lg:flex-row lg:items-center gap-6 p-6 sm:p-8 pl-8">
                                         <div className="flex gap-4 flex-1 min-w-0">
-                                            <div className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-2xl bg-indigo-950 flex items-center justify-center text-amber-200 shadow-md">
+                                            <div className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-2xl bg-slate-950 flex items-center justify-center text-lime-200 shadow-md">
                                                 <BuildingOffice2Icon className="h-7 w-7 sm:h-8 sm:w-8" />
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -244,19 +244,19 @@ const MyBookings = () => {
                                                     )}
                                                 </div>
                                                 <p className="text-sm font-bold text-slate-600 flex items-center gap-1.5 mb-4 truncate">
-                                                    <MapPinIcon className="h-4 w-4 text-amber-700 shrink-0" />
+                                                    <MapPinIcon className="h-4 w-4 text-sky-700 shrink-0" />
                                                     {booking.location}
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-950 bg-gradient-to-r from-slate-50 to-amber-50/60 border border-amber-100 px-3 py-2 rounded-xl">
-                                                        <CalendarIcon className="h-4 w-4 text-indigo-800" />
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                                                        <CalendarIcon className="h-4 w-4 text-sky-700" />
                                                         {booking.date}
                                                     </span>
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-950 bg-gradient-to-r from-slate-50 to-amber-50/60 border border-amber-100 px-3 py-2 rounded-xl">
-                                                        <ClockIcon className="h-4 w-4 text-indigo-800" />
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                                                        <ClockIcon className="h-4 w-4 text-sky-700" />
                                                         {timeLabel}
                                                     </span>
-                                                    <span className="inline-flex items-center gap-1 text-xs font-black text-indigo-950 bg-indigo-950/5 border border-indigo-100 px-3 py-2 rounded-xl">
+                                                    <span className="inline-flex items-center gap-1 text-xs font-black text-slate-950 bg-sky-50 border border-sky-100 px-3 py-2 rounded-xl">
                                                         Rs.{booking.price?.toLocaleString?.() ?? booking.price}
                                                     </span>
                                                 </div>
@@ -278,7 +278,7 @@ const MyBookings = () => {
                                                 <Link to={`/courts/${booking.courtId}`} className="block">
                                                     <Button
                                                         variant="outline"
-                                                        className="w-full h-11 rounded-xl font-bold border-amber-200 text-indigo-950 hover:bg-indigo-950 hover:text-amber-50 gap-1"
+                                                        className="w-full h-11 rounded-xl font-bold border-slate-200 text-slate-950 hover:bg-slate-950 hover:text-white gap-1"
                                                     >
                                                         View court
                                                         <ChevronRightIcon className="h-4 w-4" />
@@ -295,18 +295,18 @@ const MyBookings = () => {
                                             )}
                                         </div>
                                     </div>
-                                </motion.article>
+                                </Motion.article>
                             );
                         })}
                     </AnimatePresence>
                 </div>
             ) : (
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-16 rounded-[2rem] border border-amber-100 bg-gradient-to-br from-amber-50/80 to-indigo-50/30"
+                    className="text-center py-16 rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50/50"
                 >
-                    <div className="mx-auto h-20 w-20 rounded-2xl bg-indigo-950 flex items-center justify-center text-amber-300 mb-6">
+                    <div className="mx-auto h-20 w-20 rounded-2xl bg-slate-950 flex items-center justify-center text-lime-300 mb-6">
                         <CalendarIcon className="h-10 w-10" />
                     </div>
                     <h3 className="text-2xl font-extrabold text-slate-900">No bookings yet</h3>
@@ -314,12 +314,12 @@ const MyBookings = () => {
                         Reserve a court to see your sessions here.
                     </p>
                     <Link to="/courts" className="inline-block mt-8">
-                        <Button className="px-10 h-14 rounded-2xl font-bold bg-indigo-950 text-amber-50 gap-2">
+                        <Button className="px-10 h-14 rounded-2xl font-bold bg-slate-950 text-white gap-2">
                             Find courts
                             <ArrowRightIcon className="h-5 w-5" />
                         </Button>
                     </Link>
-                </motion.div>
+                </Motion.div>
             )}
         </div>
     );

@@ -28,21 +28,21 @@ const STATUS_CONFIG = {
     },
     registration_open: {
         label: 'Registration open',
-        badge: 'bg-emerald-500/95 text-white border-emerald-300/40',
-        accent: 'from-emerald-500 via-teal-500 to-cyan-500',
-        ring: 'ring-emerald-200',
+        badge: 'bg-lime-300 text-slate-950 border-lime-200',
+        accent: 'from-sky-600 via-cyan-600 to-teal-600',
+        ring: 'ring-lime-200',
     },
     registration_closed: {
         label: 'Registration closed',
-        badge: 'bg-amber-500/95 text-white border-amber-300/40',
-        accent: 'from-amber-500 via-orange-500 to-rose-500',
+        badge: 'bg-amber-300 text-slate-950 border-amber-200',
+        accent: 'from-slate-700 via-slate-800 to-slate-950',
         ring: 'ring-amber-200',
     },
     in_progress: {
         label: 'In progress',
-        badge: 'bg-violet-600/95 text-white border-violet-300/40',
-        accent: 'from-violet-600 via-indigo-600 to-blue-600',
-        ring: 'ring-violet-200',
+        badge: 'bg-sky-500 text-white border-sky-300',
+        accent: 'from-slate-950 via-sky-900 to-cyan-800',
+        ring: 'ring-sky-200',
     },
     completed: {
         label: 'Completed',
@@ -166,26 +166,26 @@ const TournamentList = () => {
     return (
         <div className="pb-32">
             {/* Hero */}
-            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mx-4 sm:mx-6 lg:mx-8 mt-2 mb-10 sm:mb-12 border border-violet-200/60 shadow-[0_24px_80px_-24px_rgba(99,102,241,0.45)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-indigo-600 to-fuchsia-600" />
-                <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-amber-400/30 blur-3xl" />
-                <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-cyan-400/25 blur-3xl" />
+            <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.75rem] mx-4 sm:mx-6 lg:mx-8 mt-2 mb-10 sm:mb-12 border border-slate-800 shadow-[0_28px_80px_-32px_rgba(15,23,42,0.75)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950" />
+                <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-sky-500/25 blur-3xl" />
+                <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-lime-300/15 blur-3xl" />
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.06\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-80" />
 
                 <div className="relative px-6 sm:px-10 lg:px-12 py-10 sm:py-14">
                     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                         <div className="max-w-2xl">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-md border border-white/25 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-white/95 mb-5">
-                                <SparklesIcon className="h-4 w-4 text-amber-300" />
-                                Championships hub
+                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-100 mb-5">
+                                <SparklesIcon className="h-4 w-4 text-lime-300" />
+                                Tournament center
                             </div>
                             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.1]">
                                 Find your next
-                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-orange-200">
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-200 to-lime-300">
                                     tournament
                                 </span>
                             </h1>
-                            <p className="mt-4 text-base sm:text-lg text-indigo-100/90 font-medium leading-relaxed max-w-xl">
+                            <p className="mt-4 text-base sm:text-lg text-slate-300 font-medium leading-relaxed max-w-xl">
                                 Discover and join badminton competitions near you — from local opens to regional showcases.
                             </p>
                         </div>
@@ -193,15 +193,15 @@ const TournamentList = () => {
                         {!loading && !fetchError && (
                             <div className="flex flex-wrap gap-3 lg:justify-end">
                                 <div className="rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 px-5 py-4 min-w-[7rem]">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100/80">Listed</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Listed</p>
                                     <p className="text-2xl font-black text-white mt-1">{statusCounts.total}</p>
                                 </div>
-                                <div className="rounded-2xl bg-emerald-500/25 backdrop-blur-md border border-emerald-300/30 px-5 py-4 min-w-[7rem]">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-100">Open</p>
+                                <div className="rounded-2xl bg-lime-300/10 backdrop-blur-md border border-lime-300/25 px-5 py-4 min-w-[7rem]">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-lime-200">Open</p>
                                     <p className="text-2xl font-black text-white mt-1">{statusCounts.open}</p>
                                 </div>
-                                <div className="rounded-2xl bg-amber-500/25 backdrop-blur-md border border-amber-300/30 px-5 py-4 min-w-[7rem]">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100">Live</p>
+                                <div className="rounded-2xl bg-sky-400/10 backdrop-blur-md border border-sky-300/25 px-5 py-4 min-w-[7rem]">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-sky-200">Live</p>
                                     <p className="text-2xl font-black text-white mt-1">{statusCounts.live}</p>
                                 </div>
                             </div>
@@ -213,17 +213,17 @@ const TournamentList = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Filters */}
                 <div className="relative -mt-6 sm:-mt-8 mb-10 sm:mb-14 z-10">
-                    <div className="rounded-3xl sm:rounded-[2rem] bg-white/90 backdrop-blur-xl border border-indigo-100 shadow-[0_20px_50px_-20px_rgba(79,70,229,0.2)] p-6 sm:p-8">
+                    <div className="rounded-3xl sm:rounded-[2rem] bg-white/95 backdrop-blur-xl border border-slate-200 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.24)] p-6 sm:p-8">
                         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
                             <div className="md:col-span-5">
-                                <label className="text-[10px] font-bold text-violet-600 uppercase tracking-widest mb-2 block ml-1">
+                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block ml-1">
                                     Lahore area
                                 </label>
                                 <div className="relative">
-                                    <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-violet-500 pointer-events-none" />
+                                    <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-sky-600 pointer-events-none" />
                                     <select
                                         name="area"
-                                        className="w-full h-14 pl-12 pr-4 rounded-2xl border-2 border-violet-100 bg-gradient-to-r from-violet-50/80 to-indigo-50/50 font-semibold text-sm text-slate-800 focus:ring-4 focus:ring-violet-500/15 focus:border-violet-400 outline-none transition-all"
+                                        className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 bg-slate-50 font-semibold text-sm text-slate-800 focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all"
                                         value={filters.area}
                                         onChange={handleFilterChange}
                                     >
@@ -236,12 +236,12 @@ const TournamentList = () => {
                             </div>
 
                             <div className="md:col-span-4">
-                                <label className="text-[10px] font-bold text-violet-600 uppercase tracking-widest mb-2 block ml-1">
+                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block ml-1">
                                     Status
                                 </label>
                                 <select
                                     name="status"
-                                    className="w-full min-h-[3.25rem] px-5 rounded-2xl border-2 border-violet-100 bg-gradient-to-r from-violet-50/80 to-indigo-50/50 font-bold text-sm text-slate-800 focus:ring-4 focus:ring-violet-500/15 focus:border-violet-400 outline-none transition-all"
+                                    className="w-full min-h-[3.25rem] px-5 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-sm text-slate-800 focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all"
                                     value={filters.status}
                                     onChange={handleStatusChange}
                                 >
@@ -258,7 +258,7 @@ const TournamentList = () => {
                                     type="submit"
                                     fullWidth
                                     size="lg"
-                                    className="min-h-[3.25rem] rounded-2xl font-bold text-base bg-gradient-to-r from-violet-600 via-indigo-600 to-fuchsia-600 hover:from-violet-700 hover:via-indigo-700 hover:to-fuchsia-700 text-white shadow-lg shadow-violet-300/40 border-0 gap-2"
+                                    className="min-h-[3.25rem] rounded-2xl font-bold text-base bg-slate-950 hover:bg-slate-800 text-white shadow-lg shadow-slate-300/40 border-0 gap-2"
                                 >
                                     <MagnifyingGlassIcon className="h-5 w-5" />
                                     Search
@@ -268,16 +268,16 @@ const TournamentList = () => {
 
                         {hasActiveFilters && !loading && (
                             <div className="mt-5 flex flex-wrap items-center gap-2">
-                                <span className="text-[10px] font-bold text-violet-600 uppercase tracking-widest">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                     Active filters
                                 </span>
                                 {filters.area?.trim() && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-800 px-3 py-1 text-xs font-bold">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 text-sky-800 px-3 py-1 text-xs font-bold">
                                         Area: {filters.area.trim()}
                                     </span>
                                 )}
                                 {filters.status && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 text-indigo-800 px-3 py-1 text-xs font-bold">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-xs font-bold">
                                         {getStatusConfig(filters.status).label}
                                     </span>
                                 )}
@@ -289,7 +289,7 @@ const TournamentList = () => {
                                 <button
                                     type="button"
                                     onClick={resetFilters}
-                                    className="text-xs font-bold text-violet-600 hover:text-violet-800 underline underline-offset-2"
+                                    className="text-xs font-bold text-sky-700 hover:text-sky-900 underline underline-offset-2"
                                 >
                                     Clear all
                                 </button>
@@ -344,7 +344,7 @@ const TournamentList = () => {
                                         transition={{ delay: index * 0.05 }}
                                         whileHover={{ y: -6 }}
                                         className={twMerge(
-                                            'group flex flex-col overflow-hidden rounded-[1.75rem] bg-white border-2 border-slate-100 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.12)] transition-all duration-300 hover:shadow-[0_28px_60px_-24px_rgba(99,102,241,0.35)] ring-2 ring-transparent hover:ring-violet-200/80',
+                                            'group flex flex-col overflow-hidden rounded-[1.75rem] bg-white border border-slate-200 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.18)] transition-all duration-300 hover:border-sky-200 hover:shadow-[0_28px_60px_-24px_rgba(14,116,144,0.28)] ring-2 ring-transparent',
                                             cfg.ring
                                         )}
                                     >
@@ -381,7 +381,7 @@ const TournamentList = () => {
 
                                             {fee != null && (
                                                 <div className="absolute bottom-4 left-4 rounded-xl bg-white/95 backdrop-blur px-3 py-1.5 shadow-md">
-                                                    <p className="text-[9px] font-bold text-violet-600 uppercase tracking-widest leading-none">
+                                                    <p className="text-[9px] font-bold text-sky-700 uppercase tracking-widest leading-none">
                                                         From
                                                     </p>
                                                     <p className="text-sm font-black text-slate-900">Rs. {fee}</p>
@@ -390,28 +390,28 @@ const TournamentList = () => {
                                         </div>
 
                                         <div className="p-6 flex-1 flex flex-col">
-                                            <h3 className="text-xl font-black text-slate-900 leading-snug mb-4 group-hover:text-violet-700 transition-colors line-clamp-2">
+                                            <h3 className="text-xl font-black text-slate-900 leading-snug mb-4 group-hover:text-sky-700 transition-colors line-clamp-2">
                                                 {tournament.name}
                                             </h3>
 
                                             <div className="space-y-3 mb-6">
-                                                <div className="flex items-center gap-3 text-sm font-semibold text-slate-600 rounded-xl bg-violet-50/80 border border-violet-100/80 px-3 py-2.5">
-                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white">
+                                                <div className="flex items-center gap-3 text-sm font-semibold text-slate-600 rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2.5">
+                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white">
                                                         <MapPinIcon className="h-4 w-4" />
                                                     </span>
                                                     <span className="line-clamp-1">
                                                         {tournament.venue}, {getTournamentArea(tournament)}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center gap-3 text-sm font-semibold text-slate-600 rounded-xl bg-amber-50/90 border border-amber-100/90 px-3 py-2.5">
-                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
+                                                <div className="flex items-center gap-3 text-sm font-semibold text-slate-600 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5">
+                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-white">
                                                         <CalendarIcon className="h-4 w-4" />
                                                     </span>
                                                     <span>Starts {formatDate(tournament.startDate)}</span>
                                                 </div>
                                                 {(tournament.categories?.length ?? 0) > 0 && (
-                                                    <div className="flex items-center gap-3 text-sm font-semibold text-slate-600 rounded-xl bg-emerald-50/90 border border-emerald-100/90 px-3 py-2.5">
-                                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                                                    <div className="flex items-center gap-3 text-sm font-semibold text-slate-600 rounded-xl bg-lime-50/80 border border-lime-200 px-3 py-2.5">
+                                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-lime-300 text-slate-950">
                                                             <UserGroupIcon className="h-4 w-4" />
                                                         </span>
                                                         <span>
@@ -424,7 +424,7 @@ const TournamentList = () => {
 
                                             <div className="flex items-center justify-between gap-3 pt-5 border-t border-slate-100 mt-auto">
                                                 <div className="flex items-center gap-2.5 min-w-0">
-                                                    <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-sm shadow-md">
+                                                    <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-950 flex items-center justify-center text-white font-black text-sm shadow-md">
                                                         {tournament.organizer?.name?.[0] || 'O'}
                                                     </div>
                                                     <div className="min-w-0">
@@ -437,7 +437,7 @@ const TournamentList = () => {
                                                     </div>
                                                 </div>
                                                 <Link to={`/tournaments/${tournament._id}`} className="shrink-0">
-                                                    <span className="inline-flex items-center gap-1.5 h-11 px-5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-md shadow-violet-200 transition-all group/btn">
+                                                    <span className="inline-flex items-center gap-1.5 h-11 px-5 rounded-xl text-xs font-bold text-slate-950 bg-lime-300 hover:bg-lime-200 shadow-md shadow-lime-100 transition-all group/btn">
                                                         View
                                                         <ArrowRightIcon className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
                                                     </span>
@@ -450,7 +450,7 @@ const TournamentList = () => {
                         </Motion.div>
                     ) : (
                         <Motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            <div className="rounded-[2.5rem] bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 border-2 border-dashed border-violet-200 p-4">
+                            <div className="rounded-[2.5rem] bg-gradient-to-br from-slate-50 via-white to-sky-50 border-2 border-dashed border-slate-200 p-4">
                                 <EmptyState
                                     icon={TrophyIcon}
                                     title="No tournaments found"

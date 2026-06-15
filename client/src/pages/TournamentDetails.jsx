@@ -36,9 +36,9 @@ import { formatTournamentGrade, TOURNAMENT_FORMAT_LABEL } from '../shared/consta
 
 const STATUS_STYLES = {
     draft: 'bg-slate-600/90 text-white border-slate-400/30',
-    registration_open: 'bg-emerald-600/95 text-white border-emerald-300/40',
-    registration_closed: 'bg-amber-600/95 text-white border-amber-300/40',
-    in_progress: 'bg-indigo-700/95 text-white border-indigo-300/40',
+    registration_open: 'bg-lime-300 text-slate-950 border-lime-200',
+    registration_closed: 'bg-amber-300 text-slate-950 border-amber-200',
+    in_progress: 'bg-sky-500 text-white border-sky-300',
     completed: 'bg-slate-800/90 text-white border-slate-400/30',
     cancelled: 'bg-rose-600/95 text-white border-rose-300/40',
 };
@@ -317,8 +317,8 @@ const TournamentDetails = () => {
     if (loading) {
         return (
             <div className="flex flex-col justify-center items-center h-[60vh] gap-6">
-                <div className="h-16 w-16 border-4 border-amber-200 border-t-indigo-900 rounded-full animate-spin" />
-                <p className="text-xs font-bold uppercase tracking-widest text-amber-700/80 animate-pulse">Loading tournament…</p>
+                <div className="h-16 w-16 border-4 border-sky-100 border-t-slate-950 rounded-full animate-spin" />
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 animate-pulse">Loading tournament...</p>
             </div>
         );
     }
@@ -331,7 +331,7 @@ const TournamentDetails = () => {
                 <p className="text-slate-500 font-medium mt-4 max-w-sm mx-auto">This event may have been removed or the link is incorrect.</p>
                 <div className="mt-12">
                     <Link to="/tournaments">
-                        <Button className="px-10 h-14 font-bold rounded-2xl bg-indigo-950 hover:bg-indigo-900 text-amber-50">Browse tournaments</Button>
+                        <Button className="px-10 h-14 font-bold rounded-2xl bg-slate-950 hover:bg-slate-800 text-white">Browse tournaments</Button>
                     </Link>
                 </div>
             </div>
@@ -362,20 +362,20 @@ const TournamentDetails = () => {
         return registration?.player ? [registration.player] : [];
     };
 
-    const InfoItem = ({ icon: Icon, label, value, subValue, accent = 'indigo' }) => {
+    const InfoItem = ({ icon: Icon, label, value, subValue, accent = 'slate' }) => {
         const accents = {
-            indigo: 'bg-indigo-950 text-amber-200 border-indigo-800',
-            amber: 'bg-amber-500 text-white border-amber-400',
-            emerald: 'bg-emerald-700 text-white border-emerald-600',
-            violet: 'bg-violet-800 text-violet-100 border-violet-700',
+            slate: 'bg-slate-950 text-white border-slate-800',
+            sky: 'bg-sky-600 text-white border-sky-500',
+            lime: 'bg-lime-300 text-slate-950 border-lime-200',
+            cyan: 'bg-cyan-700 text-white border-cyan-600',
         };
         return (
-            <div className="flex items-start gap-4 rounded-2xl bg-gradient-to-br from-slate-50 to-amber-50/40 border border-amber-100/80 p-4">
-                <div className={twMerge('h-11 w-11 shrink-0 flex items-center justify-center rounded-xl border shadow-sm', accents[accent] || accents.indigo)}>
+            <div className="flex items-start gap-4 rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                <div className={twMerge('h-11 w-11 shrink-0 flex items-center justify-center rounded-xl border shadow-sm', accents[accent] || accents.slate)}>
                     {createElement(Icon, { className: 'h-5 w-5' })}
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest leading-none mb-1.5">{label}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-1.5">{label}</p>
                     <p className="text-sm font-bold text-slate-900 leading-tight">{value}</p>
                     {subValue && <p className="text-[11px] font-medium text-slate-600 mt-1">{subValue}</p>}
                 </div>
@@ -389,7 +389,7 @@ const TournamentDetails = () => {
                 <div className="mb-6">
                     <Link
                         to="/tournaments"
-                        className="group inline-flex items-center gap-2 text-sm font-bold text-indigo-900/60 hover:text-indigo-950 transition-colors"
+                        className="group inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-950 transition-colors"
                     >
                         <ArrowLeftIcon className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
                         All tournaments
@@ -397,16 +397,16 @@ const TournamentDetails = () => {
                 </div>
 
                 {/* Hero */}
-                <div className="rounded-[2rem] sm:rounded-[2.75rem] overflow-hidden mb-10 sm:mb-12 border border-amber-200/60 shadow-[0_24px_70px_-28px_rgba(30,27,75,0.45)]">
+                <div className="rounded-[2rem] sm:rounded-[2.75rem] overflow-hidden mb-10 sm:mb-12 border border-slate-200 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.4)]">
                     <div className="relative h-56 sm:h-72 md:h-80 w-full overflow-hidden">
                         {tournament.banner ? (
                             <>
                                 <img src={tournament.banner} alt={tournament.name} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-indigo-950 via-indigo-950/50 to-indigo-900/20" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-sky-950/20" />
                             </>
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 flex items-center justify-center">
-                                <TrophyIcon className="h-28 w-28 text-amber-400/25" />
+                            <div className="w-full h-full bg-gradient-to-br from-slate-950 via-sky-950 to-slate-900 flex items-center justify-center">
+                                <TrophyIcon className="h-28 w-28 text-lime-300/20" />
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(251,191,36,0.2),transparent_45%)]" />
                             </div>
                         )}
@@ -421,8 +421,8 @@ const TournamentDetails = () => {
                             </span>
                         </div>
                         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 md:p-12">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/20 border border-amber-300/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-100 mb-4">
-                                <TrophyIcon className="h-3.5 w-3.5 text-amber-300" />
+                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-100 mb-4">
+                                <TrophyIcon className="h-3.5 w-3.5 text-lime-300" />
                                 Championship event
                             </div>
                             <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-[1.1] max-w-4xl">
@@ -431,21 +431,21 @@ const TournamentDetails = () => {
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-b from-amber-50/90 via-white to-white p-6 sm:p-8 md:p-12 border-t border-amber-100/80">
+                    <div className="bg-white p-6 sm:p-8 md:p-12 border-t border-slate-200">
                         <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-medium max-w-3xl">
                             {tournament.description}
                         </p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-8 pt-8 border-t border-amber-100">
-                            <InfoItem icon={MapPinIcon} label="Venue" value={tournament.venue} subValue={tournament.city} accent="amber" />
-                            <InfoItem icon={CalendarIcon} label="Start date" value={formatDate(tournament.startDate)} accent="indigo" />
-                            <InfoItem icon={ClockIcon} label="Registration closes" value={formatDate(tournament.registrationDeadline)} accent="violet" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-8 pt-8 border-t border-slate-200">
+                            <InfoItem icon={MapPinIcon} label="Venue" value={tournament.venue} subValue={tournament.city} accent="sky" />
+                            <InfoItem icon={CalendarIcon} label="Start date" value={formatDate(tournament.startDate)} accent="slate" />
+                            <InfoItem icon={ClockIcon} label="Registration closes" value={formatDate(tournament.registrationDeadline)} accent="cyan" />
                             <InfoItem
                                 icon={UserIcon}
                                 label="Organizer"
                                 value={tournament.organizer?.name}
                                 subValue={tournament.contactEmail}
-                                accent="emerald"
+                                accent="lime"
                             />
                         </div>
                     </div>
@@ -453,8 +453,8 @@ const TournamentDetails = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
                 <div className="lg:col-span-8 space-y-8 sm:space-y-12">
-                    <div className="bg-white shadow-[0_12px_40px_-18px_rgba(30,27,75,0.12)] border border-amber-100/80 rounded-3xl sm:rounded-[2.5rem] overflow-hidden">
-                        <div className="flex bg-gradient-to-r from-indigo-950 to-indigo-900 border-b border-amber-500/20 p-2 gap-1 overflow-x-auto">
+                    <div className="bg-white shadow-[0_12px_40px_-18px_rgba(15,23,42,0.16)] border border-slate-200 rounded-3xl sm:rounded-[2.5rem] overflow-hidden">
+                        <div className="flex bg-slate-950 border-b border-slate-800 p-2 gap-1 overflow-x-auto">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
@@ -463,8 +463,8 @@ const TournamentDetails = () => {
                                     className={twMerge(
                                         'flex items-center gap-2 px-5 sm:px-7 py-3.5 text-xs font-bold transition-all rounded-xl whitespace-nowrap flex-1 justify-center min-w-[5.5rem]',
                                         activeTab === tab.id
-                                            ? 'bg-amber-400 text-indigo-950 shadow-md shadow-amber-900/20'
-                                            : 'text-indigo-200/80 hover:text-white hover:bg-white/10'
+                                            ? 'bg-lime-300 text-slate-950 shadow-md shadow-slate-950/20'
+                                            : 'text-slate-300 hover:text-white hover:bg-white/10'
                                     )}
                                 >
                                     <tab.icon className="h-4 w-4" />
@@ -473,7 +473,7 @@ const TournamentDetails = () => {
                             ))}
                         </div>
 
-                        <div className="p-6 sm:p-10 md:p-12 bg-gradient-to-b from-white to-amber-50/30">
+                        <div className="p-6 sm:p-10 md:p-12 bg-gradient-to-b from-white to-slate-50/70">
                             <AnimatePresence mode="wait">
                                 {activeTab === 'details' && (
                                     <Motion.div
@@ -484,21 +484,21 @@ const TournamentDetails = () => {
                                     >
                                         <section>
                                             <div className="flex items-center gap-3 mb-6">
-                                                <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                                                <div className="h-8 w-8 bg-sky-50 rounded-xl flex items-center justify-center text-sky-700">
                                                     <SparklesIcon className="h-5 w-5" />
                                                 </div>
-                                                <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-950">Tournament format</h3>
+                                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-950">Tournament format</h3>
                                             </div>
-                                            <div className="bg-gradient-to-br from-indigo-50 to-amber-50 border border-amber-200/60 rounded-3xl p-8">
+                                            <div className="bg-gradient-to-br from-slate-50 to-sky-50 border border-slate-200 rounded-3xl p-8">
                                                 <div className="flex items-start gap-4 mb-4">
                                                     <div
-                                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-950 text-amber-300 shadow-sm"
+                                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-lime-300 shadow-sm"
                                                         aria-hidden
                                                     >
                                                         <ChartBarIcon className="h-6 w-6" />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">
+                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
                                                             Format
                                                         </p>
                                                         <p className="text-lg sm:text-xl font-bold text-slate-900 leading-snug break-words">
@@ -506,7 +506,7 @@ const TournamentDetails = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="h-px bg-amber-200/60 w-full mb-4" />
+                                                <div className="h-px bg-slate-200 w-full mb-4" />
                                                 <p className="text-slate-600 font-medium leading-relaxed">
                                                     Draws are generated automatically when registration closes and the draw is published.
                                                 </p>
@@ -519,9 +519,9 @@ const TournamentDetails = () => {
                                                     <div className="h-8 w-8 bg-slate-900 rounded-xl flex items-center justify-center text-white">
                                                         <ShieldCheckIcon className="h-5 w-5" />
                                                     </div>
-                                                    <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-950">Rules & regulations</h3>
+                                                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-950">Rules & regulations</h3>
                                                 </div>
-                                                <div className="prose prose-slate max-w-none bg-white border border-amber-100 rounded-[2rem] p-10 shadow-sm">
+                                                <div className="prose prose-slate max-w-none bg-white border border-slate-200 rounded-[2rem] p-10 shadow-sm">
                                                     <p className="text-slate-500 font-medium whitespace-pre-wrap leading-relaxed">{tournament.rules}</p>
                                                 </div>
                                             </section>
@@ -537,28 +537,28 @@ const TournamentDetails = () => {
                                         className="gap-8 flex flex-col"
                                     >
                                         {tournament.categories.map((category, index) => (
-                                            <div key={index} className="group relative bg-white border-2 border-amber-100/80 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 hover:shadow-xl hover:shadow-indigo-900/10 hover:border-amber-300/80 transition-all duration-500">
+                                            <div key={index} className="group relative bg-white border border-slate-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 hover:shadow-xl hover:shadow-sky-900/10 hover:border-sky-200 transition-all duration-500">
                                                 <div className="flex flex-col md:flex-row justify-between gap-6 sm:gap-8 mb-6 sm:mb-10">
                                                     <div>
-                                                        <h4 className="text-2xl sm:text-2xl font-extrabold text-slate-900 group-hover:text-indigo-800 transition-colors tracking-tight">{getCategoryLabel(category.name)}</h4>
+                                                        <h4 className="text-2xl sm:text-2xl font-extrabold text-slate-900 group-hover:text-sky-700 transition-colors tracking-tight">{getCategoryLabel(category.name)}</h4>
                                                         <div className="flex flex-wrap items-center gap-2 mt-3">
-                                                            <span className="px-3 py-1 rounded-full bg-indigo-950 text-amber-200 text-[10px] font-bold uppercase tracking-widest">
+                                                            <span className="px-3 py-1 rounded-full bg-slate-950 text-white text-[10px] font-bold uppercase tracking-widest">
                                                                 {formatTournamentGrade(category.skillLevel)}
                                                             </span>
-                                                            <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold uppercase tracking-widest">
+                                                            <span className="px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-[10px] font-bold uppercase tracking-widest">
                                                                 Max {category.maxParticipants} players
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div className="text-left md:text-right">
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Entry Fee</p>
-                                                        <p className="text-4xl font-black text-slate-900 tracking-tighter group-hover:text-indigo-600 transition-colors">Rs.{category.entryFee}</p>
+                                                        <p className="text-4xl font-black text-slate-900 tracking-tighter group-hover:text-sky-700 transition-colors">Rs.{category.entryFee}</p>
                                                     </div>
                                                 </div>
 
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 pt-8 border-t border-slate-50">
                                                     <div>
-                                                        <p className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest mb-2">Availability</p>
+                                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Availability</p>
                                                         <div className="flex items-center gap-2">
                                                             <div className={twMerge(
                                                                 'h-2 w-2 rounded-full',
@@ -579,7 +579,7 @@ const TournamentDetails = () => {
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Utilization</p>
                                                         <div className="w-full bg-slate-50 rounded-full h-2.5 mt-3 border border-slate-100 overflow-hidden">
                                                             <div
-                                                                className="bg-gradient-to-r from-indigo-700 to-amber-500 h-full rounded-full transition-all duration-700"
+                                                                className="bg-gradient-to-r from-sky-600 to-lime-400 h-full rounded-full transition-all duration-700"
                                                                 style={{ width: `${Math.min(100, ((tournament.registrationCounts?.[category.name] || 0) / category.maxParticipants) * 100)}%` }}
                                                             />
                                                         </div>
@@ -587,9 +587,9 @@ const TournamentDetails = () => {
                                                 </div>
 
                                                 {category.prizePool && (
-                                                    <div className="bg-gradient-to-br from-amber-50 to-indigo-50 rounded-2xl p-6 border border-amber-200/60">
-                                                        <h5 className="text-[10px] font-bold text-indigo-950 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                                            <TrophyIcon className="h-4 w-4 text-amber-600" />
+                                                    <div className="bg-gradient-to-br from-slate-50 to-sky-50 rounded-2xl p-6 border border-slate-200">
+                                                        <h5 className="text-[10px] font-bold text-slate-950 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                                            <TrophyIcon className="h-4 w-4 text-sky-600" />
                                                             Prize pool
                                                         </h5>
                                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -627,9 +627,9 @@ const TournamentDetails = () => {
                                         className="max-w-2xl mx-auto py-8"
                                     >
                                         {!canRegister ? (
-                                            <div className="bg-indigo-50 border border-indigo-100 rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-16 text-center">
-                                                <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white border border-indigo-100 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-sm">
-                                                    <ShieldCheckIcon className="h-8 w-8 sm:h-10 sm:w-10 text-indigo-600" />
+                                            <div className="bg-sky-50 border border-sky-100 rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-16 text-center">
+                                                <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white border border-sky-100 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-sm">
+                                                    <ShieldCheckIcon className="h-8 w-8 sm:h-10 sm:w-10 text-sky-600" />
                                                 </div>
                                                 <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-3 tracking-tight">Organizer workspace</h3>
                                                 <p className="text-slate-600 font-medium leading-relaxed">
@@ -664,7 +664,7 @@ const TournamentDetails = () => {
                                         ) : (
                                             <div className="space-y-10">
                                                 <div className="text-center mb-10">
-                                                    <h3 className="text-3xl font-extrabold text-indigo-950 tracking-tight mb-3">Register now</h3>
+                                                    <h3 className="text-3xl font-extrabold text-slate-950 tracking-tight mb-3">Register now</h3>
                                                     <p className="text-slate-500 font-medium">Join {tournament.name} — choose your category below.</p>
                                                 </div>
 
@@ -719,7 +719,7 @@ const TournamentDetails = () => {
                                                             value={registrationData.category}
                                                             onChange={(e) => setRegistrationData({ ...registrationData, category: e.target.value })}
                                                             required
-                                                            className="w-full h-14 rounded-2xl border-2 border-amber-200 bg-amber-50/30 px-5 font-bold text-sm text-slate-800 focus:ring-4 focus:ring-amber-400/20 focus:border-amber-400 outline-none transition-all"
+                                                            className="w-full h-14 rounded-2xl border border-slate-200 bg-slate-50 px-5 font-bold text-sm text-slate-800 focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all"
                                                         >
                                                             <option value="">Select a category…</option>
                                                             {tournament.categories.map((cat) => {
@@ -742,11 +742,11 @@ const TournamentDetails = () => {
                                                         <Motion.div
                                                             initial={{ opacity: 0, height: 0 }}
                                                             animate={{ opacity: 1, height: 'auto' }}
-                                                            className="space-y-8 p-8 bg-indigo-50/50 border border-indigo-100 rounded-3xl"
+                                                            className="space-y-8 p-8 bg-sky-50/60 border border-sky-100 rounded-3xl"
                                                         >
                                                             <div className="flex items-center gap-3 mb-2">
-                                                                <div className="h-6 w-6 rounded-full bg-indigo-950 text-amber-300 flex items-center justify-center text-[10px] font-bold">2</div>
-                                                                <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-widest">Doubles partner</h4>
+                                                                <div className="h-6 w-6 rounded-full bg-slate-950 text-lime-300 flex items-center justify-center text-[10px] font-bold">2</div>
+                                                                <h4 className="text-xs font-bold text-slate-950 uppercase tracking-widest">Doubles partner</h4>
                                                             </div>
                                                             <Input
                                                                 label="Partner name"
@@ -764,7 +764,7 @@ const TournamentDetails = () => {
                                                         disabled={!isAuthenticated}
                                                         fullWidth
                                                         size="lg"
-                                                        className="h-16 text-base font-bold bg-indigo-950 hover:bg-indigo-900 text-amber-50 shadow-xl shadow-indigo-900/20 rounded-2xl"
+                                                        className="h-16 text-base font-bold bg-slate-950 hover:bg-slate-800 text-white shadow-xl shadow-slate-900/20 rounded-2xl"
                                                     >
                                                         {isAuthenticated ? 'Submit registration' : 'Sign in to register'}
                                                     </Button>
@@ -782,8 +782,8 @@ const TournamentDetails = () => {
                                         className="space-y-6"
                                     >
                                         <div className="flex justify-between items-center mb-6">
-                                            <h3 className="text-xl font-bold text-indigo-950">Registrations</h3>
-                                            <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold uppercase">{registrations.length} Total</span>
+                                            <h3 className="text-xl font-bold text-slate-950">Registrations</h3>
+                                            <span className="px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-xs font-bold uppercase">{registrations.length} Total</span>
                                         </div>
 
                                         {registrations.length > 0 ? (
@@ -869,12 +869,12 @@ const TournamentDetails = () => {
                                                 <div className="h-20 w-20 bg-white border border-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm">
                                                     <ChartBarIcon className="h-10 w-10 text-slate-100" />
                                                 </div>
-                                                <h3 className="text-2xl font-extrabold text-indigo-950 tracking-tight">Draws not published yet</h3>
+                                                <h3 className="text-2xl font-extrabold text-slate-950 tracking-tight">Draws not published yet</h3>
                                                 <p className="text-slate-500 max-w-sm mx-auto mt-3 font-medium text-lg leading-relaxed">
                                                     The draw will appear here after registration closes and the organizer publishes draws.
                                                 </p>
                                                 {isOrganizer && tournament.status === 'registration_open' && (
-                                                    <div className="mt-8 p-4 bg-amber-50 text-amber-800 rounded-xl text-sm font-medium border border-amber-100">
+                                                    <div className="mt-8 p-4 bg-sky-50 text-sky-800 rounded-xl text-sm font-medium border border-sky-100">
                                                         <p><strong>Organizer Note:</strong> You must close registration in "My Tournaments" to generate draws.</p>
                                                     </div>
                                                 )}
@@ -889,29 +889,29 @@ const TournamentDetails = () => {
 
                 {/* Sidebar */}
                 <div className="lg:col-span-4">
-                    <div className="bg-white shadow-[0_20px_60px_-20px_rgba(30,27,75,0.15)] border-2 border-amber-200/50 rounded-3xl sm:rounded-[2.5rem] overflow-hidden sticky top-32">
-                        <div className="p-6 sm:p-8 bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-950 flex justify-between items-center relative overflow-hidden text-white border-b-4 border-amber-400">
+                    <div className="bg-white shadow-[0_20px_60px_-20px_rgba(15,23,42,0.2)] border border-slate-200 rounded-3xl sm:rounded-[2.5rem] overflow-hidden sticky top-32">
+                        <div className="p-6 sm:p-8 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 flex justify-between items-center relative overflow-hidden text-white border-b-4 border-lime-300">
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(251,191,36,0.15),transparent_50%)]" />
-                            <h3 className="text-lg font-extrabold tracking-tight relative z-10 text-amber-50">At a glance</h3>
-                            <div className="h-10 w-10 rounded-xl bg-amber-400/20 flex items-center justify-center text-amber-300 border border-amber-400/40 relative z-10">
+                            <h3 className="text-lg font-extrabold tracking-tight relative z-10 text-white">At a glance</h3>
+                            <div className="h-10 w-10 rounded-xl bg-lime-300/15 flex items-center justify-center text-lime-300 border border-lime-300/30 relative z-10">
                                 <TrophyIcon className="h-5 w-5" />
                             </div>
                         </div>
-                        <div className="p-6 sm:p-8 space-y-6 bg-gradient-to-b from-amber-50/50 to-white">
+                        <div className="p-6 sm:p-8 space-y-6 bg-gradient-to-b from-slate-50 to-white">
                             <div className="space-y-4">
-                                <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-amber-100 shadow-sm">
-                                    <span className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest">Registered</span>
+                                <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Registered</span>
                                     <span className="text-sm font-bold text-slate-900 italic">
                                         {Object.values(tournament.registrationCounts || {}).reduce((a, b) => a + b, 0)} Registered
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-amber-100 shadow-sm">
-                                    <span className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest">Categories</span>
+                                <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Categories</span>
                                     <span className="text-sm font-bold text-slate-900">{tournament.categories.length}</span>
                                 </div>
-                                <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-amber-100 shadow-sm">
-                                    <span className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest">Deadline</span>
-                                    <span className="text-sm font-bold text-indigo-800">{new Date(tournament.registrationDeadline).toLocaleDateString()}</span>
+                                <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Deadline</span>
+                                    <span className="text-sm font-bold text-sky-700">{new Date(tournament.registrationDeadline).toLocaleDateString()}</span>
                                 </div>
                             </div>
 
@@ -931,7 +931,7 @@ const TournamentDetails = () => {
                                         fullWidth
                                         size="lg"
                                         onClick={() => setActiveTab('registrations')}
-                                        className="h-14 font-bold bg-indigo-950 hover:bg-indigo-900 text-amber-50 shadow-lg shadow-indigo-900/20 rounded-2xl"
+                                        className="h-14 font-bold bg-slate-950 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 rounded-2xl"
                                     >
                                         Manage registrations
                                     </Button>
@@ -940,13 +940,13 @@ const TournamentDetails = () => {
                                         fullWidth
                                         size="lg"
                                         onClick={() => setActiveTab('register')}
-                                        className="h-14 font-bold bg-amber-500 hover:bg-amber-600 text-indigo-950 shadow-lg shadow-amber-200/80 rounded-2xl"
+                                        className="h-14 font-bold bg-lime-300 hover:bg-lime-200 text-slate-950 shadow-lg shadow-lime-100 rounded-2xl"
                                     >
                                         Register now
                                     </Button>
                                 ) : !canRegister ? (
-                                    <div className="p-4 bg-indigo-50 rounded-2xl text-center border border-indigo-100">
-                                        <p className="text-[10px] font-bold text-indigo-700 uppercase tracking-[0.15em]">Organizer accounts cannot register</p>
+                                    <div className="p-4 bg-sky-50 rounded-2xl text-center border border-sky-100">
+                                        <p className="text-[10px] font-bold text-sky-700 uppercase tracking-[0.15em]">Organizer accounts cannot register</p>
                                     </div>
                                 ) : (
                                     <div className="p-4 bg-slate-100 rounded-2xl text-center border border-slate-200">
@@ -957,9 +957,9 @@ const TournamentDetails = () => {
                         </div>
 
                         <div className="px-6 sm:px-8 pb-8">
-                            <div className="rounded-2xl p-6 border border-indigo-100 bg-indigo-50/40">
-                                <h4 className="font-bold text-[10px] text-indigo-950 mb-4 uppercase tracking-widest flex items-center gap-2">
-                                    <InformationCircleIcon className="h-4 w-4 text-amber-600" />
+                            <div className="rounded-2xl p-6 border border-slate-200 bg-slate-50">
+                                <h4 className="font-bold text-[10px] text-slate-950 mb-4 uppercase tracking-widest flex items-center gap-2">
+                                    <InformationCircleIcon className="h-4 w-4 text-sky-600" />
                                     Good to know
                                 </h4>
                                 <ul className="space-y-3">
