@@ -1,34 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '../../context/AuthContext';
 import {
-    createOrUpdateProfile,
-    getMyProfile
-} from '../../services/coachService';
+    AcademicCapIcon,
+    CameraIcon,
+    CheckCircleIcon,
+    CurrencyDollarIcon,
+    DocumentTextIcon,
+    ExclamationCircleIcon,
+    IdentificationIcon
+} from '@heroicons/react/24/outline';
+import { useAuth } from '../../context/AuthContext';
+import { createOrUpdateProfile, getMyProfile } from '../../services/coachService';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import UserAvatar from '../../components/ui/UserAvatar';
-import {
-    CheckCircleIcon,
-    ExclamationCircleIcon,
-    CurrencyDollarIcon,
-    AcademicCapIcon,
-    DocumentTextIcon,
-    CameraIcon
-} from '@heroicons/react/24/outline';
+import CoachPageHeader from '../../components/coach/CoachPageHeader';
 
-const SpecializationOption = ({ label, value, register }) => (
-    <label className="relative flex items-start p-4 cursor-pointer rounded-xl border border-slate-200 hover:bg-emerald-50/50 hover:border-emerald-300 transition-all select-none group">
-        <div className="flex items-center h-5">
-            <input
-                type="checkbox"
-                value={value}
-                {...register('specialization')}
-                className="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-slate-300 rounded"
-            />
-        </div>
-        <div className="ml-3 text-sm">
-            <span className="font-medium text-slate-900 group-hover:text-emerald-700 transition-colors">{label}</span>
-        </div>
+const fieldClass = 'mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100';
+
+const SpecializationOption = ({ label, description, value, register }) => (
+    <label className="group flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-300 hover:bg-sky-50/40 has-[:checked]:border-sky-400 has-[:checked]:bg-sky-50">
+        <input
+            type="checkbox"
+            value={value}
+            {...register('specialization')}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+        />
+        <span>
+            <span className="block text-sm font-bold text-slate-900 group-hover:text-sky-800">{label}</span>
+            <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+        </span>
     </label>
 );
 
@@ -39,25 +39,27 @@ const CoachProfileEditor = () => {
     const [imageUploading, setImageUploading] = useState(false);
     const [imageError, setImageError] = useState('');
 
-    const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm();
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors, isSubmitting }
+    } = useForm();
+    const preview = watch();
 
     useEffect(() => {
         const initData = async () => {
             try {
-                const [profileRes] = await Promise.all([
-                    getMyProfile()
-                ]);
-
-                if (profileRes) {
-                    const data = profileRes.data || {};
-                    setValue('monthlyFee', data.monthlyFee);
-                    setValue('hourlyRate', data.hourlyRate);
-                    setValue('experience', data.experience);
-                    setValue('bio', data.bio);
-                    setValue('specialization', data.specialization || []);
-                }
+                const profileResponse = await getMyProfile();
+                const data = profileResponse?.data || {};
+                setValue('monthlyFee', data.monthlyFee);
+                setValue('hourlyRate', data.hourlyRate);
+                setValue('experience', data.experience);
+                setValue('bio', data.bio);
+                setValue('specialization', data.specialization || []);
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching coach profile:', error);
             } finally {
                 setLoading(false);
             }
@@ -66,14 +68,16 @@ const CoachProfileEditor = () => {
         initData();
     }, [setValue]);
 
+    const clearStatusLater = () => window.setTimeout(() => setSubmitStatus(null), 3000);
+
     const onSubmit = async (data) => {
         setSubmitStatus(null);
         try {
             await createOrUpdateProfile(data);
             setSubmitStatus('success');
-            setTimeout(() => setSubmitStatus(null), 3000);
+            clearStatusLater();
         } catch (error) {
-            console.error('Error saving profile:', error);
+            console.error('Error saving coach profile:', error);
             setSubmitStatus('error');
         }
     };
@@ -98,7 +102,7 @@ const CoachProfileEditor = () => {
         try {
             await updateProfilePicture(file);
             setSubmitStatus('success');
-            setTimeout(() => setSubmitStatus(null), 3000);
+            clearStatusLater();
         } catch (error) {
             console.error('Error uploading coach photo:', error);
             setImageError(error.response?.data?.error || 'Failed to upload profile picture.');
@@ -109,184 +113,173 @@ const CoachProfileEditor = () => {
 
     if (loading) return <LoadingSpinner />;
 
+    const specializations = Array.isArray(preview.specialization) ? preview.specialization : [];
+
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            {/* ── Gradient Header ─────────────────────────────── */}
-            <header className="relative rounded-2xl border border-amber-200/80 bg-gradient-to-r from-indigo-950 to-indigo-900 px-6 sm:px-8 py-8 text-white shadow-lg overflow-hidden">
-                {/* Decorative shapes */}
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl" />
-                <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-indigo-400/10 rounded-full blur-2xl" />
-
-                <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-5">
-                    <div className="flex items-end gap-4 sm:gap-5">
-                        <div className="relative shrink-0">
-                            <UserAvatar
-                                user={user}
-                                className="h-20 w-20 rounded-2xl bg-white text-indigo-950 text-2xl shadow-xl ring-2 ring-white/70"
-                                fallbackClassName="text-indigo-950"
+        <div className="mx-auto max-w-[1280px] space-y-6 pb-10">
+            <CoachPageHeader
+                eyebrow="Public presence"
+                title="Coach profile"
+                description="Keep your rates, experience, coaching philosophy, areas of expertise, and profile photo accurate for athletes browsing the directory."
+                icon={IdentificationIcon}
+                actions={(
+                    <>
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10">
+                            <CameraIcon className="h-4 w-4" />
+                            {imageUploading ? 'Uploading...' : 'Change photo'}
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="sr-only"
+                                onChange={handleProfilePictureChange}
+                                disabled={imageUploading}
                             />
-                            <label className="absolute -right-2 -top-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-amber-400 text-indigo-950 shadow-lg ring-1 ring-amber-200 transition hover:bg-amber-300">
-                                <CameraIcon className="h-4 w-4" />
-                                <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    className="sr-only"
-                                    onChange={handleProfilePictureChange}
-                                    disabled={imageUploading}
-                                />
-                            </label>
-                        </div>
-                        <div>
-                            <p className="text-sm text-indigo-200/90 font-medium">Settings</p>
-                            <h1 className="text-3xl font-black tracking-tight mt-1">Coach Profile</h1>
-                            <p className="mt-2 text-sm text-indigo-100/80">
-                                Update your qualifications, fees, specialization details, and public photo.
-                            </p>
-                            <label className="mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-white/12 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/18">
-                                <CameraIcon className="h-4 w-4" />
-                                {imageUploading ? 'Uploading...' : user?.profilePicture ? 'Change photo' : 'Upload photo'}
-                                <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    className="sr-only"
-                                    onChange={handleProfilePictureChange}
-                                    disabled={imageUploading}
-                                />
-                            </label>
-                        </div>
-                    </div>
-                    <button
-                        type="submit"
-                        form="coach-profile-form"
-                        disabled={isSubmitting}
-                        className="inline-flex items-center h-12 px-6 rounded-xl font-bold bg-amber-400 hover:bg-amber-300 text-indigo-950 transition-all shadow-lg shadow-amber-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isSubmitting ? 'Saving...' : 'Save Changes'}
-                    </button>
-                </div>
-            </header>
+                        </label>
+                        <button
+                            type="submit"
+                            form="coach-profile-form"
+                            disabled={isSubmitting}
+                            className="inline-flex items-center gap-2 rounded-xl bg-lime-300 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-lime-200 disabled:opacity-50"
+                        >
+                            <CheckCircleIcon className="h-5 w-5" /> {isSubmitting ? 'Saving...' : 'Save profile'}
+                        </button>
+                    </>
+                )}
+            />
 
-            {/* ── Status Alerts ────────────────────────────────── */}
-            {submitStatus === 'success' && (
-                <div className="rounded-2xl bg-emerald-50 p-4 border border-emerald-200 flex items-center gap-3 animate-enter">
-                    <CheckCircleIcon className="h-5 w-5 text-emerald-500 shrink-0" />
-                    <h3 className="text-sm font-medium text-emerald-800">Profile saved successfully</h3>
+            {(submitStatus || imageError) && (
+                <div className={`flex items-center gap-3 rounded-2xl border p-4 ${
+                    submitStatus === 'success' && !imageError
+                        ? 'border-lime-200 bg-lime-50 text-lime-900'
+                        : 'border-rose-200 bg-rose-50 text-rose-900'
+                }`}>
+                    {submitStatus === 'success' && !imageError
+                        ? <CheckCircleIcon className="h-5 w-5 shrink-0 text-lime-600" />
+                        : <ExclamationCircleIcon className="h-5 w-5 shrink-0 text-rose-600" />}
+                    <p className="text-sm font-semibold">
+                        {imageError || (submitStatus === 'success' ? 'Profile saved successfully.' : 'Could not save your profile. Please try again.')}
+                    </p>
                 </div>
             )}
 
-            {submitStatus === 'error' && (
-                <div className="rounded-2xl bg-red-50 p-4 border border-red-200 flex items-center gap-3 animate-enter">
-                    <ExclamationCircleIcon className="h-5 w-5 text-red-500 shrink-0" />
-                    <h3 className="text-sm font-medium text-red-800">Error saving profile. Please try again.</h3>
-                </div>
-            )}
-
-            {imageError && (
-                <div className="rounded-2xl bg-red-50 p-4 border border-red-200 flex items-center gap-3 animate-enter">
-                    <ExclamationCircleIcon className="h-5 w-5 text-red-500 shrink-0" />
-                    <h3 className="text-sm font-medium text-red-800">{imageError}</h3>
-                </div>
-            )}
-
-            {/* ── Profile Form Card ──────────────────────────── */}
-            <div className="bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-100 shadow-md p-6 sm:p-8">
-                <form id="coach-profile-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-                    {/* Service Details */}
-                    <div>
-                        <div className="flex items-center gap-3 mb-5">
-                            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md shadow-indigo-100">
-                                <CurrencyDollarIcon className="h-5 w-5 text-white" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-900">Service Details</h3>
-                        </div>
-                        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                            <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700">Hourly Rate (PKR)</label>
-                                <div className="mt-1 relative">
-                                    <input
-                                        type="number"
-                                        className="block w-full rounded-xl border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2.5"
-                                        {...register('hourlyRate', { required: 'Hourly rate is required', min: 0 })}
-                                    />
-                                </div>
-                                {errors.hourlyRate && <p className="mt-1 text-sm text-red-600">{errors.hourlyRate.message}</p>}
-                            </div>
-
-                            <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700">Monthly Fee (Optional)</label>
-                                <div className="mt-1 relative">
-                                    <input
-                                        type="number"
-                                        className="block w-full rounded-xl border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2.5"
-                                        {...register('monthlyFee', { min: 0 })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700">Experience (Years)</label>
-                                <div className="mt-1 relative">
-                                    <input
-                                        type="number"
-                                        className="block w-full rounded-xl border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm py-2.5"
-                                        {...register('experience', { required: 'Experience is required', min: 0 })}
-                                    />
-                                </div>
-                                {errors.experience && <p className="mt-1 text-sm text-red-600">{errors.experience.message}</p>}
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.65fr)]">
+                <form id="coach-profile-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                        <div className="flex items-start gap-4 border-b border-slate-100 pb-5">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700"><CurrencyDollarIcon className="h-5 w-5" /></div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Service details</p>
+                                <h2 className="mt-1 text-xl font-black text-slate-950">Rates and experience</h2>
+                                <p className="mt-1 text-sm text-slate-500">Set clear expectations before an athlete sends a request.</p>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Bio */}
-                    <div className="pt-6 border-t border-slate-100">
-                        <div className="flex items-center gap-3 mb-5">
-                            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-md shadow-amber-100">
-                                <DocumentTextIcon className="h-5 w-5 text-white" />
+                        <div className="mt-6 grid gap-5 md:grid-cols-3">
+                            <div>
+                                <label className="text-sm font-bold text-slate-700">Hourly rate (PKR)</label>
+                                <input type="number" className={fieldClass} placeholder="2500" {...register('hourlyRate', { required: 'Hourly rate is required', min: 0 })} />
+                                {errors.hourlyRate && <p className="mt-2 text-xs font-semibold text-rose-600">{errors.hourlyRate.message}</p>}
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-900">Professional Bio</h3>
-                                <p className="text-xs text-slate-400 mt-0.5">Describe your coaching philosophy and experience</p>
+                                <label className="text-sm font-bold text-slate-700">Monthly fee (optional)</label>
+                                <input type="number" className={fieldClass} placeholder="18000" {...register('monthlyFee', { min: 0 })} />
+                            </div>
+                            <div>
+                                <label className="text-sm font-bold text-slate-700">Experience (years)</label>
+                                <input type="number" className={fieldClass} placeholder="5" {...register('experience', { required: 'Experience is required', min: 0 })} />
+                                {errors.experience && <p className="mt-2 text-xs font-semibold text-rose-600">{errors.experience.message}</p>}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                        <div className="flex items-start gap-4 border-b border-slate-100 pb-5">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700"><DocumentTextIcon className="h-5 w-5" /></div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">Coach story</p>
+                                <h2 className="mt-1 text-xl font-black text-slate-950">Professional bio</h2>
+                                <p className="mt-1 text-sm text-slate-500">Explain your coaching philosophy, credentials, and the athletes you work best with.</p>
                             </div>
                         </div>
                         <textarea
-                            rows={4}
-                            className="block w-full rounded-xl border-slate-300 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                            placeholder="Share your coaching approach, certifications, achievements..."
-                            {...register('bio', { required: 'Bio is required', maxLength: 1000 })}
+                            rows={7}
+                            className={`${fieldClass} resize-y leading-6`}
+                            placeholder="Share your coaching approach, certifications, achievements, and training focus..."
+                            {...register('bio', { required: 'Bio is required', maxLength: { value: 1000, message: 'Bio must be 1000 characters or fewer' } })}
                         />
-                        {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>}
-                        <p className="mt-2 text-xs text-slate-400">Max 1000 characters</p>
-                    </div>
+                        <div className="mt-2 flex justify-between gap-3 text-xs text-slate-400">
+                            <span>{errors.bio ? <span className="font-semibold text-rose-600">{errors.bio.message}</span> : 'Write in a clear, athlete-friendly voice.'}</span>
+                            <span>{preview.bio?.length || 0}/1000</span>
+                        </div>
+                    </section>
 
-                    {/* Specializations */}
-                    <div className="pt-6 border-t border-slate-100">
-                        <div className="flex items-center gap-3 mb-5">
-                            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-100">
-                                <AcademicCapIcon className="h-5 w-5 text-white" />
-                            </div>
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                        <div className="flex items-start gap-4 border-b border-slate-100 pb-5">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime-50 text-lime-700"><AcademicCapIcon className="h-5 w-5" /></div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-900">Areas of Expertise</h3>
-                                <p className="text-xs text-slate-400 mt-0.5">Select your coaching specializations</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-lime-700">Expertise</p>
+                                <h2 className="mt-1 text-xl font-black text-slate-950">Areas of specialization</h2>
+                                <p className="mt-1 text-sm text-slate-500">Choose the training outcomes athletes can expect from you.</p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <SpecializationOption label="Tactical Strategy" value="tactics" register={register} />
-                            <SpecializationOption label="High Performance" value="high_performance" register={register} />
-                            <SpecializationOption label="Fitness & Conditioning" value="fitness" register={register} />
+                        <div className="mt-6 grid gap-4 md:grid-cols-3">
+                            <SpecializationOption label="Tactical strategy" description="Match planning, shot selection, and game intelligence." value="tactics" register={register} />
+                            <SpecializationOption label="High performance" description="Advanced drills and preparation for competition." value="high_performance" register={register} />
+                            <SpecializationOption label="Fitness & conditioning" description="Movement, stamina, recovery, and athletic capacity." value="fitness" register={register} />
                         </div>
-                    </div>
+                    </section>
 
-                    {/* Mobile Save Button */}
-                    <div className="pt-6 border-t border-slate-100 flex justify-end sm:hidden">
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full px-6 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-md shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isSubmitting ? 'Saving...' : 'Save Changes'}
-                        </button>
-                    </div>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3.5 text-sm font-extrabold text-white transition hover:bg-sky-900 disabled:opacity-50 xl:hidden"
+                    >
+                        <CheckCircleIcon className="h-5 w-5" /> {isSubmitting ? 'Saving...' : 'Save profile'}
+                    </button>
                 </form>
+
+                <aside className="space-y-6 xl:sticky xl:top-28 xl:self-start">
+                    <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.05)]">
+                        <div className="bg-slate-950 p-6 text-white">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-200">Directory preview</p>
+                            <div className="mt-5 flex items-center gap-4">
+                                <div className="relative">
+                                    <UserAvatar user={user} className="h-20 w-20 rounded-2xl bg-white text-slate-950 text-2xl ring-2 ring-white/70" fallbackClassName="text-slate-950" />
+                                    <label className="absolute -right-2 -top-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-lime-300 text-slate-950 shadow-lg transition hover:bg-lime-200">
+                                        <CameraIcon className="h-4 w-4" />
+                                        <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handleProfilePictureChange} disabled={imageUploading} />
+                                    </label>
+                                </div>
+                                <div className="min-w-0">
+                                    <h2 className="truncate text-xl font-black">{user?.name || 'Coach profile'}</h2>
+                                    <p className="mt-1 text-sm text-slate-400">{preview.experience || 0} years experience</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-4 p-6 text-sm">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span className="text-slate-500">Hourly rate</span><strong className="text-slate-950">PKR {preview.hourlyRate || '0'}</strong></div>
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3"><span className="text-slate-500">Monthly fee</span><strong className="text-slate-950">{preview.monthlyFee ? `PKR ${preview.monthlyFee}` : 'Not set'}</strong></div>
+                            <div>
+                                <p className="text-slate-500">Specializations</p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {specializations.length > 0 ? specializations.map(item => (
+                                        <span key={item} className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">{item.replace(/_/g, ' ')}</span>
+                                    )) : <span className="text-xs text-slate-400">Choose at least one area of expertise.</span>}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
+                        <h2 className="font-black text-slate-950">Profile checklist</h2>
+                        <div className="mt-4 space-y-3 text-sm text-slate-600">
+                            <p className="flex items-center gap-2"><CheckCircleIcon className={`h-4 w-4 ${preview.hourlyRate ? 'text-lime-600' : 'text-slate-300'}`} /> Clear hourly pricing</p>
+                            <p className="flex items-center gap-2"><CheckCircleIcon className={`h-4 w-4 ${preview.bio ? 'text-lime-600' : 'text-slate-300'}`} /> Athlete-friendly bio</p>
+                            <p className="flex items-center gap-2"><CheckCircleIcon className={`h-4 w-4 ${specializations.length ? 'text-lime-600' : 'text-slate-300'}`} /> Training expertise selected</p>
+                            <p className="flex items-center gap-2"><CheckCircleIcon className={`h-4 w-4 ${user?.profilePicture ? 'text-lime-600' : 'text-slate-300'}`} /> Professional profile photo</p>
+                        </div>
+                    </section>
+                </aside>
             </div>
         </div>
     );

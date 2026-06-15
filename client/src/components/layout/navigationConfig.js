@@ -48,6 +48,13 @@ export const buildCoachNavigation = () => ([
         description: 'Review incoming training requests.',
         groupKey: 'operations',
     },
+    {
+        name: 'Coach Profile',
+        href: '/coach/profile',
+        icon: UserCircleIcon,
+        description: 'Update rates, expertise, bio, and photo.',
+        groupKey: 'operations',
+    },
 ])
 
 export const buildProfessionalNavigation = () => ([

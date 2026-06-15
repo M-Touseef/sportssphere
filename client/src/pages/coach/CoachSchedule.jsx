@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import coachService from '../../services/coachService';
 import { getAllCourts } from '../../services/courtService';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import CoachPageHeader from '../../components/coach/CoachPageHeader';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/ui/Button';
 import HourSlotSelect from '../../components/ui/HourSlotSelect';
@@ -11,6 +12,7 @@ import { formatSlotHourRange } from '../../utils/timeFormat';
 import { twMerge } from 'tailwind-merge';
 import {
     BuildingOffice2Icon,
+    CalendarDaysIcon,
     MapPinIcon,
     PlusIcon,
     TrashIcon,
@@ -38,8 +40,8 @@ const StepBar = ({ steps, current }) => (
                         <div
                             className={twMerge(
                                 'h-8 w-8 rounded-full flex items-center justify-center text-xs font-black border-2',
-                                done && 'bg-emerald-600 border-emerald-600 text-white',
-                                active && !done && 'bg-indigo-950 border-indigo-950 text-amber-100',
+                                done && 'border-lime-500 bg-lime-500 text-slate-950',
+                                active && !done && 'border-slate-950 bg-slate-950 text-white',
                                 !done && !active && 'bg-white border-slate-200 text-slate-400'
                             )}
                         >
@@ -48,7 +50,7 @@ const StepBar = ({ steps, current }) => (
                         <span
                             className={twMerge(
                                 'text-[9px] font-bold uppercase hidden sm:block',
-                                active ? 'text-indigo-950' : 'text-slate-400'
+                                active ? 'text-slate-950' : 'text-slate-400'
                             )}
                         >
                             {s.label}
@@ -58,7 +60,7 @@ const StepBar = ({ steps, current }) => (
                         <div
                             className={twMerge(
                                 'h-0.5 flex-1 mx-2 rounded-full',
-                                current > s.id ? 'bg-emerald-500' : 'bg-slate-200'
+                                current > s.id ? 'bg-lime-500' : 'bg-slate-200'
                             )}
                         />
                     )}
@@ -217,7 +219,6 @@ const CoachSchedule = () => {
         setCourtSubmitting(true);
         try {
             const res = await coachService.createCourtBooking(courtForm);
-            const newBookingId = res?.data?._id;
             success('Court reserved. Now open coaching hours for that date.');
             resetCourtWizard();
             await refreshAll();
@@ -307,8 +308,78 @@ const CoachSchedule = () => {
     if (loading) return <LoadingSpinner />;
 
     return (
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-20 space-y-6">
-            <div>
+        <div className="mx-auto max-w-[1280px] space-y-6 pb-10">
+            <CoachPageHeader
+                eyebrow="Coaching calendar"
+                title="Schedule & courts"
+                description="Reserve a court for a specific date, then publish the coaching hours athletes can request inside that reservation."
+                icon={CalendarDaysIcon}
+                actions={(
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (showCourtWizard) {
+                                resetCourtWizard();
+                            } else {
+                                setShowCourtWizard(true);
+                                setCourtStep(1);
+                            }
+                        }}
+                        className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold transition ${
+                            showCourtWizard
+                                ? 'border border-white/15 bg-white/5 text-white hover:bg-white/10'
+                                : 'bg-lime-300 text-slate-950 hover:bg-lime-200'
+                        }`}
+                    >
+                        <PlusIcon className={`h-5 w-5 transition ${showCourtWizard ? 'rotate-45' : ''}`} />
+                        {showCourtWizard ? 'Close reservation form' : 'Reserve a court'}
+                    </button>
+                )}
+            >
+                <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-sky-100">{upcomingReservations.length} upcoming reservations</span>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-200">{slots.length} published coaching slots</span>
+                </div>
+            </CoachPageHeader>
+
+            <section className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                    <div className="flex items-center justify-between gap-4">
+                        <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Reserved dates</p><p className="mt-2 text-3xl font-black text-slate-950">{upcomingReservations.length}</p></div>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-700"><BuildingOffice2Icon className="h-5 w-5" /></div>
+                    </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                    <div className="flex items-center justify-between gap-4">
+                        <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-lime-700">Open time blocks</p><p className="mt-2 text-3xl font-black text-slate-950">{slots.length}</p></div>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-lime-50 text-lime-700"><ClockIcon className="h-5 w-5" /></div>
+                    </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                    <div className="flex items-center justify-between gap-4">
+                        <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Athlete capacity</p><p className="mt-2 text-3xl font-black text-slate-950">{slots.reduce((total, slot) => total + (Number(slot.maxStudents) || 1), 0)}</p></div>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><UserGroupIcon className="h-5 w-5" /></div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                    {[
+                        ['01', 'Reserve the court', 'Choose the venue, date, and full time window you need.'],
+                        ['02', 'Open coaching hours', 'Publish one or more athlete-facing slots inside the reservation.'],
+                        ['03', 'Review requests', 'Athletes request those exact slots from your request inbox.']
+                    ].map(([number, title, description]) => (
+                        <div key={number} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-700">Step {number}</span>
+                            <h2 className="mt-2 font-black text-slate-950">{title}</h2>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            <div className="hidden">
                 <h1 className="text-2xl font-black text-slate-900">Schedule & courts</h1>
                 <p className="text-sm text-slate-600 mt-2 font-medium leading-relaxed">
                     In real life you book a <strong className="text-slate-800">court for a specific day</strong>, then
@@ -317,27 +388,27 @@ const CoachSchedule = () => {
                 </p>
             </div>
 
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3 text-sm text-indigo-950 font-medium">
+            <div className="hidden rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3 text-sm text-indigo-950 font-medium">
                 <span className="font-black">1.</span> Reserve court (date + time) →{' '}
                 <span className="font-black">2.</span> Open coaching hours on that reservation → players book that date
                 only
             </div>
 
             {needsProfileSetup && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm font-medium text-amber-950">
                         Complete your public coach profile (rates, bio) so players can find you in the coach directory.
                     </p>
                     <Link
                         to="/coach/profile"
-                        className="text-sm font-bold text-indigo-950 underline shrink-0"
+                        className="shrink-0 text-sm font-bold text-sky-800 hover:text-sky-950"
                     >
                         Set up profile →
                     </Link>
                 </div>
             )}
 
-            <div className="flex justify-end">
+            <div className="hidden justify-end">
                 {!showCourtWizard && (
                     <Button
                         type="button"
@@ -355,14 +426,15 @@ const CoachSchedule = () => {
 
             <AnimatePresence>
                 {showCourtWizard && (
-                    <motion.section
+                    <Motion.section
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className="rounded-[1.75rem] border-2 border-amber-200/80 bg-white shadow-lg overflow-hidden"
+                        className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
                     >
-                        <div className="px-5 py-4 border-b border-amber-50 bg-amber-50/40">
-                            <h2 className="font-black text-indigo-950">New court reservation</h2>
+                        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-8">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Reservation wizard</p>
+                            <h2 className="mt-1 font-black text-slate-950">New court reservation</h2>
                         </div>
                         <div className="p-5 sm:p-8">
                             <StepBar steps={COURT_STEPS} current={courtStep} />
@@ -375,10 +447,10 @@ const CoachSchedule = () => {
                                             type="button"
                                             onClick={() => setCourtForm((f) => ({ ...f, courtId: c._id }))}
                                             className={twMerge(
-                                                'w-full text-left p-4 rounded-2xl border-2',
+                                                'w-full rounded-2xl border p-4 text-left transition',
                                                 courtForm.courtId === c._id
-                                                    ? 'border-indigo-950 bg-indigo-950/5'
-                                                    : 'border-amber-100'
+                                                    ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-100'
+                                                    : 'border-slate-200 hover:border-sky-300 hover:bg-slate-50'
                                             )}
                                         >
                                             <p className="font-black">{c.name}</p>
@@ -393,7 +465,7 @@ const CoachSchedule = () => {
                                     min={todayStr}
                                     value={courtForm.date}
                                     onChange={(e) => setCourtForm((f) => ({ ...f, date: e.target.value }))}
-                                    className="w-full h-14 px-4 rounded-2xl border-2 border-amber-100 font-bold"
+                                    className="h-14 w-full rounded-2xl border border-slate-200 px-4 font-bold outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                                 />
                             )}
                             {courtStep === 3 && (
@@ -411,7 +483,7 @@ const CoachSchedule = () => {
                                 </div>
                             )}
                             {courtStep === 4 && courtSummary && (
-                                <div className="rounded-2xl bg-amber-50 border border-amber-100 p-5 space-y-2 text-sm font-bold">
+                                <div className="space-y-3 rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm font-bold">
                                     <div className="flex justify-between">
                                         <span className="text-slate-500">Court</span>
                                         <span>{courtSummary.court}</span>
@@ -422,7 +494,7 @@ const CoachSchedule = () => {
                                     </div>
                                 </div>
                             )}
-                            <div className="flex gap-3 mt-8 pt-4 border-t border-amber-50">
+                            <div className="mt-8 flex gap-3 border-t border-slate-100 pt-5">
                                 {courtStep > 1 ? (
                                     <Button
                                         variant="outline"
@@ -460,7 +532,7 @@ const CoachSchedule = () => {
                                             }
                                             setCourtStep((s) => s + 1);
                                         }}
-                                        className="flex-1 h-12 rounded-xl font-bold bg-indigo-950 text-amber-50"
+                                        className="h-12 flex-1 rounded-xl bg-slate-950 font-bold text-white hover:bg-sky-900"
                                     >
                                         Continue
                                     </Button>
@@ -469,25 +541,25 @@ const CoachSchedule = () => {
                                         type="button"
                                         onClick={handleCourtSubmit}
                                         isLoading={courtSubmitting}
-                                        className="flex-1 h-12 rounded-xl font-bold bg-emerald-600 text-white"
+                                        className="h-12 flex-1 rounded-xl bg-lime-300 font-bold text-slate-950 hover:bg-lime-200"
                                     >
                                         Confirm reservation
                                     </Button>
                                 )}
                             </div>
                         </div>
-                    </motion.section>
+                    </Motion.section>
                 )}
             </AnimatePresence>
 
             {upcomingReservations.length === 0 && !showCourtWizard ? (
-                <div className="py-16 text-center rounded-2xl border-2 border-dashed border-amber-200">
+                <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50/70 py-16 text-center">
                     <BuildingOffice2Icon className="h-12 w-12 text-slate-300 mx-auto mb-3" />
                     <p className="font-bold text-slate-800">No upcoming court bookings</p>
                     <p className="text-sm text-slate-500 mt-1">Reserve a court to start accepting players on that date.</p>
                 </div>
             ) : (
-                <ul className="space-y-4">
+                <ul className="grid gap-5 xl:grid-cols-2">
                     {upcomingReservations.map((booking) => {
                         const bid = booking._id;
                         const coachingHours = slotsByBooking.get(bid) || [];
@@ -496,15 +568,15 @@ const CoachSchedule = () => {
                         return (
                             <li
                                 key={bid}
-                                className="rounded-[1.75rem] border-2 border-amber-100 bg-white shadow-sm overflow-hidden"
+                                className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.05)]"
                             >
-                                <div className="p-5 border-b border-amber-50">
+                                <div className="border-b border-slate-100 p-5 sm:p-6">
                                     <div className="flex justify-between gap-3">
                                         <div>
                                             <p className="font-black text-lg text-slate-900">
                                                 {booking.court?.name || 'Court'}
                                             </p>
-                                            <p className="text-sm font-bold text-indigo-950 mt-1">
+                                            <p className="mt-1 text-sm font-bold text-sky-800">
                                                 {formatBookingDate(booking.date)}
                                             </p>
                                             <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
@@ -530,7 +602,7 @@ const CoachSchedule = () => {
                                     </div>
                                 </div>
 
-                                <div className="p-5 bg-slate-50/50">
+                                <div className="bg-slate-50/70 p-5 sm:p-6">
                                     <p className="text-xs font-black uppercase text-slate-500 mb-3 flex items-center gap-2">
                                         <UserGroupIcon className="h-4 w-4" />
                                         Coaching on this date only
@@ -541,7 +613,7 @@ const CoachSchedule = () => {
                                             {coachingHours.map((slot) => (
                                                 <li
                                                     key={slot._id}
-                                                    className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white border border-amber-100"
+                                                    className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3"
                                                 >
                                                     <span className="font-bold text-slate-900">
                                                         {formatSlotHourRange(slot.startTime, slot.endTime)}
@@ -577,7 +649,7 @@ const CoachSchedule = () => {
                                     {isOpen ? (
                                         <form
                                             onSubmit={handleCoachingSave}
-                                            className="rounded-2xl border-2 border-indigo-200 bg-white p-4 space-y-3"
+                                            className="space-y-3 rounded-2xl border border-sky-200 bg-white p-4 shadow-sm"
                                         >
                                             <p className="text-sm font-black text-slate-900">
                                                 {editingSlotId ? 'Edit coaching hours' : 'Open for players'}
@@ -616,7 +688,7 @@ const CoachSchedule = () => {
                                                             maxStudents: e.target.value
                                                         }))
                                                     }
-                                                    className="mt-1 w-20 h-10 rounded-lg border-2 border-amber-100 px-2 font-bold"
+                                                    className="mt-1 h-10 w-20 rounded-lg border border-slate-200 px-2 font-bold outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                                                 />
                                             </div>
                                             <div className="flex gap-2">
@@ -630,7 +702,7 @@ const CoachSchedule = () => {
                                                 </Button>
                                                 <Button
                                                     type="submit"
-                                                    className="flex-1 h-10 rounded-xl font-bold bg-emerald-600 text-white"
+                                                    className="h-10 flex-1 rounded-xl bg-slate-950 font-bold text-white hover:bg-sky-900"
                                                 >
                                                     {editingSlotId ? 'Save' : 'Publish'}
                                                 </Button>
@@ -641,7 +713,7 @@ const CoachSchedule = () => {
                                             type="button"
                                             variant="outline"
                                             onClick={() => openCoachingForm(booking)}
-                                            className="w-full h-11 font-bold border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                                            className="h-11 w-full border-sky-200 font-bold text-sky-800 hover:bg-sky-50"
                                         >
                                             <PlusIcon className="h-4 w-4 mr-1" />
                                             {coachingHours.length ? 'Add more hours' : 'Open coaching hours'}

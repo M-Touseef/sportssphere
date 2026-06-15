@@ -61,13 +61,13 @@ const RequestCard = ({ request, onStatusChange }) => {
     const requestEndTime = request.availabilitySlot?.endTime || request.booking?.endTime;
 
     return (
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start">
-                <div className="flex items-start space-x-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-6">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                <div className="flex min-w-0 items-start space-x-4">
                     <UserAvatar
                         user={request.requester}
-                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-indigo-50 text-indigo-600"
-                        fallbackClassName="text-sm sm:text-base text-indigo-700"
+                        className="h-11 w-11 rounded-xl bg-sky-50 text-sky-700 sm:h-12 sm:w-12"
+                        fallbackClassName="text-sm text-sky-700 sm:text-base"
                     />
                     <div>
                         <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">{request.requester?.name}</h3>
@@ -102,18 +102,18 @@ const RequestCard = ({ request, onStatusChange }) => {
                         )}
 
                         {request.message && (
-                            <div className="mt-4 p-3 bg-slate-50 rounded-xl text-[11px] sm:text-sm italic text-slate-600 border border-slate-100">
+                            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3 text-[11px] italic text-slate-600 sm:text-sm">
                                 "{request.message}"
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="flex flex-col items-end">
+                <div className="flex shrink-0 flex-row items-center justify-between gap-3 sm:flex-col sm:items-end">
                     <span className={`px-2.5 sm:px-3 py-1 rounded-full text-[9px] sm:text-xs font-semibold uppercase tracking-wide
-                        ${request.status === 'PENDING_RESPONSE' ? 'bg-blue-100 text-blue-700' :
-                            request.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-700' :
-                                request.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                        ${request.status === 'PENDING_RESPONSE' ? 'bg-amber-100 text-amber-800' :
+                            request.status === 'ACCEPTED' ? 'bg-lime-100 text-lime-800' :
+                                request.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' :
                                     'bg-slate-100 text-slate-700'}`}>
                         {request.status.replace('_', ' ')}
                     </span>
@@ -127,11 +127,11 @@ const RequestCard = ({ request, onStatusChange }) => {
             </div>
 
             {isPending && (
-                <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 sm:space-x-3 justify-end items-stretch sm:items-center">
+                <div className="mt-6 flex flex-col items-stretch justify-end gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center">
                     <button
                         onClick={() => handleAction('reject')}
                         disabled={processing}
-                        className="flex items-center justify-center px-4 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-red-600 transition-colors disabled:opacity-50"
+                        className="flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-700 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50 sm:text-sm"
                     >
                         <XCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                         Reject
@@ -139,7 +139,7 @@ const RequestCard = ({ request, onStatusChange }) => {
                     <button
                         onClick={() => handleAction('accept')}
                         disabled={processing}
-                        className="flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-xl text-xs sm:text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
+                        className="flex items-center justify-center rounded-xl border border-transparent bg-slate-950 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-sky-900 disabled:opacity-50 sm:text-sm"
                     >
                         {processing ? 'Processing...' : (
                             <>
