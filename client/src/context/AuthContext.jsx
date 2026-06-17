@@ -114,17 +114,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateProfilePicture = async (file) => {
-        setLoading(true);
-        try {
-            const response = await authService.updateProfilePicture(file);
-            setUser(response.user);
-            cacheUser(response.user);
-            setLoading(false);
-            return response;
-        } catch (err) {
-            setLoading(false);
-            throw err;
+        const response = await authService.updateProfilePicture(file);
+        const updatedUser = response.user || response.data;
+        if (updatedUser) {
+            setUser(updatedUser);
+            cacheUser(updatedUser);
         }
+        return response;
     };
 
     const completeProfile = async (userData) => {

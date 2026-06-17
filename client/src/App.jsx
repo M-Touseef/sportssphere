@@ -186,7 +186,7 @@ const AnimatedRoutes = () => {
               element={
                 user?.role === 'admin'
                   ? <Navigate to="/admin/dashboard" replace />
-                  : <LazyPage><div className="p-4">User Settings</div></LazyPage>
+                  : <LazyPage><SettingsPlaceholder /></LazyPage>
               }
             />
 
@@ -271,6 +271,33 @@ const PublicLayout = () => {
     </div>
   );
 };
+
+const SettingsPlaceholder = () => (
+  <div className="mx-auto max-w-4xl">
+    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+      <div className="bg-slate-950 px-6 py-8 text-white sm:px-8">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-200">Account settings</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight">Settings workspace</h1>
+        <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-300">
+          Core profile details, verification, bookings, and role-specific preferences are managed from the dedicated dashboard sections.
+        </p>
+      </div>
+      <div className="grid gap-4 p-6 sm:grid-cols-2 sm:p-8">
+        {[
+          ['Profile details', 'Update your name, phone, location, and public account photo from the profile page.'],
+          ['Verification', 'Review account status and support options from the verification page.'],
+          ['Notifications', 'Booking and request notifications are delivered through the dashboard header.'],
+          ['Security', 'Password recovery is available from the sign-in flow.']
+        ].map(([title, description]) => (
+          <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <h2 className="text-sm font-black text-slate-950">{title}</h2>
+            <p className="mt-2 text-sm font-medium leading-6 text-slate-500">{description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+);
 
 function App() {
   useEffect(() => {

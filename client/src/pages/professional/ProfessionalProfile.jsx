@@ -1,43 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-    createProfile,
-    getMyProfile,
-    updateProfile
-} from '../../services/professionalService';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import {
     CheckCircleIcon,
-    ExclamationCircleIcon,
     CurrencyDollarIcon,
-    AcademicCapIcon,
     DocumentTextIcon,
-    UserIcon
+    ExclamationCircleIcon,
+    EyeIcon,
+    PencilSquareIcon,
+    SparklesIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../../context/AuthContext';
+import { createProfile, getMyProfile, updateProfile } from '../../services/professionalService';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import UserAvatar from '../../components/ui/UserAvatar';
 
-const SpecializationOption = ({ label, value, register }) => (
-    <label className="relative flex items-start p-4 cursor-pointer rounded-xl border border-slate-200 hover:bg-sky-50/60 hover:border-sky-200 transition-all select-none">
-        <div className="flex items-center h-5">
-            <input
-                type="checkbox"
-                value={value}
-                {...register('specializations')}
-                className="focus:ring-sky-500 h-4 w-4 text-sky-600 border-slate-300 rounded"
-            />
-        </div>
-        <div className="ml-3 text-sm">
-            <span className="font-medium text-slate-900">{label}</span>
-        </div>
-    </label>
-);
+const fieldClass = 'mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500';
+
+const options = [
+    { label: 'Singles', value: 'singles' },
+    { label: 'Doubles', value: 'doubles' },
+    { label: 'Mixed doubles', value: 'mixed_doubles' },
+    { label: 'Training / sparring', value: 'training' },
+    { label: 'Competitive match', value: 'competitive' }
+];
 
 const ProfessionalProfile = () => {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
-    const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error'
+    const [submitStatus, setSubmitStatus] = useState(null);
     const [profileExists, setProfileExists] = useState(false);
 
-    const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm();
+    const {
+        register,
+        handleSubmit,
+        reset,
+        watch,
+        formState: { errors, isSubmitting }
+    } = useForm({
+        defaultValues: {
+            matchFee: '',
+            experienceYears: '',
+            bio: '',
+            specializations: [],
+            isActive: true
+        }
+    });
+
+    const preview = watch();
+    const selectedSpecializations = useMemo(
+        () => Array.isArray(preview.specializations) ? preview.specializations : [],
+        [preview.specializations]
+    );
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -45,25 +60,31 @@ const ProfessionalProfile = () => {
                 const response = await getMyProfile();
                 if (response.success && response.data) {
                     const data = response.data;
-                    setValue('matchFee', data.matchFee);
-                    setValue('experienceYears', data.experienceYears);
-                    setValue('bio', data.bio);
-                    setValue('specializations', data.specializations || []);
-                    setValue('isActive', data.isActive);
+                    const nextValues = {
+                        matchFee: data.matchFee || '',
+                        experienceYears: data.experienceYears || '',
+                        bio: data.bio || '',
+                        specializations: data.specializations || [],
+                        isActive: data.isActive ?? true
+                    };
+                    reset(nextValues);
                     setProfileExists(true);
+                } else {
+                    setIsEditing(true);
                 }
             } catch (error) {
-                // If 404, it just means profile doesn't exist yet, which is fine
                 if (error.response?.status !== 404) {
                     console.error('Error fetching profile:', error);
+                    setSubmitStatus('error');
                 }
+                setIsEditing(true);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProfile();
-    }, [setValue]);
+    }, [reset]);
 
     const onSubmit = async (data) => {
         setSubmitStatus(null);
@@ -76,9 +97,7 @@ const ProfessionalProfile = () => {
             }
             setSubmitStatus('success');
             setIsEditing(false);
-
-            // Clear success message after 3 seconds
-            setTimeout(() => setSubmitStatus(null), 3000);
+            window.setTimeout(() => setSubmitStatus(null), 3000);
         } catch (error) {
             console.error('Error saving profile:', error);
             setSubmitStatus('error');
@@ -88,226 +107,292 @@ const ProfessionalProfile = () => {
     if (loading) return <LoadingSpinner />;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            {/* ── Gradient Header ─────────────────────────────── */}
-            <header className="relative rounded-[2rem] border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-sky-950 px-6 sm:px-8 py-8 text-white shadow-xl shadow-slate-900/15 overflow-hidden">
-                {/* Decorative shapes */}
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
-                <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-white/10 rounded-full blur-2xl" />
-
-                <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                    <div>
-                        <p className="text-[11px] text-sky-200 font-bold uppercase tracking-[0.18em]">Professional settings</p>
-                        <h1 className="text-3xl font-black tracking-tight mt-1">Professional Profile</h1>
-                        <p className="mt-2 text-sm text-slate-300">
-                            Manage your public profile, fees, and specializations.
-                        </p>
-                    </div>
-                    {profileExists && !isEditing && (
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="inline-flex items-center h-12 px-6 rounded-xl font-bold bg-lime-300 hover:bg-lime-200 text-slate-950 transition-all shadow-lg shadow-slate-950/20"
-                        >
-                            Edit Profile
-                        </button>
-                    )}
-                </div>
-            </header>
-
-            {/* ── Status Alerts ────────────────────────────────── */}
-            {submitStatus === 'success' && (
-                <div className="rounded-2xl bg-emerald-50 p-4 border border-emerald-200 flex items-center gap-3">
-                    <CheckCircleIcon className="h-5 w-5 text-emerald-500 shrink-0" />
-                    <h3 className="text-sm font-medium text-emerald-800">Profile saved successfully</h3>
-                </div>
-            )}
-
-            {submitStatus === 'error' && (
-                <div className="rounded-2xl bg-red-50 p-4 border border-red-200 flex items-center gap-3">
-                    <ExclamationCircleIcon className="h-5 w-5 text-red-500 shrink-0" />
-                    <h3 className="text-sm font-medium text-red-800">Error saving profile. Please try again.</h3>
-                </div>
-            )}
-
-            {/* ── Profile Form Card ──────────────────────────── */}
-            <div className="bg-white rounded-[1.75rem] border border-slate-200 shadow-[0_16px_45px_rgba(15,23,42,0.06)] p-6 sm:p-8">
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-                    {/* Basic Info */}
-                    <div>
-                        <div className="flex items-center gap-3 mb-5">
-                            <div className="h-9 w-9 rounded-xl bg-slate-950 flex items-center justify-center shadow-md shadow-slate-200">
-                                <CurrencyDollarIcon className="h-5 w-5 text-white" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-900">Basic Information</h3>
-                        </div>
-                        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                            <div className="sm:col-span-3">
-                                <label htmlFor="matchFee" className="block text-sm font-medium text-slate-700">
-                                    Per Match Fee (PKR)
-                                </label>
-                                <div className="mt-1 relative rounded-xl shadow-sm">
-                                    <input
-                                        type="number"
-                                        id="matchFee"
-                                        disabled={!isEditing && profileExists}
-                                        className={`block w-full rounded-xl border-slate-300 focus:ring-sky-500 focus:border-sky-500 sm:text-sm py-2.5 ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
-                                            }`}
-                                        {...register('matchFee', {
-                                            required: 'Match fee is required',
-                                            min: { value: 0, message: 'Fee cannot be negative' }
-                                        })}
-                                    />
-                                </div>
-                                {errors.matchFee && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.matchFee.message}</p>
-                                )}
-                            </div>
-
-                            <div className="sm:col-span-3">
-                                <label htmlFor="experienceYears" className="block text-sm font-medium text-slate-700">
-                                    Years of Experience
-                                </label>
-                                <div className="mt-1 relative rounded-xl shadow-sm">
-                                    <input
-                                        type="number"
-                                        id="experienceYears"
-                                        disabled={!isEditing && profileExists}
-                                        className={`block w-full rounded-xl border-slate-300 focus:ring-sky-500 focus:border-sky-500 sm:text-sm py-2.5 ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
-                                            }`}
-                                        {...register('experienceYears', {
-                                            required: 'Experience is required',
-                                            min: { value: 0, message: 'Experience cannot be negative' }
-                                        })}
-                                    />
-                                </div>
-                                {errors.experienceYears && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.experienceYears.message}</p>
-                                )}
-                            </div>
-
-                            <div className="sm:col-span-6">
-                                <label htmlFor="bio" className="block text-sm font-medium text-slate-700">
-                                    Professional Bio
-                                </label>
-                                <div className="mt-1">
-                                    <textarea
-                                        id="bio"
-                                        rows={4}
-                                        disabled={!isEditing && profileExists}
-                                        className={`block w-full rounded-xl border-slate-300 focus:ring-sky-500 focus:border-sky-500 sm:text-sm ${(!isEditing && profileExists) ? 'bg-slate-50 text-slate-500' : ''
-                                            }`}
-                                        {...register('bio', {
-                                            required: 'Bio is required',
-                                            maxLength: { value: 1000, message: 'Bio cannot exceed 1000 characters' }
-                                        })}
-                                    />
-                                </div>
-                                {errors.bio && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>
-                                )}
-                                <p className="mt-2 text-sm text-slate-500">
-                                    Write a short bio about your playing style, achievements, and what you offer.
+        <div className="mx-auto max-w-[1280px] space-y-6 pb-10">
+            <header className="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl shadow-slate-900/15">
+                <div className="relative px-5 py-6 sm:px-8 sm:py-8">
+                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-lime-300 via-sky-400 to-indigo-500" />
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="flex min-w-0 gap-4 sm:gap-5">
+                            <UserAvatar
+                                user={user}
+                                className="h-16 w-16 shrink-0 rounded-2xl bg-white text-2xl text-slate-950 ring-2 ring-white/70 sm:h-20 sm:w-20"
+                                fallbackClassName="text-slate-950"
+                            />
+                            <div className="min-w-0">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-200">
+                                    Professional profile
+                                </p>
+                                <h1 className="mt-2 truncate text-3xl font-black tracking-tight sm:text-4xl">
+                                    {user?.name || 'Player profile'}
+                                </h1>
+                                <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-300">
+                                    Manage the public details players see when they invite you for sparring, matches, and competitive preparation.
                                 </p>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Specializations */}
-                    <div className="pt-6 border-t border-slate-100">
-                        <div className="flex items-center gap-3 mb-5">
-                            <div className="h-9 w-9 rounded-xl bg-sky-100 flex items-center justify-center shadow-sm">
-                                <AcademicCapIcon className="h-5 w-5 text-sky-700" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900">Specializations</h3>
-                                <p className="text-xs text-slate-400 mt-0.5">Select your playing specializations</p>
-                            </div>
+                        <div className="flex flex-wrap gap-3">
+                            <span className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold ${
+                                preview.isActive ? 'border-lime-300/40 bg-lime-300 text-slate-950' : 'border-white/15 bg-white/5 text-slate-300'
+                            }`}>
+                                <EyeIcon className="h-4 w-4" />
+                                {preview.isActive ? 'Visible' : 'Hidden'}
+                            </span>
+                            {profileExists && !isEditing && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditing(true)}
+                                    className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-extrabold text-slate-950 transition hover:bg-slate-100"
+                                >
+                                    <PencilSquareIcon className="h-4 w-4" />
+                                    Edit profile
+                                </button>
+                            )}
                         </div>
-                        <fieldset disabled={!isEditing && profileExists}>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <SpecializationOption label="Singles" value="singles" register={register} />
-                                <SpecializationOption label="Doubles" value="doubles" register={register} />
-                                <SpecializationOption label="Mixed Doubles" value="mixed_doubles" register={register} />
-                                <SpecializationOption label="Training / Sparring" value="training" register={register} />
-                                <SpecializationOption label="Competitive Match" value="competitive" register={register} />
-                            </div>
-                        </fieldset>
                     </div>
+                </div>
+            </header>
 
-                    {/* Visibility Toggle */}
-                    {profileExists && (
-                        <div className="pt-6 border-t border-slate-100">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-100">
-                                        <UserIcon className="h-5 w-5 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-900">Profile Visibility</h3>
-                                        <p className="text-xs text-slate-400 mt-0.5">
-                                            When active, your profile is visible to non-professional players in search results.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center">
-                                    <label className="relative inline-flex items-center cursor-pointer">
+            {submitStatus && (
+                <div className={`flex items-center gap-3 rounded-2xl border p-4 ${
+                    submitStatus === 'success'
+                        ? 'border-lime-200 bg-lime-50 text-lime-900'
+                        : 'border-rose-200 bg-rose-50 text-rose-900'
+                }`}>
+                    {submitStatus === 'success'
+                        ? <CheckCircleIcon className="h-5 w-5 shrink-0 text-lime-600" />
+                        : <ExclamationCircleIcon className="h-5 w-5 shrink-0 text-rose-600" />}
+                    <p className="text-sm font-semibold">
+                        {submitStatus === 'success' ? 'Profile saved successfully.' : 'Could not save your profile. Please try again.'}
+                    </p>
+                </div>
+            )}
+
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.7fr)]">
+                <form id="professional-profile-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                        <SectionTitle
+                            icon={CurrencyDollarIcon}
+                            iconClass="bg-sky-50 text-sky-700"
+                            eyebrow="Match terms"
+                            title="Fees and experience"
+                            description="Set clear expectations before a player sends a request."
+                        />
+                        <div className="mt-6 grid gap-5 md:grid-cols-2">
+                            <Field label="Per match fee (PKR)" error={errors.matchFee}>
+                                <input
+                                    type="number"
+                                    disabled={!isEditing && profileExists}
+                                    className={fieldClass}
+                                    placeholder="2500"
+                                    {...register('matchFee', {
+                                        required: 'Match fee is required',
+                                        min: { value: 0, message: 'Fee cannot be negative' }
+                                    })}
+                                />
+                            </Field>
+                            <Field label="Years of experience" error={errors.experienceYears}>
+                                <input
+                                    type="number"
+                                    disabled={!isEditing && profileExists}
+                                    className={fieldClass}
+                                    placeholder="4"
+                                    {...register('experienceYears', {
+                                        required: 'Experience is required',
+                                        min: { value: 0, message: 'Experience cannot be negative' }
+                                    })}
+                                />
+                            </Field>
+                        </div>
+                    </section>
+
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                        <SectionTitle
+                            icon={DocumentTextIcon}
+                            iconClass="bg-amber-50 text-amber-700"
+                            eyebrow="Public story"
+                            title="Professional bio"
+                            description="Describe your playing style, achievements, and ideal sparring format."
+                        />
+                        <Field error={errors.bio} className="mt-6">
+                            <textarea
+                                rows={7}
+                                disabled={!isEditing && profileExists}
+                                className={`${fieldClass} resize-y leading-6`}
+                                placeholder="Share your playing background, strengths, competitive level, and match preferences..."
+                                {...register('bio', {
+                                    required: 'Bio is required',
+                                    maxLength: { value: 1000, message: 'Bio cannot exceed 1000 characters' }
+                                })}
+                            />
+                        </Field>
+                        <div className="mt-2 flex justify-between gap-3 text-xs text-slate-400">
+                            <span>{errors.bio ? <span className="font-semibold text-rose-600">{errors.bio.message}</span> : 'Keep it concise and player-friendly.'}</span>
+                            <span>{preview.bio?.length || 0}/1000</span>
+                        </div>
+                    </section>
+
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                        <SectionTitle
+                            icon={SparklesIcon}
+                            iconClass="bg-lime-50 text-lime-700"
+                            eyebrow="Match fit"
+                            title="Specializations"
+                            description="Choose the formats and session types where you want to be discovered."
+                        />
+                        <fieldset disabled={!isEditing && profileExists} className="mt-6">
+                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                {options.map((option) => (
+                                    <label
+                                        key={option.value}
+                                        className="group flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-300 hover:bg-sky-50/40 has-[:checked]:border-sky-400 has-[:checked]:bg-sky-50 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-70"
+                                    >
                                         <input
                                             type="checkbox"
-                                            className="sr-only peer"
-                                            disabled={!isEditing}
-                                            {...register('isActive')}
+                                            value={option.value}
+                                            {...register('specializations')}
+                                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                                         />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-                                        <span className="ml-3 text-sm font-medium text-slate-900">
-                                            {(!isEditing && profileExists) ? null : 'Active'}
+                                        <span className="text-sm font-bold text-slate-900 group-hover:text-sky-800">
+                                            {option.label}
                                         </span>
                                     </label>
-                                </div>
+                                ))}
                             </div>
-                        </div>
+                        </fieldset>
+                    </section>
+
+                    {profileExists && (
+                        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
+                            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                                <SectionTitle
+                                    icon={EyeIcon}
+                                    iconClass="bg-slate-950 text-white"
+                                    eyebrow="Directory status"
+                                    title="Profile visibility"
+                                    description="When active, non-professional players can find this profile."
+                                    compact
+                                />
+                                <label className="relative inline-flex w-fit cursor-pointer items-center">
+                                    <input
+                                        type="checkbox"
+                                        className="peer sr-only"
+                                        disabled={!isEditing}
+                                        {...register('isActive')}
+                                    />
+                                    <span className="h-7 w-12 rounded-full bg-slate-200 transition peer-checked:bg-sky-600 peer-focus:ring-4 peer-focus:ring-sky-100 peer-disabled:opacity-60" />
+                                    <span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
+                                    <span className="ml-3 text-sm font-bold text-slate-700">
+                                        {preview.isActive ? 'Active' : 'Hidden'}
+                                    </span>
+                                </label>
+                            </div>
+                        </section>
                     )}
 
-                    {/* Form Actions */}
                     {(isEditing || !profileExists) && (
-                        <div className="pt-6 border-t border-slate-100 flex justify-end space-x-3">
+                        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                             {profileExists && (
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setIsEditing(false);
-                                        reset();
+                                        setSubmitStatus(null);
                                     }}
-                                    className="px-5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
                                 >
+                                    <XMarkIcon className="h-4 w-4" />
                                     Cancel
                                 </button>
                             )}
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-6 py-2.5 border border-transparent rounded-xl shadow-md shadow-lime-100 text-sm font-bold text-slate-950 bg-lime-300 hover:bg-lime-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 text-sm font-extrabold text-white shadow-lg shadow-slate-900/15 transition hover:bg-sky-900 disabled:opacity-50"
                             >
-                                {isSubmitting ? 'Saving...' : 'Save Profile'}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Mobile Save Button */}
-                    {(isEditing || !profileExists) && (
-                        <div className="pt-6 border-t border-slate-100 flex justify-end sm:hidden">
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="w-full px-6 py-3 rounded-xl font-bold bg-lime-300 hover:bg-lime-200 text-slate-950 transition-all shadow-md shadow-lime-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isSubmitting ? 'Saving...' : 'Save Profile'}
+                                <CheckCircleIcon className="h-5 w-5" />
+                                {isSubmitting ? 'Saving...' : 'Save profile'}
                             </button>
                         </div>
                     )}
                 </form>
+
+                <aside className="space-y-6 xl:sticky xl:top-28 xl:self-start">
+                    <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.05)]">
+                        <div className="bg-slate-950 p-6 text-white">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-200">Directory preview</p>
+                            <div className="mt-5 flex items-center gap-4">
+                                <UserAvatar user={user} className="h-20 w-20 rounded-2xl bg-white text-2xl text-slate-950 ring-2 ring-white/70" fallbackClassName="text-slate-950" />
+                                <div className="min-w-0">
+                                    <h2 className="truncate text-xl font-black">{user?.name || 'Professional player'}</h2>
+                                    <p className="mt-1 text-sm text-slate-400">{preview.experienceYears || 0} years experience</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-4 p-6 text-sm">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <span className="text-slate-500">Match fee</span>
+                                <strong className="text-slate-950">PKR {preview.matchFee || '0'}</strong>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Specializations</p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {selectedSpecializations.length > 0 ? selectedSpecializations.map((item) => (
+                                        <span key={item} className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
+                                            {item.replace(/_/g, ' ')}
+                                        </span>
+                                    )) : <span className="text-xs text-slate-400">Choose at least one match format.</span>}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
+                        <h2 className="font-black text-slate-950">Profile checklist</h2>
+                        <div className="mt-4 space-y-3 text-sm text-slate-600">
+                            <ChecklistItem done={preview.matchFee} label="Match fee added" />
+                            <ChecklistItem done={preview.experienceYears} label="Experience added" />
+                            <ChecklistItem done={preview.bio} label="Bio written" />
+                            <ChecklistItem done={selectedSpecializations.length} label="Formats selected" />
+                            <ChecklistItem done={preview.isActive} label="Directory visible" />
+                        </div>
+                    </section>
+                </aside>
             </div>
         </div>
     );
 };
+
+const SectionTitle = ({ icon, iconClass, eyebrow, title, description, compact = false }) => {
+    const IconComponent = icon;
+
+    return (
+    <div className="flex items-start gap-4">
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconClass}`}>
+            <IconComponent className="h-5 w-5" />
+        </div>
+        <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">{eyebrow}</p>
+            <h2 className={`${compact ? 'text-lg' : 'text-xl'} mt-1 font-black text-slate-950`}>{title}</h2>
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
+        </div>
+    </div>
+    );
+};
+
+const Field = ({ label, error, className = '', children }) => (
+    <div className={className}>
+        {label && <label className="text-sm font-bold text-slate-700">{label}</label>}
+        {children}
+        {error && <p className="mt-2 text-xs font-semibold text-rose-600">{error.message}</p>}
+    </div>
+);
+
+const ChecklistItem = ({ done, label }) => (
+    <p className="flex items-center gap-2">
+        <CheckCircleIcon className={`h-4 w-4 ${done ? 'text-lime-600' : 'text-slate-300'}`} />
+        {label}
+    </p>
+);
 
 export default ProfessionalProfile;

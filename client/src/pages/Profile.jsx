@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -66,6 +66,7 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [imageUploading, setImageUploading] = useState(false);
+    const photoInputRef = useRef(null);
 
     const theme = ROLE_THEME[user?.role] || defaultTheme;
 
@@ -158,6 +159,12 @@ const Profile = () => {
         }
     };
 
+    const openProfilePicturePicker = () => {
+        if (!imageUploading) {
+            photoInputRef.current?.click();
+        }
+    };
+
     if (!user) return null;
 
     const roleLabel = user.role?.charAt(0).toUpperCase() + user.role?.slice(1);
@@ -172,6 +179,16 @@ const Profile = () => {
         >
             {/* Hero */}
             <div className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] shadow-xl shadow-slate-200/60">
+                {canUploadProfilePicture && (
+                    <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="sr-only"
+                        onChange={handleProfilePictureChange}
+                        disabled={imageUploading}
+                    />
+                )}
                 <div className={twMerge('absolute inset-0 bg-gradient-to-br', theme.gradient)} />
                 <div
                     className="absolute inset-0 opacity-[0.07]"
@@ -198,16 +215,15 @@ const Profile = () => {
                                     <ShieldCheckIcon className="h-4 w-4" />
                                 </span>
                                 {canUploadProfilePicture && (
-                                    <label className="absolute -top-2 -right-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-white text-indigo-700 shadow-lg ring-1 ring-slate-200 transition hover:bg-indigo-50">
+                                    <button
+                                        type="button"
+                                        onClick={openProfilePicturePicker}
+                                        disabled={imageUploading}
+                                        aria-label={user.profilePicture ? 'Change profile photo' : 'Upload profile photo'}
+                                        className="absolute -top-2 -right-2 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-white text-indigo-700 shadow-lg ring-1 ring-slate-200 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
                                         <CameraIcon className="h-4 w-4" />
-                                        <input
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            className="sr-only"
-                                            onChange={handleProfilePictureChange}
-                                            disabled={imageUploading}
-                                        />
-                                    </label>
+                                    </button>
                                 )}
                             </div>
                             <div className="pb-1 min-w-0">
@@ -232,17 +248,15 @@ const Profile = () => {
                                     </span>
                                 </div>
                                 {canUploadProfilePicture && (
-                                    <label className="mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-white/12 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/18">
+                                    <button
+                                        type="button"
+                                        onClick={openProfilePicturePicker}
+                                        disabled={imageUploading}
+                                        className="mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-white/12 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/18 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
                                         <CameraIcon className="h-4 w-4" />
                                         {imageUploading ? 'Uploading...' : user.profilePicture ? 'Change photo' : 'Upload photo'}
-                                        <input
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            className="sr-only"
-                                            onChange={handleProfilePictureChange}
-                                            disabled={imageUploading}
-                                        />
-                                    </label>
+                                    </button>
                                 )}
                             </div>
                         </div>
