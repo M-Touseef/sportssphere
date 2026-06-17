@@ -18,7 +18,8 @@ import {
     TrashIcon,
     ClockIcon,
     PencilSquareIcon,
-    UserGroupIcon
+    UserGroupIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { CheckIcon as CheckSolid } from '@heroicons/react/24/solid';
 
@@ -426,75 +427,129 @@ const CoachSchedule = () => {
 
             <AnimatePresence>
                 {showCourtWizard && (
-                    <Motion.section
+                    <Motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
+                        className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/55 px-4 py-5 backdrop-blur-sm sm:py-8"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="court-reservation-title"
                     >
-                        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-8">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Reservation wizard</p>
-                            <h2 className="mt-1 font-black text-slate-950">New court reservation</h2>
-                        </div>
-                        <div className="p-5 sm:p-8">
-                            <StepBar steps={COURT_STEPS} current={courtStep} />
-                            {/* court wizard steps - same as before */}
-                            {courtStep === 1 && (
-                                <div className="space-y-2 max-h-64 overflow-y-auto">
-                                    {courts.map((c) => (
-                                        <button
-                                            key={c._id}
-                                            type="button"
-                                            onClick={() => setCourtForm((f) => ({ ...f, courtId: c._id }))}
-                                            className={twMerge(
-                                                'w-full rounded-2xl border p-4 text-left transition',
-                                                courtForm.courtId === c._id
-                                                    ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-100'
-                                                    : 'border-slate-200 hover:border-sky-300 hover:bg-slate-50'
+                        <Motion.section
+                            initial={{ scale: 0.98 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.98 }}
+                            className="w-full max-w-3xl overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.28)]"
+                        >
+                            <div className="border-b border-slate-100 bg-slate-950 px-5 py-5 text-white sm:px-8">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-200">Reservation wizard</p>
+                                        <h2 id="court-reservation-title" className="mt-1 text-2xl font-black tracking-tight">New court reservation</h2>
+                                        <p className="mt-2 text-sm font-medium leading-6 text-slate-300">
+                                            Pick the court, date, and time without losing your place on the schedule.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={resetCourtWizard}
+                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/15"
+                                        aria-label="Close reservation form"
+                                    >
+                                        <XMarkIcon className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-5 sm:p-8">
+                                <StepBar steps={COURT_STEPS} current={courtStep} />
+                                {courtStep === 1 && (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-black text-slate-950">Choose a court</p>
+                                                <p className="mt-1 text-xs font-medium text-slate-500">Select where you want to coach on this date.</p>
+                                            </div>
+                                            <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700">
+                                                {courts.length} available
+                                            </span>
+                                        </div>
+                                        <div className="max-h-[45vh] space-y-2 overflow-y-auto pr-1">
+                                            {courts.map((c) => (
+                                                <button
+                                                    key={c._id}
+                                                    type="button"
+                                                    onClick={() => setCourtForm((f) => ({ ...f, courtId: c._id }))}
+                                                    className={twMerge(
+                                                        'w-full rounded-2xl border p-4 text-left transition',
+                                                        courtForm.courtId === c._id
+                                                            ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-100'
+                                                            : 'border-slate-200 hover:border-sky-300 hover:bg-slate-50'
+                                                    )}
+                                                >
+                                                    <p className="font-black text-slate-950">{c.name}</p>
+                                                    <p className="mt-1 text-xs font-medium text-slate-500">{c.location?.area || 'Lahore'}</p>
+                                                </button>
+                                            ))}
+                                            {courts.length === 0 && (
+                                                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                                                    <BuildingOffice2Icon className="mx-auto h-10 w-10 text-slate-300" />
+                                                    <p className="mt-3 text-sm font-bold text-slate-800">No courts available yet</p>
+                                                    <p className="mt-1 text-xs font-medium text-slate-500">Try again after courts are added by organizers.</p>
+                                                </div>
                                             )}
-                                        >
-                                            <p className="font-black">{c.name}</p>
-                                            <p className="text-xs text-slate-500 mt-1">{c.location?.area || 'Lahore'}</p>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            {courtStep === 2 && (
-                                <input
-                                    type="date"
-                                    min={todayStr}
-                                    value={courtForm.date}
-                                    onChange={(e) => setCourtForm((f) => ({ ...f, date: e.target.value }))}
-                                    className="h-14 w-full rounded-2xl border border-slate-200 px-4 font-bold outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                                />
-                            )}
-                            {courtStep === 3 && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <HourSlotSelect
-                                        label="Court from"
-                                        value={courtForm.startTime}
-                                        onChange={(v) => setCourtForm((f) => ({ ...f, startTime: v }))}
-                                    />
-                                    <HourSlotSelect
-                                        label="Court until"
-                                        value={courtForm.endTime}
-                                        onChange={(v) => setCourtForm((f) => ({ ...f, endTime: v }))}
-                                    />
-                                </div>
-                            )}
-                            {courtStep === 4 && courtSummary && (
-                                <div className="space-y-3 rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm font-bold">
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500">Court</span>
-                                        <span>{courtSummary.court}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500">When</span>
-                                        <span>{courtSummary.when}</span>
+                                )}
+                                {courtStep === 2 && (
+                                    <div>
+                                        <p className="text-sm font-black text-slate-950">Pick the coaching date</p>
+                                        <p className="mt-1 text-xs font-medium text-slate-500">This reservation is only for the selected calendar day.</p>
+                                        <input
+                                            type="date"
+                                            min={todayStr}
+                                            value={courtForm.date}
+                                            onChange={(e) => setCourtForm((f) => ({ ...f, date: e.target.value }))}
+                                            className="mt-5 h-14 w-full rounded-2xl border border-slate-200 px-4 font-bold outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                                        />
                                     </div>
-                                </div>
-                            )}
-                            <div className="mt-8 flex gap-3 border-t border-slate-100 pt-5">
+                                )}
+                                {courtStep === 3 && (
+                                    <div>
+                                        <p className="text-sm font-black text-slate-950">Reserve your court time</p>
+                                        <p className="mt-1 text-xs font-medium text-slate-500">You can publish athlete-facing coaching hours inside this window after confirming.</p>
+                                        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <HourSlotSelect
+                                                label="Court from"
+                                                value={courtForm.startTime}
+                                                onChange={(v) => setCourtForm((f) => ({ ...f, startTime: v }))}
+                                            />
+                                            <HourSlotSelect
+                                                label="Court until"
+                                                value={courtForm.endTime}
+                                                onChange={(v) => setCourtForm((f) => ({ ...f, endTime: v }))}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                {courtStep === 4 && courtSummary && (
+                                    <div>
+                                        <p className="text-sm font-black text-slate-950">Confirm reservation</p>
+                                        <p className="mt-1 text-xs font-medium text-slate-500">Review the court and time before saving.</p>
+                                        <div className="mt-5 space-y-3 rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm font-bold">
+                                            <div className="flex justify-between gap-4">
+                                                <span className="text-slate-500">Court</span>
+                                                <span className="text-right text-slate-950">{courtSummary.court}</span>
+                                            </div>
+                                            <div className="flex justify-between gap-4">
+                                                <span className="text-slate-500">When</span>
+                                                <span className="text-right text-slate-950">{courtSummary.when}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="sticky bottom-0 flex gap-3 border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-8">
                                 {courtStep > 1 ? (
                                     <Button
                                         variant="outline"
@@ -547,8 +602,8 @@ const CoachSchedule = () => {
                                     </Button>
                                 )}
                             </div>
-                        </div>
-                    </Motion.section>
+                        </Motion.section>
+                    </Motion.div>
                 )}
             </AnimatePresence>
 
