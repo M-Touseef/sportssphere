@@ -1,5 +1,5 @@
 import { createElement, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
     AcademicCapIcon,
@@ -25,7 +25,6 @@ const Login = () => {
     const { login } = useAuth();
     const { success, error: toastError } = useToast();
     const navigate = useNavigate();
-    const location = useLocation();
     const [loading, setLoading] = useState(false);
 
     const {
@@ -44,8 +43,7 @@ const Login = () => {
         try {
             await login(data);
             success('Welcome back! You have logged in successfully.');
-            const from = location.state?.from?.pathname || '/dashboard';
-            navigate(from, { replace: true });
+            navigate('/app', { replace: true });
         } catch (err) {
             toastError(err.response?.data?.error || 'Login failed. Please check your email and password.');
         } finally {
