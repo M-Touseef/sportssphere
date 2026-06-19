@@ -270,7 +270,7 @@ const AdminDashboard = () => {
     };
 
     if (authLoading || loading && !stats) return (
-        <div className="flex min-h-[60vh] items-center justify-center bg-[#f4f9fc]">
+        <div className="flex min-h-[60vh] items-center justify-center sports-canvas">
             <div className="text-center">
                 <div className="mx-auto h-11 w-11 animate-spin rounded-full border-4 border-sky-100 border-t-brand-sky" />
                 <p className="mt-4 text-sm font-bold text-brand-navy">Preparing admin workspace...</p>
@@ -279,7 +279,7 @@ const AdminDashboard = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#f4f9fc] pb-16">
+        <div className="min-h-screen sports-canvas pb-16">
             <main className="mx-auto max-w-[92rem] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                 <section className="relative mb-6 overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-navy-deep via-brand-navy to-sky-800 p-6 text-white shadow-[0_28px_70px_-34px_rgba(3,20,47,0.75)] sm:p-8 lg:p-10">
                     <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-sky/20 blur-3xl" />

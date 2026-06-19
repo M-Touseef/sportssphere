@@ -55,7 +55,7 @@ const CreateCourt = lazy(() => import('./pages/organizer/CreateCourt'));
 const OrganizerCourtDetails = lazy(() => import('./pages/organizer/OrganizerCourtDetails'));
 
 const RouteFallback = () => (
-  <div className="flex min-h-[40vh] items-center justify-center">
+  <div className="flex min-h-[40vh] items-center justify-center sports-canvas">
     <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" aria-label="Loading" />
   </div>
 );
@@ -261,7 +261,7 @@ const AnimatedRoutes = () => {
 
 const PublicLayout = () => {
   return (
-    <div className="min-h-screen bg-white selection:bg-sky-200 selection:text-brand-navy">
+    <div className="min-h-screen sports-canvas selection:bg-sky-200 selection:text-brand-navy">
       <Suspense fallback={<RouteFallback />}>
         <Navbar />
       </Suspense>

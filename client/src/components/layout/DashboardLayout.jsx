@@ -10,7 +10,7 @@ export default function DashboardLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
 
     return (
-        <div className="min-h-screen bg-slate-50/60 text-slate-900">
+        <div className="min-h-screen dashboard-canvas text-slate-900">
             <Transition.Root show={sidebarOpen} as={Fragment}>
                 <Dialog as="div" className="relative z-[100] lg:hidden" onClose={setSidebarOpen}>
                     <Transition.Child

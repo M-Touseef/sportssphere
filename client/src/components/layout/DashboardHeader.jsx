@@ -210,8 +210,8 @@ const DashboardHeader = ({ user, logout, setSidebarOpen, navigation, navigationC
     ]
 
     return (
-        <header className="sticky top-0 z-40 border-b border-sky-100/70 bg-[#f4f9fc]/90 px-3 py-3 backdrop-blur-xl sm:px-5">
-            <div className="mx-auto flex min-h-[68px] max-w-[92rem] items-center justify-between gap-4 rounded-[1.4rem] border border-white/80 bg-white/95 px-3 shadow-[0_18px_55px_-26px_rgba(3,20,47,0.45)] backdrop-blur-xl sm:px-4">
+        <header className="sticky top-0 z-40 border-b border-sky-200/70 bg-sky-50/85 px-3 py-3 backdrop-blur-xl sm:px-5">
+            <div className="surface-tint mx-auto flex min-h-[68px] max-w-[92rem] items-center justify-between gap-4 rounded-[1.4rem] border border-white/80 px-3 shadow-[0_18px_55px_-26px_rgba(3,20,47,0.45)] backdrop-blur-xl sm:px-4">
                 <div className="flex min-w-0 items-center gap-3 lg:gap-8">
                     <button
                         type="button"

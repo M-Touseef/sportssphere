@@ -23,7 +23,7 @@ const AuthShell = ({
     cardBadge,
     footer,
 }) => (
-    <div className="min-h-[calc(100vh-4.5rem)] bg-[#f4f9fc] text-slate-950 selection:bg-sky-200 selection:text-brand-navy">
+    <div className="min-h-[calc(100vh-4.5rem)] sports-canvas text-slate-950 selection:bg-sky-200 selection:text-brand-navy">
         <div className="grid min-h-[calc(100vh-4.5rem)] lg:grid-cols-[minmax(0,1.08fr)_minmax(30rem,0.92fr)]">
             <aside className="relative hidden min-h-[calc(100vh-4.5rem)] overflow-hidden bg-brand-navy-deep lg:flex">
                 <img

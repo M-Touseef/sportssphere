@@ -99,7 +99,7 @@ const RoleSelection = () => {
     };
 
     return (
-        <div className="relative min-h-[calc(100vh-5.75rem)] overflow-hidden bg-[#f4f9fc] px-4 py-8 text-slate-950 selection:bg-sky-200 selection:text-brand-navy sm:px-6 lg:px-8 lg:py-12">
+        <div className="relative min-h-[calc(100vh-5.75rem)] overflow-hidden sports-canvas px-4 py-8 text-slate-950 selection:bg-sky-200 selection:text-brand-navy sm:px-6 lg:px-8 lg:py-12">
             <div className="pointer-events-none absolute -right-32 -top-28 h-96 w-96 rounded-full bg-sky-200/55 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-40 -left-32 h-[28rem] w-[28rem] rounded-full bg-lime-100/70 blur-3xl" />
 

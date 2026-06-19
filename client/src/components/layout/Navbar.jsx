@@ -33,7 +33,7 @@ const Navbar = () => {
 
     if (isAuthPage) {
         return (
-            <header className="sticky top-0 z-[100] border-b border-sky-100 bg-white/95 px-5 backdrop-blur-xl">
+            <header className="sticky top-0 z-[100] border-b border-sky-200/70 bg-sky-50/90 px-5 backdrop-blur-xl">
                 <nav className="mx-auto flex h-[72px] max-w-[92rem] items-center" aria-label="Authentication navigation">
                     <BrandLogo compact showTagline={false} />
                 </nav>
@@ -48,12 +48,12 @@ const Navbar = () => {
                 'inset-x-0 z-[100] px-3 py-3 sm:px-5',
                 isHomePage
                     ? 'absolute top-0'
-                    : 'sticky top-0 border-b border-sky-100/70 bg-[#f4f9fc]/90 backdrop-blur-xl',
+                    : 'sticky top-0 border-b border-sky-200/70 bg-sky-50/85 backdrop-blur-xl',
             )}
         >
             {({ open }) => (
                 <nav
-                    className="mx-auto max-w-[92rem] rounded-[1.4rem] border border-white/80 bg-white/95 px-3 shadow-[0_18px_55px_-26px_rgba(3,20,47,0.45)] backdrop-blur-xl sm:px-4"
+                    className="surface-tint mx-auto max-w-[92rem] rounded-[1.4rem] border border-white/80 px-3 shadow-[0_18px_55px_-26px_rgba(3,20,47,0.45)] backdrop-blur-xl sm:px-4"
                     aria-label="Primary navigation"
                 >
                     <div className="flex h-[68px] items-center justify-between gap-4">

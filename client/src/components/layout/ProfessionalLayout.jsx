@@ -13,7 +13,7 @@ const ProfessionalLayout = () => {
     const navigation = buildProfessionalNavigation();
 
     return (
-        <div className="min-h-screen bg-slate-50/60">
+        <div className="min-h-screen dashboard-canvas">
             {/* Mobile Sidebar Overlay */}
             <Transition.Root show={sidebarOpen} as={Fragment}>
                 <Dialog as="div" className="relative z-[100] lg:hidden" onClose={setSidebarOpen}>

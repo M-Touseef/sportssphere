@@ -312,7 +312,7 @@ const Chatbot = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-80px)] bg-slate-50/50 text-slate-900 transition-all duration-300 overflow-hidden rounded-[2.5rem] border border-slate-100 shadow-2xl m-4">
+        <div className="flex h-[calc(100vh-80px)] surface-tint text-slate-900 transition-all duration-300 overflow-hidden rounded-[2.5rem] border border-sky-100 shadow-2xl m-4">
             {/* Context Sidebar */}
             <AnimatePresence>
                 {sidebarOpen && (
@@ -320,7 +320,7 @@ const Chatbot = () => {
                         initial={{ x: -300, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -300, opacity: 0 }}
-                        className="fixed inset-y-0 left-0 z-50 md:relative w-80 flex flex-col bg-white border-r border-slate-100 shadow-[1px_0_10px_rgba(0,0,0,0.02)]"
+                        className="fixed inset-y-0 left-0 z-50 md:relative w-80 flex flex-col bg-sky-50/95 border-r border-sky-100 shadow-[1px_0_10px_rgba(0,0,0,0.02)]"
                     >
                         <div className="p-6 border-b border-slate-50">
                             <div className="flex items-center justify-between mb-6 px-1">
@@ -383,9 +383,9 @@ const Chatbot = () => {
             </AnimatePresence>
 
             {/* Chat Interface */}
-            <main className="flex-1 flex flex-col h-full bg-white relative">
+            <main className="flex-1 flex flex-col h-full bg-gradient-to-br from-white/95 via-sky-50/80 to-lime-50/70 relative">
                 {/* Header */}
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-50 px-8 flex items-center justify-between shrink-0">
+                <header className="h-20 bg-white/75 backdrop-blur-md border-b border-sky-100 px-8 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-4">
                         {!sidebarOpen && (
                             <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-slate-50 rounded-xl transition-all border border-slate-100 mr-2">
@@ -426,7 +426,7 @@ const Chatbot = () => {
                 </header>
 
                 {/* Messages Feed */}
-                <div className="flex-1 overflow-y-auto px-6 md:px-12 py-10 space-y-8 custom-scrollbar bg-slate-50/20">
+                <div className="flex-1 overflow-y-auto px-6 md:px-12 py-10 space-y-8 custom-scrollbar bg-sky-50/25">
                     {!activeConversation ? (
                         <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto pb-20">
                             <div className="h-24 w-24 bg-white shadow-2xl rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-100 transform -rotate-3">
@@ -551,7 +551,7 @@ const Chatbot = () => {
 
                 {/* Input Area */}
                 {activeConversation && (
-                    <div className="p-8 md:px-12 bg-white">
+                    <div className="p-8 md:px-12 bg-white/75 backdrop-blur">
                         <div className="max-w-4xl mx-auto">
                             <div className="flex flex-wrap gap-2 mb-4">
                                 {suggestedPrompts.map((item) => (
