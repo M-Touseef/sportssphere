@@ -6,7 +6,6 @@ import {
     CurrencyDollarIcon,
     DocumentTextIcon,
     ExclamationCircleIcon,
-    EyeIcon,
     PencilSquareIcon,
     SparklesIcon,
     XMarkIcon
@@ -46,8 +45,7 @@ const ProfessionalProfile = () => {
             matchFee: '',
             experienceYears: '',
             bio: '',
-            specializations: [],
-            isActive: true
+            specializations: []
         }
     });
 
@@ -67,8 +65,7 @@ const ProfessionalProfile = () => {
                         matchFee: data.matchFee || '',
                         experienceYears: data.experienceYears || '',
                         bio: data.bio || '',
-                        specializations: data.specializations || [],
-                        isActive: data.isActive ?? true
+                        specializations: data.specializations || []
                     };
                     reset(nextValues);
                     setProfileExists(true);
@@ -92,11 +89,13 @@ const ProfessionalProfile = () => {
     const onSubmit = async (data) => {
         setSubmitStatus(null);
         setImageError('');
+        const profileData = { ...data };
+        delete profileData.isActive;
         try {
             if (profileExists) {
-                await updateProfile(data);
+                await updateProfile(profileData);
             } else {
-                await createProfile(data);
+                await createProfile(profileData);
                 setProfileExists(true);
             }
             setSubmitStatus('success');
@@ -190,12 +189,6 @@ const ProfessionalProfile = () => {
                                     disabled={imageUploading}
                                 />
                             </label>
-                            <span className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold ${
-                                preview.isActive ? 'border-lime-300/40 bg-lime-300 text-slate-950' : 'border-white/15 bg-white/5 text-slate-300'
-                            }`}>
-                                <EyeIcon className="h-4 w-4" />
-                                {preview.isActive ? 'Visible' : 'Hidden'}
-                            </span>
                             {profileExists && !isEditing && (
                                 <button
                                     type="button"
@@ -320,34 +313,6 @@ const ProfessionalProfile = () => {
                         </fieldset>
                     </section>
 
-                    {profileExists && (
-                        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-7">
-                            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                                <SectionTitle
-                                    icon={EyeIcon}
-                                    iconClass="bg-slate-950 text-white"
-                                    eyebrow="Directory status"
-                                    title="Profile visibility"
-                                    description="When active, non-professional players can find this profile."
-                                    compact
-                                />
-                                <label className="relative inline-flex w-fit cursor-pointer items-center">
-                                    <input
-                                        type="checkbox"
-                                        className="peer sr-only"
-                                        disabled={!isEditing}
-                                        {...register('isActive')}
-                                    />
-                                    <span className="h-7 w-12 rounded-full bg-slate-200 transition peer-checked:bg-sky-600 peer-focus:ring-4 peer-focus:ring-sky-100 peer-disabled:opacity-60" />
-                                    <span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
-                                    <span className="ml-3 text-sm font-bold text-slate-700">
-                                        {preview.isActive ? 'Active' : 'Hidden'}
-                                    </span>
-                                </label>
-                            </div>
-                        </section>
-                    )}
-
                     {(isEditing || !profileExists) && (
                         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                             {profileExists && (
@@ -419,7 +384,6 @@ const ProfessionalProfile = () => {
                             <ChecklistItem done={preview.bio} label="Bio written" />
                             <ChecklistItem done={selectedSpecializations.length} label="Formats selected" />
                             <ChecklistItem done={user?.profilePicture} label="Professional profile photo" />
-                            <ChecklistItem done={preview.isActive} label="Directory visible" />
                         </div>
                     </section>
                 </aside>

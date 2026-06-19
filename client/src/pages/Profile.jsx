@@ -180,6 +180,42 @@ const Profile = () => {
         ? 'Club player'
         : user.role?.charAt(0).toUpperCase() + user.role?.slice(1);
     const canUploadProfilePicture = user.role !== 'admin';
+    const cameraButtonClass = isNonProfessionalPlayer
+        ? 'absolute -top-2 -right-2 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-lime-300 text-slate-950 shadow-lg ring-1 ring-lime-200 transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60'
+        : 'absolute -top-2 -right-2 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-white text-indigo-700 shadow-lg ring-1 ring-slate-200 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60';
+    const editButtonClass = isNonProfessionalPlayer
+        ? 'gap-2 h-11 px-5 font-black bg-lime-300 text-slate-950 hover:bg-lime-200 shadow-lg border-0'
+        : 'gap-2 h-11 px-5 font-bold bg-white text-slate-900 hover:bg-white/90 shadow-lg border-0';
+    const editPanelClass = isNonProfessionalPlayer
+        ? 'overflow-hidden rounded-[2rem] border border-sky-200/25 bg-slate-950 text-white shadow-[0_24px_70px_-34px_rgba(8,47,73,0.55)]'
+        : 'rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] overflow-hidden';
+    const editHeaderClass = isNonProfessionalPlayer
+        ? 'border-b border-white/10 bg-slate-900 px-6 sm:px-8 py-5'
+        : 'border-b border-slate-100 bg-slate-50/80 px-6 sm:px-8 py-5';
+    const editIconClass = isNonProfessionalPlayer
+        ? 'flex h-10 w-10 items-center justify-center rounded-xl bg-lime-300 text-slate-950 shadow-sm'
+        : twMerge('flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm', theme.accent);
+    const editInputClass = isNonProfessionalPlayer
+        ? 'border-white/10 bg-white/10 text-white placeholder:text-slate-500 focus-visible:ring-lime-300 disabled:bg-white/5 disabled:text-slate-400'
+        : '';
+    const selectClass = isNonProfessionalPlayer
+        ? 'w-full h-11 px-4 rounded-xl border border-white/10 bg-slate-900 font-semibold text-sm text-white focus:ring-lime-300 focus:border-lime-300'
+        : 'w-full h-11 px-4 rounded-xl border border-slate-200 bg-white font-semibold text-sm text-slate-700 focus:ring-indigo-500 focus:border-indigo-500';
+    const disabledSelectClass = isNonProfessionalPlayer
+        ? 'w-full h-11 px-4 rounded-xl border border-white/10 bg-white/5 font-semibold text-sm text-slate-400 cursor-not-allowed'
+        : 'w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 font-semibold text-sm text-slate-500 cursor-not-allowed';
+    const editLabelClass = isNonProfessionalPlayer
+        ? 'text-[10px] font-black text-sky-200 uppercase tracking-widest pl-1'
+        : 'text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1';
+    const editFooterClass = isNonProfessionalPlayer
+        ? 'flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-white/10 bg-slate-900 px-6 sm:px-8 py-5'
+        : 'flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-6 sm:px-8 py-5';
+    const viewCardClass = isNonProfessionalPlayer
+        ? 'group relative overflow-hidden rounded-2xl border border-sky-200/20 bg-slate-950 p-5 text-white shadow-[0_18px_50px_-35px_rgba(8,47,73,0.7)] transition-all duration-300 hover:border-lime-300/50 hover:shadow-[0_24px_60px_-35px_rgba(8,47,73,0.8)] sm:p-6'
+        : 'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-slate-300/80 transition-all duration-300';
+    const verifiedCardClass = isNonProfessionalPlayer
+        ? 'sm:col-span-2 rounded-2xl border border-sky-200/20 bg-slate-950 p-5 text-white shadow-[0_18px_50px_-35px_rgba(8,47,73,0.7)] sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'
+        : 'sm:col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4';
 
     return (
         <motion.div
@@ -232,7 +268,7 @@ const Profile = () => {
                                         onClick={openProfilePicturePicker}
                                         disabled={imageUploading}
                                         aria-label={user.profilePicture ? 'Change profile photo' : 'Upload profile photo'}
-                                        className="absolute -top-2 -right-2 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-white text-indigo-700 shadow-lg ring-1 ring-slate-200 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className={cameraButtonClass}
                                     >
                                         <CameraIcon className="h-4 w-4" />
                                     </button>
@@ -277,7 +313,7 @@ const Profile = () => {
                             {!isEditing ? (
                                 <Button
                                     onClick={() => setIsEditing(true)}
-                                    className="gap-2 h-11 px-5 font-bold bg-white text-slate-900 hover:bg-white/90 shadow-lg border-0"
+                                    className={editButtonClass}
                                 >
                                     <PencilSquareIcon className="h-4 w-4" />
                                     Edit profile
@@ -323,15 +359,20 @@ const Profile = () => {
                         onSubmit={handleSubmit(onSubmit)}
                         className="mt-8"
                     >
-                        <div className="rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
-                            <div className="border-b border-slate-100 bg-slate-50/80 px-6 sm:px-8 py-5">
+                        <div className={editPanelClass}>
+                            {isNonProfessionalPlayer && <div className="h-1 bg-gradient-to-r from-lime-300 via-sky-400 to-indigo-500" />}
+                            <div className={editHeaderClass}>
                                 <div className="flex items-center gap-3">
-                                    <div className={twMerge('flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm', theme.accent)}>
+                                    <div className={editIconClass}>
                                         <IdentificationIcon className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h2 className="text-base font-bold text-slate-900">Edit your details</h2>
-                                        <p className="text-sm text-slate-500">Changes apply across SportsSphere immediately.</p>
+                                        <h2 className={twMerge('text-base font-bold', isNonProfessionalPlayer ? 'text-white' : 'text-slate-900')}>
+                                            {isNonProfessionalPlayer ? 'Edit player details' : 'Edit your details'}
+                                        </h2>
+                                        <p className={twMerge('text-sm', isNonProfessionalPlayer ? 'text-slate-300' : 'text-slate-500')}>
+                                            Changes apply across SportsSphere immediately.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -342,6 +383,7 @@ const Profile = () => {
                                         label="Full name"
                                         placeholder="Your name"
                                         error={errors.name}
+                                        className={editInputClass}
                                         {...register('name', { required: 'Name is required' })}
                                     />
                                     <Input
@@ -349,20 +391,22 @@ const Profile = () => {
                                         type="email"
                                         disabled
                                         error={errors.email}
+                                        className={editInputClass}
                                         {...register('email')}
                                     />
                                     <Input
                                         label="Phone"
                                         placeholder="+92 300 0000000"
                                         error={errors.phone}
+                                        className={editInputClass}
                                         {...register('phone')}
                                     />
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                                        <label className={editLabelClass}>
                                             Lahore area
                                         </label>
                                         <select
-                                            className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white font-semibold text-sm text-slate-700 focus:ring-indigo-500 focus:border-indigo-500"
+                                            className={selectClass}
                                             {...register('area', { required: 'Area is required' })}
                                         >
                                             <option value="">Select area</option>
@@ -374,11 +418,11 @@ const Profile = () => {
                                     </div>
                                     {user.role === 'player' && (
                                         <div className="md:col-span-2 space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                                            <label className={editLabelClass}>
                                                 Skill level
                                             </label>
                                             <select
-                                                className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 font-semibold text-sm text-slate-500 cursor-not-allowed"
+                                                className={disabledSelectClass}
                                                 disabled
                                                 {...register('skillLevel')}
                                             >
@@ -389,7 +433,7 @@ const Profile = () => {
                                                     </option>
                                                 ))}
                                             </select>
-                                            <p className="text-xs text-slate-400 pl-1">
+                                            <p className={twMerge('text-xs pl-1', isNonProfessionalPlayer ? 'text-slate-400' : 'text-slate-400')}>
                                                 Skill level is set during onboarding and cannot be changed here.
                                             </p>
                                         </div>
@@ -397,15 +441,25 @@ const Profile = () => {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-6 sm:px-8 py-5">
+                            <div className={editFooterClass}>
                                 <button
                                     type="button"
                                     onClick={() => setIsEditing(false)}
-                                    className="h-11 px-6 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                                    className={twMerge(
+                                        'h-11 px-6 text-sm font-bold transition-colors',
+                                        isNonProfessionalPlayer ? 'text-slate-300 hover:text-white' : 'text-slate-500 hover:text-slate-800'
+                                    )}
                                 >
                                     Discard
                                 </button>
-                                <Button type="submit" isLoading={loading} className="h-11 px-8 font-bold shadow-lg">
+                                <Button
+                                    type="submit"
+                                    isLoading={loading}
+                                    className={twMerge(
+                                        'h-11 px-8 font-bold shadow-lg',
+                                        isNonProfessionalPlayer ? 'bg-lime-300 text-slate-950 hover:bg-lime-200 border-0' : ''
+                                    )}
+                                >
                                     Save changes
                                 </Button>
                             </div>
@@ -428,13 +482,17 @@ const Profile = () => {
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05, duration: 0.35 }}
-                                    className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-slate-300/80 transition-all duration-300"
+                                    className={viewCardClass}
                                 >
-                                    <div className="absolute top-0 right-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-slate-50 group-hover:bg-slate-100/80 transition-colors" />
+                                    <div className={twMerge(
+                                        'absolute top-0 right-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full transition-colors',
+                                        isNonProfessionalPlayer ? 'bg-white/5 group-hover:bg-lime-300/10' : 'bg-slate-50 group-hover:bg-slate-100/80'
+                                    )} />
                                     <div className="relative flex items-start gap-4">
                                         <div
                                             className={twMerge(
-                                                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 group-hover:scale-105 transition-transform ring-1',
+                                                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl group-hover:scale-105 transition-transform ring-1',
+                                                isNonProfessionalPlayer ? 'bg-white/10 ring-white/10' : 'bg-slate-50',
                                                 theme.ring
                                             )}
                                         >
@@ -444,7 +502,7 @@ const Profile = () => {
                                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
                                                 {field.label}
                                             </p>
-                                            <p className="text-base font-semibold text-slate-900 truncate capitalize">
+                                            <p className={twMerge('text-base font-semibold truncate capitalize', isNonProfessionalPlayer ? 'text-white' : 'text-slate-900')}>
                                                 {field.value?.toString().trim() || (
                                                     <span className="text-slate-300 font-medium italic">Not set</span>
                                                 )}
@@ -459,15 +517,18 @@ const Profile = () => {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: profileFields.length * 0.05 }}
-                            className="sm:col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                            className={verifiedCardClass}
                         >
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm">
+                                <div className={twMerge(
+                                    'flex h-10 w-10 items-center justify-center rounded-xl shadow-sm',
+                                    isNonProfessionalPlayer ? 'bg-lime-300 text-slate-950' : 'bg-white border border-slate-200'
+                                )}>
                                     <ShieldCheckIcon className="h-5 w-5 text-emerald-600" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900">Verified member</p>
-                                    <p className="text-xs text-slate-500 mt-0.5">
+                                    <p className={twMerge('text-sm font-bold', isNonProfessionalPlayer ? 'text-white' : 'text-slate-900')}>Verified member</p>
+                                    <p className={twMerge('text-xs mt-0.5', isNonProfessionalPlayer ? 'text-slate-400' : 'text-slate-500')}>
                                         Your account is active on the SportsSphere network.
                                     </p>
                                 </div>
@@ -475,7 +536,10 @@ const Profile = () => {
                             <Button
                                 variant="outline"
                                 onClick={() => setIsEditing(true)}
-                                className="shrink-0 h-10 px-5 text-sm font-bold border-slate-200"
+                                className={twMerge(
+                                    'shrink-0 h-10 px-5 text-sm font-bold',
+                                    isNonProfessionalPlayer ? 'border-white/15 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200'
+                                )}
                             >
                                 Update details
                             </Button>

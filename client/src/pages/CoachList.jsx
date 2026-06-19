@@ -5,7 +5,6 @@ import {
     AcademicCapIcon,
     ArrowPathIcon,
     ArrowRightIcon,
-    BanknotesIcon,
     BuildingStorefrontIcon,
     CheckBadgeIcon,
     ClockIcon,
@@ -18,6 +17,7 @@ import {
 import { getCoaches } from '../services/coachService';
 import { getAllCourts } from '../services/courtService';
 import { useToast } from '../context/ToastContext';
+import { LAHORE_AREAS } from '../constants/lahoreAreas';
 
 const COACHING_IMAGE = '/images/homepage/coaching-web.jpg';
 
@@ -31,8 +31,8 @@ const SPEC_LABELS = {
 };
 
 const DEFAULT_FILTERS = {
-    court: '',
-    maxRate: ''
+    area: '',
+    court: ''
 };
 
 const formatSpec = (specialization) =>
@@ -46,20 +46,18 @@ const normalizeCourtId = (courtValue) => {
 };
 
 const applyClientFilters = (coachList, activeFilters) => {
+    const areaPrefix = activeFilters.area?.trim().toLowerCase();
     const selectedCourt = activeFilters.court?.trim();
-    const maximumRate = activeFilters.maxRate !== '' ? Number(activeFilters.maxRate) : null;
 
     return coachList.filter((coach) => {
+        const coachArea = coach.user?.area?.trim().toLowerCase() || '';
+        if (areaPrefix && !coachArea.startsWith(areaPrefix)) return false;
+
         if (selectedCourt) {
             const hasCourtMatch =
                 Array.isArray(coach.availability) &&
                 coach.availability.some((slot) => normalizeCourtId(slot?.court) === selectedCourt);
             if (!hasCourtMatch) return false;
-        }
-
-        if (maximumRate !== null && !Number.isNaN(maximumRate)) {
-            const selectedRate = Number(coach.hourlyRate);
-            if (Number.isNaN(selectedRate) || selectedRate > maximumRate) return false;
         }
 
         return true;
@@ -111,7 +109,7 @@ const CoachList = () => {
 
     useEffect(() => {
         requestSequence.current += 1;
-        const shouldDebounce = filters.maxRate !== '';
+        const shouldDebounce = Boolean(filters.area.trim());
         const timeoutId = setTimeout(() => {
             fetchCoaches(filters);
         }, shouldDebounce ? 250 : 0);
@@ -128,7 +126,7 @@ const CoachList = () => {
     };
 
     const hasActiveFilters = Boolean(
-        filters.court || filters.maxRate !== ''
+        filters.area.trim() || filters.court
     );
 
     const selectedCourtName = useMemo(() => {
@@ -203,7 +201,28 @@ const CoachList = () => {
                     <p className="text-xs font-semibold text-slate-500">Results update as you type.</p>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_minmax(180px,260px)_auto]">
+                <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_auto]">
+                    <div>
+                        <label htmlFor="coach-area" className="sr-only">Search coaches by Lahore area</label>
+                        <div className="relative">
+                            <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky-700" />
+                            <input
+                                id="coach-area"
+                                type="search"
+                                name="area"
+                                list="coach-area-options"
+                                value={filters.area}
+                                onChange={handleFilterChange}
+                                placeholder="Type an area"
+                                autoComplete="off"
+                                className="h-12 w-full rounded-xl border border-slate-300 bg-white pl-12 pr-4 text-sm font-bold text-brand-navy-deep outline-none transition-all placeholder:text-slate-400 focus:border-brand-sky focus:ring-4 focus:ring-sky-200/60"
+                            />
+                            <datalist id="coach-area-options">
+                                {LAHORE_AREAS.map((area) => <option key={area} value={area}>{area}</option>)}
+                            </datalist>
+                        </div>
+                    </div>
+
                     <div className="relative">
                         <BuildingStorefrontIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
                         <label htmlFor="coach-court" className="sr-only">Coaching venue</label>
@@ -221,21 +240,6 @@ const CoachList = () => {
                         </select>
                     </div>
 
-                    <div className="relative">
-                        <BanknotesIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
-                        <label htmlFor="maximum-fee" className="sr-only">Maximum hourly fee in PKR</label>
-                        <input
-                            id="maximum-fee"
-                            type="number"
-                            name="maxRate"
-                            min="0"
-                            value={filters.maxRate}
-                            onChange={handleFilterChange}
-                            placeholder="Maximum"
-                            className="h-12 w-full rounded-xl border border-slate-300 bg-white pl-12 pr-3 text-sm font-bold text-brand-navy-deep outline-none transition-all placeholder:text-slate-400 focus:border-brand-sky focus:ring-4 focus:ring-sky-200/60"
-                        />
-                    </div>
-
                     <button
                         type="button"
                         onClick={resetFilters}
@@ -250,11 +254,11 @@ const CoachList = () => {
                 {hasActiveFilters && (
                     <div className="mt-4 flex flex-wrap items-center gap-2" aria-live="polite">
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Active</span>
+                        {filters.area.trim() && (
+                            <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-black text-sky-800">Area starts with: {filters.area.trim()}</span>
+                        )}
                         {selectedCourtName && (
                             <span className="max-w-52 truncate rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">{selectedCourtName}</span>
-                        )}
-                        {filters.maxRate !== '' && (
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">Maximum Rs. {filters.maxRate}</span>
                         )}
                     </div>
                 )}
@@ -405,7 +409,7 @@ const CoachList = () => {
                                     <MagnifyingGlassIcon className="h-8 w-8" />
                                 </div>
                                 <h3 className="mt-5 text-2xl font-black text-brand-navy-deep">No matching coaches</h3>
-                                <p className="mx-auto mt-2 max-w-md text-sm font-medium leading-6 text-slate-600">Try another venue or a higher maximum fee.</p>
+                                <p className="mx-auto mt-2 max-w-md text-sm font-medium leading-6 text-slate-600">Try a shorter area prefix or another venue.</p>
                                 <button
                                     type="button"
                                     onClick={resetFilters}
