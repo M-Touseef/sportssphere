@@ -15,6 +15,9 @@ class QueryRouter {
         this.INTENT_TYPE_DENIED = 'DENIED';
 
         this.personalPatterns = [
+            /\b(next|upcoming)\s+(match|matches|game|games)\b/i,
+            /\bwhen\s+(do|will|am)\s+i\s+(play|playing)\b/i,
+            /\bwho\s+(do|will|am)\s+i\s+(play|playing)\b/i,
             /\bmy\b.*\b(match|matches|game|games|schedule)\b/i,
             /\bmy\b.*\b(booking|bookings|reservation|reservations)\b/i,
             /\bmy\b.*\b(tournament|tournaments|registration|registrations)\b/i,
@@ -75,12 +78,12 @@ class QueryRouter {
         const isPublic = this.publicPatterns.some((p) => p.test(normalized));
         const isKnowledge = this.knowledgePatterns.some((p) => p.test(normalized));
 
-        if (isPersonal) {
-            return this.INTENT_TYPE_PERSONAL;
-        }
-
         if (isDenied) {
             return this.INTENT_TYPE_DENIED;
+        }
+
+        if (isPersonal) {
+            return this.INTENT_TYPE_PERSONAL;
         }
 
         // Public listings must not steal "my ..." personal queries

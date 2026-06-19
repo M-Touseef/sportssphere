@@ -5,6 +5,7 @@ const Booking = require('../models/Booking');
 const Court = require('../models/Court');
 const CoachProfile = require('../models/CoachProfile');
 const Session = require('../models/Session');
+require('../models/User');
 
 /**
  * Service to fetch user-specific data for chatbot responses
@@ -20,7 +21,13 @@ class ChatDataService {
     async getUserRegistrationIds(userId) {
         const uid = this.normalizeUserId(userId);
         if (!uid) return [];
-        const registrations = await Registration.find({ player: uid }).select('_id').lean();
+        const registrations = await Registration.find({
+            $or: [
+                { player: uid },
+                { player1: uid },
+                { player2: uid }
+            ]
+        }).select('_id').lean();
         return registrations.map((r) => r._id);
     }
 
@@ -40,7 +47,11 @@ class ChatDataService {
                 .populate({ path: 'tournament', select: 'name venue startDate' })
                 .populate({
                     path: 'participant1.registration participant2.registration',
-                    populate: { path: 'player', select: 'name' }
+                    populate: [
+                        { path: 'player', select: 'name' },
+                        { path: 'player1', select: 'name' },
+                        { path: 'player2', select: 'name' }
+                    ]
                 })
                 .sort({ scheduledTime: 1 })
                 .limit(5);
@@ -58,16 +69,49 @@ class ChatDataService {
     }
 
     isUserInMatch(match, userId) {
-        const p1 = match.participant1?.registration?.player?._id?.toString();
-        const p2 = match.participant2?.registration?.player?._id?.toString();
-        return p1 === userId || p2 === userId;
+        return (
+            this.isUserInRegistration(match.participant1?.registration, userId) ||
+            this.isUserInRegistration(match.participant2?.registration, userId)
+        );
+    }
+
+    isUserInRegistration(registration, userId) {
+        const uid = this.normalizeUserId(userId);
+        if (!registration || !uid) return false;
+        return this.getRegistrationPlayerIds(registration).includes(uid);
+    }
+
+    getRegistrationPlayerIds(registration) {
+        return ['player', 'player1', 'player2']
+            .map((field) => {
+                const value = registration?.[field];
+                return value?._id?.toString?.() || value?.toString?.();
+            })
+            .filter(Boolean);
+    }
+
+    getRegistrationDisplayName(registration) {
+        if (!registration) return 'TBD';
+        if (registration.teamName) return registration.teamName;
+
+        const playerNames = ['player', 'player1', 'player2']
+            .map((field) => registration[field]?.name)
+            .filter(Boolean);
+
+        if (playerNames.length) return playerNames.join(' / ');
+        if (registration.partnerName) return registration.partnerName;
+        return 'TBD';
     }
 
     // Get user's tournament registrations and results
     async getUserTournaments(userId) {
         try {
             const registrations = await Registration.find({
-                player: userId,
+                $or: [
+                    { player: userId },
+                    { player1: userId },
+                    { player2: userId }
+                ],
                 status: { $in: ['confirmed', 'checked_in'] }
             })
                 .populate('tournament', 'name status startDate venue')
@@ -143,7 +187,11 @@ class ChatDataService {
                 .populate({ path: 'tournament', select: 'name' })
                 .populate({
                     path: 'participant1.registration participant2.registration',
-                    populate: { path: 'player', select: 'name' }
+                    populate: [
+                        { path: 'player', select: 'name' },
+                        { path: 'player1', select: 'name' },
+                        { path: 'player2', select: 'name' }
+                    ]
                 })
                 .sort({ completedAt: -1 })
                 .limit(5);
@@ -234,7 +282,7 @@ class ChatDataService {
         let response = `Your recent match results:\n\n`;
 
         matches.forEach((match, index) => {
-            const isParticipant1 = match.participant1.registration?.player?._id.toString() === userId;
+            const isParticipant1 = this.isUserInRegistration(match.participant1.registration, userId);
             const userScore = isParticipant1 ? match.participant1.score : match.participant2.score;
             const oppScore = isParticipant1 ? match.participant2.score : match.participant1.score;
             const opponent = this.getOpponentName(match, userId);
@@ -256,21 +304,19 @@ class ChatDataService {
         const uid = this.normalizeUserId(userId);
         const p1 = match.participant1?.registration;
         const p2 = match.participant2?.registration;
-        const p1Id = p1?.player?._id?.toString();
-        const p2Id = p2?.player?._id?.toString();
 
-        if (p1Id === uid) {
-            return p2?.player?.name || p2?.teamName || 'TBD';
+        if (this.isUserInRegistration(p1, uid)) {
+            return this.getRegistrationDisplayName(p2);
         }
-        if (p2Id === uid) {
-            return p1?.player?.name || p1?.teamName || 'TBD';
+        if (this.isUserInRegistration(p2, uid)) {
+            return this.getRegistrationDisplayName(p1);
         }
         return 'Opponent';
     }
 
     // Helper: Check if user won the match
     didUserWin(match, userId) {
-        const isParticipant1 = match.participant1.registration?.player?._id.toString() === userId;
+        const isParticipant1 = this.isUserInRegistration(match.participant1.registration, userId);
 
         if (!match.participant1.score || !match.participant2.score) return false;
 
