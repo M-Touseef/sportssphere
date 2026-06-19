@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
+    CameraIcon,
     CheckCircleIcon,
     CurrencyDollarIcon,
     DocumentTextIcon,
@@ -26,10 +27,12 @@ const options = [
 ];
 
 const ProfessionalProfile = () => {
-    const { user } = useAuth();
+    const { user, updateProfilePicture } = useAuth();
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [submitStatus, setSubmitStatus] = useState(null);
+    const [imageUploading, setImageUploading] = useState(false);
+    const [imageError, setImageError] = useState('');
     const [profileExists, setProfileExists] = useState(false);
 
     const {
@@ -88,6 +91,7 @@ const ProfessionalProfile = () => {
 
     const onSubmit = async (data) => {
         setSubmitStatus(null);
+        setImageError('');
         try {
             if (profileExists) {
                 await updateProfile(data);
@@ -104,6 +108,37 @@ const ProfessionalProfile = () => {
         }
     };
 
+    const clearStatusLater = () => window.setTimeout(() => setSubmitStatus(null), 3000);
+
+    const handleProfilePictureChange = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        setImageError('');
+        setSubmitStatus(null);
+
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            setImageError('Please choose an image file.');
+            return;
+        }
+        if (file.size > 3 * 1024 * 1024) {
+            setImageError('Profile image must be 3MB or smaller.');
+            return;
+        }
+
+        setImageUploading(true);
+        try {
+            await updateProfilePicture(file);
+            setSubmitStatus('success');
+            clearStatusLater();
+        } catch (error) {
+            console.error('Error uploading professional photo:', error);
+            setImageError(error.response?.data?.error || 'Failed to upload profile picture.');
+        } finally {
+            setImageUploading(false);
+        }
+    };
+
     if (loading) return <LoadingSpinner />;
 
     return (
@@ -113,11 +148,23 @@ const ProfessionalProfile = () => {
                     <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-lime-300 via-sky-400 to-indigo-500" />
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div className="flex min-w-0 gap-4 sm:gap-5">
-                            <UserAvatar
-                                user={user}
-                                className="h-16 w-16 shrink-0 rounded-2xl bg-white text-2xl text-slate-950 ring-2 ring-white/70 sm:h-20 sm:w-20"
-                                fallbackClassName="text-slate-950"
-                            />
+                            <div className="relative shrink-0">
+                                <UserAvatar
+                                    user={user}
+                                    className="h-16 w-16 rounded-2xl bg-white text-2xl text-slate-950 ring-2 ring-white/70 sm:h-20 sm:w-20"
+                                    fallbackClassName="text-slate-950"
+                                />
+                                <label className="absolute -right-2 -top-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-lime-300 text-slate-950 shadow-lg transition hover:bg-lime-200 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60" title={user?.profilePicture ? 'Change profile photo' : 'Upload profile photo'}>
+                                    <CameraIcon className="h-4 w-4" />
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        className="sr-only"
+                                        onChange={handleProfilePictureChange}
+                                        disabled={imageUploading}
+                                    />
+                                </label>
+                            </div>
                             <div className="min-w-0">
                                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-200">
                                     Professional profile
@@ -132,6 +179,17 @@ const ProfessionalProfile = () => {
                         </div>
 
                         <div className="flex flex-wrap gap-3">
+                            <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-sm font-bold text-white transition hover:bg-white/10 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
+                                <CameraIcon className="h-4 w-4" />
+                                {imageUploading ? 'Uploading...' : user?.profilePicture ? 'Change photo' : 'Upload photo'}
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="sr-only"
+                                    onChange={handleProfilePictureChange}
+                                    disabled={imageUploading}
+                                />
+                            </label>
                             <span className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-bold ${
                                 preview.isActive ? 'border-lime-300/40 bg-lime-300 text-slate-950' : 'border-white/15 bg-white/5 text-slate-300'
                             }`}>
@@ -153,17 +211,17 @@ const ProfessionalProfile = () => {
                 </div>
             </header>
 
-            {submitStatus && (
+            {(submitStatus || imageError) && (
                 <div className={`flex items-center gap-3 rounded-2xl border p-4 ${
-                    submitStatus === 'success'
+                    submitStatus === 'success' && !imageError
                         ? 'border-lime-200 bg-lime-50 text-lime-900'
                         : 'border-rose-200 bg-rose-50 text-rose-900'
                 }`}>
-                    {submitStatus === 'success'
+                    {submitStatus === 'success' && !imageError
                         ? <CheckCircleIcon className="h-5 w-5 shrink-0 text-lime-600" />
                         : <ExclamationCircleIcon className="h-5 w-5 shrink-0 text-rose-600" />}
                     <p className="text-sm font-semibold">
-                        {submitStatus === 'success' ? 'Profile saved successfully.' : 'Could not save your profile. Please try again.'}
+                        {imageError || (submitStatus === 'success' ? 'Profile saved successfully.' : 'Could not save your profile. Please try again.')}
                     </p>
                 </div>
             )}
@@ -322,7 +380,13 @@ const ProfessionalProfile = () => {
                         <div className="bg-slate-950 p-6 text-white">
                             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-200">Directory preview</p>
                             <div className="mt-5 flex items-center gap-4">
-                                <UserAvatar user={user} className="h-20 w-20 rounded-2xl bg-white text-2xl text-slate-950 ring-2 ring-white/70" fallbackClassName="text-slate-950" />
+                                <div className="relative">
+                                    <UserAvatar user={user} className="h-20 w-20 rounded-2xl bg-white text-2xl text-slate-950 ring-2 ring-white/70" fallbackClassName="text-slate-950" />
+                                    <label className="absolute -right-2 -top-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-lime-300 text-slate-950 shadow-lg transition hover:bg-lime-200 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60" title={user?.profilePicture ? 'Change profile photo' : 'Upload profile photo'}>
+                                        <CameraIcon className="h-4 w-4" />
+                                        <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handleProfilePictureChange} disabled={imageUploading} />
+                                    </label>
+                                </div>
                                 <div className="min-w-0">
                                     <h2 className="truncate text-xl font-black">{user?.name || 'Professional player'}</h2>
                                     <p className="mt-1 text-sm text-slate-400">{preview.experienceYears || 0} years experience</p>
@@ -354,6 +418,7 @@ const ProfessionalProfile = () => {
                             <ChecklistItem done={preview.experienceYears} label="Experience added" />
                             <ChecklistItem done={preview.bio} label="Bio written" />
                             <ChecklistItem done={selectedSpecializations.length} label="Formats selected" />
+                            <ChecklistItem done={user?.profilePicture} label="Professional profile photo" />
                             <ChecklistItem done={preview.isActive} label="Directory visible" />
                         </div>
                     </section>

@@ -48,6 +48,14 @@ const ROLE_THEME = {
         ring: 'ring-sky-100',
         bar: 'bg-sky-500'
     },
+    nonProfessionalPlayer: {
+        gradient: 'from-slate-950 via-sky-950 to-emerald-900',
+        glow: 'shadow-sky-900/25',
+        chip: 'bg-lime-300 text-slate-950 ring-lime-200/70',
+        accent: 'text-sky-700',
+        ring: 'ring-sky-100',
+        bar: 'bg-lime-300'
+    },
     admin: {
         gradient: 'from-slate-700 via-slate-800 to-slate-900',
         glow: 'shadow-slate-500/25',
@@ -68,7 +76,8 @@ const Profile = () => {
     const [imageUploading, setImageUploading] = useState(false);
     const photoInputRef = useRef(null);
 
-    const theme = ROLE_THEME[user?.role] || defaultTheme;
+    const isNonProfessionalPlayer = user?.role === 'player' && user?.skillLevel === 'non-professional';
+    const theme = isNonProfessionalPlayer ? ROLE_THEME.nonProfessionalPlayer : ROLE_THEME[user?.role] || defaultTheme;
 
     const {
         register,
@@ -167,7 +176,9 @@ const Profile = () => {
 
     if (!user) return null;
 
-    const roleLabel = user.role?.charAt(0).toUpperCase() + user.role?.slice(1);
+    const roleLabel = isNonProfessionalPlayer
+        ? 'Club player'
+        : user.role?.charAt(0).toUpperCase() + user.role?.slice(1);
     const canUploadProfilePicture = user.role !== 'admin';
 
     return (
@@ -190,6 +201,7 @@ const Profile = () => {
                     />
                 )}
                 <div className={twMerge('absolute inset-0 bg-gradient-to-br', theme.gradient)} />
+                {isNonProfessionalPlayer && <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-lime-300 via-sky-400 to-indigo-500" />}
                 <div
                     className="absolute inset-0 opacity-[0.07]"
                     style={{
@@ -228,7 +240,7 @@ const Profile = () => {
                             </div>
                             <div className="pb-1 min-w-0">
                                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/70 mb-1">
-                                    Account
+                                    {isNonProfessionalPlayer ? 'Player profile' : 'Account'}
                                 </p>
                                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight truncate">
                                     {user.name}
@@ -285,7 +297,7 @@ const Profile = () => {
 
                     <div className="mt-8 max-w-md">
                         <div className="flex items-center justify-between text-xs font-semibold text-white/80 mb-2">
-                            <span>Profile completeness</span>
+                            <span>{isNonProfessionalPlayer ? 'Player profile readiness' : 'Profile completeness'}</span>
                             <span>{completion}%</span>
                         </div>
                         <div className="h-2 rounded-full bg-white/20 overflow-hidden">
