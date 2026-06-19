@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import tournamentService from '../services/tournamentService';
 import { useToast } from '../context/ToastContext';
@@ -88,31 +88,40 @@ const TournamentList = () => {
     const { error } = useToast();
     const [filters, setFilters] = useState(DEFAULT_FILTERS);
     const [resultCount, setResultCount] = useState(null);
+    const requestSequence = useRef(0);
 
     const loadTournaments = useCallback(
         async (activeFilters) => {
+            const requestId = ++requestSequence.current;
             const queryFilters = normalizeFilters(activeFilters);
             try {
                 setLoading(true);
                 setFetchError(false);
                 const data = await tournamentService.getTournaments(queryFilters);
+                if (requestId !== requestSequence.current) return;
                 setTournaments(data.data || []);
                 setResultCount(typeof data.count === 'number' ? data.count : (data.data || []).length);
             } catch (err) {
+                if (requestId !== requestSequence.current) return;
                 console.error('Error fetching tournaments:', err);
                 setFetchError(true);
                 setResultCount(null);
                 error('Failed to load tournaments. Please check your connection.');
             } finally {
-                setLoading(false);
+                if (requestId === requestSequence.current) setLoading(false);
             }
         },
         [error]
     );
 
     useEffect(() => {
-        loadTournaments(DEFAULT_FILTERS);
-    }, [loadTournaments]);
+        const shouldDebounce = Boolean(filters.area.trim());
+        const timeoutId = setTimeout(() => {
+            loadTournaments(filters);
+        }, shouldDebounce ? 250 : 0);
+
+        return () => clearTimeout(timeoutId);
+    }, [filters, loadTournaments]);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -121,29 +130,12 @@ const TournamentList = () => {
 
     const handleStatusChange = (e) => {
         const status = e.target.value;
-        setFilters((prev) => {
-            const next = { ...prev, status };
-            loadTournaments(next);
-            return next;
-        });
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const next = normalizeFilters({
-            area: String(formData.get('area') ?? ''),
-            status: String(formData.get('status') ?? ''),
-            upcoming: 'true',
-        });
-        setFilters(next);
-        loadTournaments(next);
+        setFilters((prev) => ({ ...prev, status }));
     };
 
     const resetFilters = () => {
         const cleared = { area: '', status: '', upcoming: '' };
         setFilters(cleared);
-        loadTournaments(cleared);
     };
 
     const hasActiveFilters = Boolean(filters.area.trim() || filters.status);
@@ -214,28 +206,32 @@ const TournamentList = () => {
                 {/* Filters */}
                 <div className="relative -mt-6 sm:-mt-8 mb-10 sm:mb-14 z-10">
                     <div className="rounded-3xl sm:rounded-[2rem] bg-white/95 backdrop-blur-xl border border-slate-200 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.24)] p-6 sm:p-8">
-                        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
-                            <div className="md:col-span-5">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
+                            <div className="md:col-span-7">
                                 <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block ml-1">
-                                    Lahore area
+                                    Search Lahore area
                                 </label>
                                 <div className="relative">
-                                    <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-sky-600 pointer-events-none" />
-                                    <select
+                                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-sky-600 pointer-events-none" />
+                                    <input
+                                        type="search"
                                         name="area"
+                                        list="tournament-area-options"
                                         className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 bg-slate-50 font-semibold text-sm text-slate-800 focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all"
                                         value={filters.area}
                                         onChange={handleFilterChange}
-                                    >
-                                        <option value="">All Lahore areas</option>
+                                        placeholder="Type an area, e.g. DHA or Gulberg"
+                                        autoComplete="off"
+                                    />
+                                    <datalist id="tournament-area-options">
                                         {LAHORE_AREAS.map((area) => (
                                             <option key={area} value={area}>{area}</option>
                                         ))}
-                                    </select>
+                                    </datalist>
                                 </div>
                             </div>
 
-                            <div className="md:col-span-4">
+                            <div className="md:col-span-3">
                                 <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block ml-1">
                                     Status
                                 </label>
@@ -253,18 +249,17 @@ const TournamentList = () => {
                                 </select>
                             </div>
 
-                            <div className="md:col-span-3">
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    size="lg"
-                                    className="min-h-[3.25rem] rounded-2xl font-bold text-base bg-slate-950 hover:bg-slate-800 text-white shadow-lg shadow-slate-300/40 border-0 gap-2"
+                            <div className="md:col-span-2">
+                                <button
+                                    type="button"
+                                    onClick={resetFilters}
+                                    disabled={!hasActiveFilters}
+                                    className="inline-flex min-h-[3.25rem] w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
                                 >
-                                    <MagnifyingGlassIcon className="h-5 w-5" />
-                                    Search
-                                </Button>
+                                    Clear
+                                </button>
                             </div>
-                        </form>
+                        </div>
 
                         {hasActiveFilters && !loading && (
                             <div className="mt-5 flex flex-wrap items-center gap-2">
