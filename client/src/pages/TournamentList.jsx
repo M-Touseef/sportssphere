@@ -14,6 +14,7 @@ import {
     ArrowRightIcon,
     SparklesIcon,
     UserGroupIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { twMerge } from 'tailwind-merge';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
@@ -204,94 +205,100 @@ const TournamentList = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Filters */}
-                <div className="relative -mt-6 sm:-mt-8 mb-10 sm:mb-14 z-10">
-                    <div className="rounded-3xl sm:rounded-[2rem] bg-white/95 backdrop-blur-xl border border-slate-200 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.24)] p-6 sm:p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-end">
-                            <div className="md:col-span-7">
-                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block ml-1">
-                                    Search Lahore area
-                                </label>
-                                <div className="relative">
-                                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-sky-600 pointer-events-none" />
-                                    <input
-                                        type="search"
-                                        name="area"
-                                        list="tournament-area-options"
-                                        className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 bg-slate-50 font-semibold text-sm text-slate-800 focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all"
-                                        value={filters.area}
-                                        onChange={handleFilterChange}
-                                        placeholder="Type an area, e.g. DHA or Gulberg"
-                                        autoComplete="off"
-                                    />
-                                    <datalist id="tournament-area-options">
-                                        {LAHORE_AREAS.map((area) => (
-                                            <option key={area} value={area}>{area}</option>
-                                        ))}
-                                    </datalist>
-                                </div>
-                            </div>
+                <section className="mb-10 rounded-[1.75rem] border border-slate-200 bg-slate-100 p-4 shadow-sm sm:mb-14 sm:p-6">
+                    <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-700">
+                                Dynamic tournament search
+                            </p>
+                            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
+                                Search and refine
+                            </h2>
+                            <p className="mt-1 text-sm font-semibold text-slate-500">
+                                Results update as you type.
+                            </p>
+                        </div>
+                        {resultCount != null && !loading && !fetchError && (
+                            <span className="inline-flex h-9 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm">
+                                {resultCount} result{resultCount === 1 ? '' : 's'}
+                            </span>
+                        )}
+                    </div>
 
-                            <div className="md:col-span-3">
-                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2 block ml-1">
-                                    Status
-                                </label>
-                                <select
-                                    name="status"
-                                    className="w-full min-h-[3.25rem] px-5 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-sm text-slate-800 focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 outline-none transition-all"
-                                    value={filters.status}
-                                    onChange={handleStatusChange}
-                                >
-                                    <option value="">All statuses</option>
-                                    <option value="registration_open">Registration open</option>
-                                    <option value="registration_closed">Registration closed</option>
-                                    <option value="in_progress">In progress</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <button
-                                    type="button"
-                                    onClick={resetFilters}
-                                    disabled={!hasActiveFilters}
-                                    className="inline-flex min-h-[3.25rem] w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
-                                >
-                                    Clear
-                                </button>
+                    <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_minmax(220px,0.6fr)_auto]">
+                        <div>
+                            <label htmlFor="tournament-area" className="sr-only">
+                                Search Lahore area
+                            </label>
+                            <div className="relative">
+                                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky-700" />
+                                <input
+                                    id="tournament-area"
+                                    type="search"
+                                    name="area"
+                                    list="tournament-area-options"
+                                    className="h-12 w-full rounded-xl border border-slate-300 bg-white pl-11 pr-4 text-sm font-bold text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10"
+                                    value={filters.area}
+                                    onChange={handleFilterChange}
+                                    placeholder="Type an area"
+                                    autoComplete="off"
+                                />
+                                <datalist id="tournament-area-options">
+                                    {LAHORE_AREAS.map((area) => (
+                                        <option key={area} value={area}>{area}</option>
+                                    ))}
+                                </datalist>
                             </div>
                         </div>
 
-                        {hasActiveFilters && !loading && (
-                            <div className="mt-5 flex flex-wrap items-center gap-2">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                    Active filters
-                                </span>
-                                {filters.area?.trim() && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 text-sky-800 px-3 py-1 text-xs font-bold">
-                                        Area: {filters.area.trim()}
-                                    </span>
-                                )}
-                                {filters.status && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-xs font-bold">
-                                        {getStatusConfig(filters.status).label}
-                                    </span>
-                                )}
-                                {resultCount != null && (
-                                    <span className="text-xs font-semibold text-slate-500 ml-auto">
-                                        {resultCount} result{resultCount === 1 ? '' : 's'}
-                                    </span>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={resetFilters}
-                                    className="text-xs font-bold text-sky-700 hover:text-sky-900 underline underline-offset-2"
-                                >
-                                    Clear all
-                                </button>
-                            </div>
-                        )}
+                        <div>
+                            <label htmlFor="tournament-status" className="sr-only">
+                                Status
+                            </label>
+                            <select
+                                id="tournament-status"
+                                name="status"
+                                className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10"
+                                value={filters.status}
+                                onChange={handleStatusChange}
+                            >
+                                <option value="">All statuses</option>
+                                <option value="registration_open">Registration open</option>
+                                <option value="registration_closed">Registration closed</option>
+                                <option value="in_progress">In progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={resetFilters}
+                            disabled={!hasActiveFilters}
+                            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-black text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+                        >
+                            <XMarkIcon className="h-5 w-5" />
+                            Clear
+                        </button>
                     </div>
-                </div>
+
+                    {hasActiveFilters && !loading && (
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                                Active filters
+                            </span>
+                            {filters.area?.trim() && (
+                                <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-black text-sky-800">
+                                    Area starts with: {filters.area.trim()}
+                                </span>
+                            )}
+                            {filters.status && (
+                                <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-black text-slate-700 ring-1 ring-slate-200">
+                                    {getStatusConfig(filters.status).label}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </section>
 
                 <AnimatePresence mode="wait">
                     {loading ? (

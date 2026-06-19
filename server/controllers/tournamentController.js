@@ -7,6 +7,8 @@ const { LAHORE_CITY, normalizeArea, isLahoreArea } = require('../constants/lahor
 
 const TOURNAMENT_GRADES = ['division', 'national', 'international'];
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const normalizeContactPhone = (phone) => {
     if (phone == null || phone === '') return phone;
     const digits = String(phone).replace(/\D/g, '');
@@ -86,7 +88,14 @@ exports.getTournaments = async (req, res, next) => {
         let query = { isPublished: true };
 
         if (area) {
-            if (!isLahoreArea(area)) {
+            const areaFilter = String(area).trim();
+            const matchingAreas = isLahoreArea(areaFilter)
+                ? [normalizeArea(areaFilter)]
+                : LAHORE_AREAS.filter((lahoreArea) =>
+                    lahoreArea.toLowerCase().startsWith(areaFilter.toLowerCase())
+                );
+
+            if (!matchingAreas.length) {
                 return res.status(200).json({
                     success: true,
                     count: 0,
@@ -94,12 +103,12 @@ exports.getTournaments = async (req, res, next) => {
                 });
             }
 
-            const normalizedArea = normalizeArea(area);
-            const courtsInArea = await Court.find({ 'location.area': normalizedArea })
+            const areaPattern = `^(${matchingAreas.map(escapeRegex).join('|')})$`;
+            const courtsInArea = await Court.find({ 'location.area': { $regex: areaPattern, $options: 'i' } })
                 .select('_id')
                 .lean();
             query.$or = [
-                { area: normalizedArea },
+                { area: { $in: matchingAreas } },
                 { court: { $in: courtsInArea.map((court) => court._id) } }
             ];
         }
